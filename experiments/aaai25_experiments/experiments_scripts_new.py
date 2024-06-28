@@ -20,17 +20,18 @@ logger = get_logger(__name__)
 # GENERAL SETTINGS
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
-INSTANCE_FOLDERS = ["ubo100"]
-INSTANCE_IDS = range(4, 5)
+INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
+INSTANCE_IDS = range(1, 11)
 nb_scenarios_test = 10
 perfect_information = False
 reactive = False
 proactive = True
 stnu = False
+noise_factor = 2
 
 
-def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample):
-    df = pd.read_csv(f'experiments/aaai25_experiments/results/results_pi_{instance_folder}.csv')
+def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
+    df = pd.read_csv(f'experiments/aaai25_experiments/results/results_pi_{instance_folder}_{noise_factor}.csv')
     filtered_df = df[(df['instance_id'] == instance_id) & (df['sample'] == sample_index)]
     assert len(filtered_df) == 1
 
@@ -70,10 +71,10 @@ if reactive:
         for instance_id in INSTANCE_IDS:
             np.random.seed(SEED)
             rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id)
-            test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
+            test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test, noise_factor=noise_factor)
 
             for i, duration_sample in enumerate(test_durations_samples):
-                pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample)
+                pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
                 if pi_feasible:
                     data_dict = run_reactive_offline(rcpsp_max, time_limit_initial, mode)
                     data_dict["obj_pi"] = obj_pi
@@ -95,11 +96,11 @@ if proactive:
             for instance_id in INSTANCE_IDS:
                 np.random.seed(SEED)
                 rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id)
-                test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
+                test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test, noise_factor=noise_factor)
                 data_dict = run_proactive_offline(rcpsp_max, time_limit, mode, nb_scenarios_saa)
 
                 for i, duration_sample in enumerate(test_durations_samples):
-                    pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample)
+                    pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
                     data_dict["obj_pi"] = obj_pi
                     if pi_feasible:
                         data += run_proactive_online(rcpsp_max, duration_sample, data_dict)
@@ -118,9 +119,9 @@ if stnu:
         for instance_folder in INSTANCE_FOLDERS:
             data = []
             for instance_id in INSTANCE_IDS:
-                rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id)
+                rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
                 np.random.seed(SEED)
-                test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
+                test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test, noise_factor)
                 dc, estnu, data_dict = run_stnu_offline(rcpsp_max, time_limit_cp_stnu=time_limit_cp_stnu, mode=mode)
 
                 for i, duration_sample in enumerate(test_durations_samples):

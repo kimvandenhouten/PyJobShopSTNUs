@@ -40,6 +40,7 @@ def run_reactive_offline(rcpsp_max, time_limit_initial=60, mode="mean"):
     # Initialize data
     data_dict = {"instance_folder": rcpsp_max.instance_folder,
                  "instance_id": rcpsp_max.instance_id,
+                 "noise_factor": rcpsp_max.noise_factor,
                  "obj": np.inf,
                  "method": f"reactive_{mode}",
                  "time_limit_rescheduling": None,

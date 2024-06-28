@@ -9,7 +9,7 @@ logger = general.logger.get_logger(__name__)
 
 class RCPSP_CP_Benchmark:
     def __init__(self, capacity, durations, successors, needs, temporal_constraints=None, problem_type="RCPSP",
-                 instance_folder="", instance_id=""):
+                 instance_folder="", instance_id="", noise_factor=1):
         # convert to RCPSP instance
         self.capacity = capacity
         self.durations = durations
@@ -20,9 +20,10 @@ class RCPSP_CP_Benchmark:
         self.instance_folder = instance_folder
         self.instance_id = instance_id
         self.num_tasks = len(self.durations)
+        self.noise_factor = noise_factor
 
     @classmethod
-    def parsche_file(cls, directory, instance_folder, instance_id):
+    def parsche_file(cls, directory, instance_folder, instance_id, noise_factor):
 
         if instance_folder[0] == "j":
             filename = f'{directory}/{instance_folder}/PSP{instance_id}.SCH'
@@ -71,7 +72,7 @@ class RCPSP_CP_Benchmark:
         capacity = list(map(int, lines[-1].strip().split()))
 
         rcpsp_max = cls(capacity, durations, None, needs, temporal_relations, "RCPSP_max",
-                        instance_folder, instance_id)
+                        instance_folder, instance_id, noise_factor)
 
         return rcpsp_max
 
@@ -247,20 +248,20 @@ class RCPSP_CP_Benchmark:
 
         return res, start_times
 
-    def get_bound(self, mode="upper_bound", noise_factor=1):
+    def get_bound(self, mode="upper_bound"):
         scenario = []
         for duration in self.durations:
             if duration == 0:
                 scenario.append(0)
             else:
                 if mode == "lower_bound":
-                    bound = int(max(1, duration - noise_factor * np.sqrt(duration)))
+                    bound = int(max(1, duration - self.noise_factor * np.sqrt(duration)))
                 else:
-                    bound = int(duration + noise_factor * np.sqrt(duration))
+                    bound = int(duration + self.noise_factor * np.sqrt(duration))
                 scenario.append(bound)
         return scenario
 
-    def sample_durations(self, nb_scenarios=1, noise_factor=1):
+    def sample_durations(self, nb_scenarios=1):
         scenarios = []
         for _ in range(nb_scenarios):
             scenario = []
@@ -268,8 +269,8 @@ class RCPSP_CP_Benchmark:
                 if duration == 0:
                     scenario.append(0)
                 else:
-                    lower_bound = int(max(1, duration - noise_factor * np.sqrt(duration)))
-                    upper_bound = int(duration + noise_factor * np.sqrt(duration))
+                    lower_bound = int(max(1, duration - self.noise_factor * np.sqrt(duration)))
+                    upper_bound = int(duration + self.noise_factor * np.sqrt(duration))
                     duration_sample = np.random.randint(lower_bound, upper_bound)
                     scenario.append(duration_sample)
             scenarios.append(scenario)

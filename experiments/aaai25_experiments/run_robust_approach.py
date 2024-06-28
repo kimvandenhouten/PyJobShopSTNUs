@@ -14,6 +14,7 @@ def run_robust_offline(rcpsp_max, time_limit=60, mode="robust"):
     data_dict = {
         "instance_folder": rcpsp_max.instance_folder,
         "instance_id": rcpsp_max.instance_id,
+        "noise_factor": rcpsp_max.noise_factor,
         "method": f"robust_{mode}",
         "time_limit": time_limit,
         "feasibility": False,

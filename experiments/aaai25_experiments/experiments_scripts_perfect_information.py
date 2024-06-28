@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 # GENERAL SETTINGS
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
-INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
+INSTANCE_FOLDERS = ["ubo50", "ubo100"]
 INSTANCE_IDS = range(1, 11)
 nb_scenarios_test = 10
 perfect_information = True
@@ -24,8 +24,8 @@ if perfect_information:
         data = []
         for instance_id in INSTANCE_IDS:
             np.random.seed(SEED)
-            rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id)
-            test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test, noise_factor=2)
+            rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
+            test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
 
             for i, sample in enumerate(test_durations_samples):
                 logger.info(f'Start {instance_folder}_PSP{instance_id} timelimit {time_limit} and sample {sample}')

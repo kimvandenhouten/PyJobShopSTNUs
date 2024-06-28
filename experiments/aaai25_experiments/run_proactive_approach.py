@@ -13,6 +13,7 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
     data_dict = {
         "instance_folder": rcpsp_max.instance_folder,
         "instance_id": rcpsp_max.instance_id,
+        "noise_factor": rcpsp_max.noise_factor,
         "method": f"proactive_{mode}",
         "time_limit": time_limit,
         "feasibility": False,

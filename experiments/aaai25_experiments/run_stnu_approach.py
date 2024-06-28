@@ -49,6 +49,7 @@ def run_stnu_offline(rcpsp_max, time_limit_cp_stnu=60, mode="mean"):
     data_dict = {
         "instance_folder": rcpsp_max.instance_folder,
         "instance_id": rcpsp_max.instance_id,
+        "noise_factor": rcpsp_max.noise_factor,
         "method": f"STNU_{mode}",
         "time_limit_cp_stnu": time_limit_cp_stnu,
         "can_build_stnu": None,

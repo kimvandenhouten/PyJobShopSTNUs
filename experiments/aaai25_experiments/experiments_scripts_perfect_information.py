@@ -17,7 +17,7 @@ noise_factor = 2
 
 if perfect_information:
     # Settings perfect information
-    time_limit = 10
+    time_limit = 60
 
     # Start solving the instances with perfect information
     for instance_folder in INSTANCE_FOLDERS:

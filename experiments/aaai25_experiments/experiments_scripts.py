@@ -20,13 +20,13 @@ logger = get_logger(__name__)
 # GENERAL SETTINGS
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
-INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
+INSTANCE_FOLDERS = ["j10", "j20", "j30"]
 INSTANCE_IDS = range(1, 11)
 nb_scenarios_test = 10
 perfect_information = False
-reactive = True
-proactive = True
-stnu = False
+reactive = False
+proactive = False
+stnu = True
 noise_factor = 2
 
 

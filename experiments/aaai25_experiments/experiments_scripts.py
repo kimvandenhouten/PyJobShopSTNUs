@@ -11,7 +11,7 @@ from experiments.aaai25_experiments.run_reactive_approach import run_reactive_of
 from experiments.aaai25_experiments.run_proactive_approach import run_proactive_offline, run_proactive_online
 
 # Import STNU approach
-from experiments.aaai25_experiments.run_stnu_approach import run_stnu_offline, run_stnu_online
+#from experiments.aaai25_experiments.run_stnu_approach import run_stnu_offline, run_stnu_online
 
 
 from general.logger import get_logger

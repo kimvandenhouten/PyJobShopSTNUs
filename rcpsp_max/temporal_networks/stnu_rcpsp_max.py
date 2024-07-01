@@ -30,7 +30,7 @@ class RCPSP_STNU(STNU):
         return stnu
 
     @classmethod
-    def from_rcpsp_max_instance(cls, durations, temporal_constraints, sink_source=1):
+    def from_rcpsp_max_instance(cls, durations, temporal_constraints, sink_source=1, noise_factor=1):
         # TODO: can we extract this from the STNU class?
         stnu = cls(origin_horizon=False)
         for task, duration in enumerate(durations):
@@ -46,8 +46,8 @@ class RCPSP_STNU(STNU):
                 stnu.add_tight_constraint(task_start, task_finish, 0)
             else:
                 task_finish = stnu.add_node(f'{task}_{STNU.EVENT_FINISH}')
-                lower_bound = int(max(1, duration - np.sqrt(duration)))
-                upper_bound = int(duration + np.sqrt(duration))
+                lower_bound = int(max(1, duration - noise_factor * np.sqrt(duration)))
+                upper_bound = int(duration + noise_factor * np.sqrt(duration))
                 stnu.add_contingent_link(task_start, task_finish, lower_bound, upper_bound)
 
         for (pred, lag, suc) in temporal_constraints:

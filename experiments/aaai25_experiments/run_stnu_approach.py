@@ -97,7 +97,7 @@ def run_stnu_offline(rcpsp_max, time_limit_cp_stnu=60, mode="mean"):
         schedule = schedule.to_dict('records')
         resource_chains, resource_assignments = get_resource_chains(schedule, rcpsp_max.capacity, rcpsp_max.needs,
                                                                     complete=True)
-        stnu = RCPSP_STNU.from_rcpsp_max_instance(rcpsp_max.durations, rcpsp_max.temporal_constraints)
+        stnu = RCPSP_STNU.from_rcpsp_max_instance(rcpsp_max.durations, rcpsp_max.temporal_constraints, noise_factor=rcpsp_max.noise_factor)
         stnu = add_resource_chains(stnu, resource_chains)
         stnu_to_xml(stnu, f"example_rcpsp_max_stnu", "temporal_networks/cstnu_tool/xml_files")
 

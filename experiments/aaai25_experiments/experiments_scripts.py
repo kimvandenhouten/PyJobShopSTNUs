@@ -11,7 +11,7 @@ from experiments.aaai25_experiments.run_reactive_approach import run_reactive_of
 from experiments.aaai25_experiments.run_proactive_approach import run_proactive_offline, run_proactive_online
 
 # Import STNU approach
-from experiments.aaai25_experiments.run_stnu_approach import run_stnu_offline, run_stnu_online
+#from experiments.aaai25_experiments.run_stnu_approach import run_stnu_offline, run_stnu_online
 
 
 from general.logger import get_logger
@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 # GENERAL SETTINGS
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
-INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
+INSTANCE_FOLDERS = ["j10", "j20", "j30"]
 INSTANCE_IDS = range(1, 11)
 nb_scenarios_test = 10
 perfect_information = False

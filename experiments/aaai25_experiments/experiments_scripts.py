@@ -11,7 +11,7 @@ from experiments.aaai25_experiments.run_reactive_approach import run_reactive_of
 from experiments.aaai25_experiments.run_proactive_approach import run_proactive_offline, run_proactive_online
 
 # Import STNU approach
-#from experiments.aaai25_experiments.run_stnu_approach import run_stnu_offline, run_stnu_online
+from experiments.aaai25_experiments.run_stnu_approach import run_stnu_offline, run_stnu_online
 
 
 from general.logger import get_logger
@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 # GENERAL SETTINGS
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
-INSTANCE_FOLDERS = ["j10", "j20", "j30"]
+INSTANCE_FOLDERS = ["ubo50", "ubo100"]
 INSTANCE_IDS = range(1, 11)
 nb_scenarios_test = 10
 perfect_information = False
@@ -28,7 +28,7 @@ reactive = True
 proactive = True
 stnu = False
 noise_factor = 2
-
+writing = True
 
 def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
     df = pd.read_csv(f'experiments/aaai25_experiments/results/results_pi_{instance_folder}_{noise_factor}.csv')
@@ -80,8 +80,9 @@ if reactive:
                     data_dict["obj_pi"] = obj_pi
                     data += run_reactive_online(rcpsp_max, duration_sample, data_dict, time_limit_rescheduling)
                     data_df = pd.DataFrame(data)
-                    data_df.to_csv(f'experiments/aaai25_experiments/results/results_reactive_{instance_folder}'
-                                   f'_{mode}_{noise_factor}.csv', index=False)
+                    if writing:
+                        data_df.to_csv(f'experiments/aaai25_experiments/results/results_reactive_{instance_folder}'
+                                       f'_{mode}_{noise_factor}.csv', index=False)
                 else:
                     logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the reactive approach')
 
@@ -105,8 +106,9 @@ if proactive:
                     if pi_feasible:
                         data += run_proactive_online(rcpsp_max, duration_sample, data_dict)
                         data_df = pd.DataFrame(data)
-                        data_df.to_csv(f"experiments/aaai25_experiments/results/results_proactive_"
-                                       f"{instance_folder}_{mode}_{time_limit}_{noise_factor}.csv", index=False)
+                        if writing:
+                            data_df.to_csv(f"experiments/aaai25_experiments/results/results_proactive_"
+                                           f"{instance_folder}_{mode}_{time_limit}_{noise_factor}.csv", index=False)
                     else:
                         logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: '
                                     f'We can skip the proactive approach')
@@ -134,8 +136,9 @@ if stnu:
                     if pi_feasible:
                         data += run_stnu_online(dc, estnu, duration_sample, rcpsp_max, data_dict)
                         df = pd.DataFrame(data)
-                        df.to_csv(f"experiments/aaai25_experiments/results/results_stnu_{instance_folder}_"
-                                  f"{mode}_{noise_factor}.csv", index=False)
+                        if writing:
+                            df.to_csv(f"experiments/aaai25_experiments/results/results_stnu_{instance_folder}_"
+                                     f"{mode}_{noise_factor}.csv", index=False)
                     else:
                         logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the STNU approach')
 

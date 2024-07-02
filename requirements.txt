@@ -6,3 +6,4 @@ seaborn==0.13.2
 tomli==2.0.1
 seaborn==0.13.2
 docplex==2.25.236
+scipy==1.13.1

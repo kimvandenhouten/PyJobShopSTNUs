@@ -20,14 +20,14 @@ logger = get_logger(__name__)
 # GENERAL SETTINGS
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
-INSTANCE_FOLDERS = ["ubo50", "ubo100"]
-INSTANCE_IDS = range(1, 11)
+INSTANCE_FOLDERS = ["ubo50"]
+INSTANCE_IDS = range(1, 21)
 nb_scenarios_test = 10
 perfect_information = False
-reactive = False
+reactive = True
 proactive = False
-stnu = True
-noise_factor = 2
+stnu = False
+noise_factor = 1
 writing = True
 
 def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
@@ -63,28 +63,30 @@ if reactive:
     time_limit_initial = 60
     time_limit_rescheduling = 2
 
-    mode = "quantile_0.9"
+    data = []
+    for (mode, time_limit_initial, time_limit_rescheduling) in  [("quantile_0.5", 60, 2), ("quantile_0.75", 60, 2),
+                                                                 ("quantile_0.9", 60, 2), ("robust", 60, 2)]:
 
-    # Run the experiments
-    for instance_folder in INSTANCE_FOLDERS:
-        data = []
-        for instance_id in INSTANCE_IDS:
-            np.random.seed(SEED)
-            rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
-            test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
+        # Run the experiments
+        for instance_folder in INSTANCE_FOLDERS:
 
-            for i, duration_sample in enumerate(test_durations_samples):
-                pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
-                if pi_feasible:
-                    data_dict = run_reactive_offline(rcpsp_max, time_limit_initial, mode)
-                    data_dict["obj_pi"] = obj_pi
-                    data += run_reactive_online(rcpsp_max, duration_sample, data_dict, time_limit_rescheduling)
-                    data_df = pd.DataFrame(data)
-                    if writing:
-                        data_df.to_csv(f'experiments/aaai25_experiments/results/results_reactive_{instance_folder}'
-                                       f'_{mode}_{noise_factor}.csv', index=False)
-                else:
-                    logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the reactive approach')
+            for instance_id in INSTANCE_IDS:
+                np.random.seed(SEED)
+                rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
+                test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
+
+                for i, duration_sample in enumerate(test_durations_samples):
+                    pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
+                    if pi_feasible:
+                        data_dict = run_reactive_offline(rcpsp_max, time_limit_initial, mode)
+                        data_dict["obj_pi"] = obj_pi
+                        data += run_reactive_online(rcpsp_max, duration_sample, data_dict, time_limit_rescheduling)
+                        data_df = pd.DataFrame(data)
+                        if writing:
+                            data_df.to_csv(f'experiments/aaai25_experiments/results/results_tuning_reactive'
+                                           f'_{instance_folder}.csv', index=False)
+                    else:
+                        logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the reactive approach')
 
 if proactive:
     # RUN PROACTIVE EXPERIMENTS

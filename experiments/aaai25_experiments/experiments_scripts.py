@@ -20,14 +20,14 @@ logger = get_logger(__name__)
 # GENERAL SETTINGS
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
-INSTANCE_FOLDERS = ["ubo50"]
-INSTANCE_IDS = range(1, 21)
+INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
+INSTANCE_IDS = range(1, 51)
 nb_scenarios_test = 10
 perfect_information = False
 reactive = True
-proactive = False
-stnu = False
-noise_factor = 1
+proactive = True
+stnu = True
+noise_factor = 2
 writing = True
 
 def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
@@ -56,17 +56,14 @@ def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sampl
         obj_pi = np.inf
     return feasible, obj_pi
 
-
+data = []
 if reactive:
     # RUN REACTIVE EXPERIMENTS
     # Settings reactive approach
     time_limit_initial = 60
     time_limit_rescheduling = 2
 
-    data = []
-    for (mode, time_limit_initial, time_limit_rescheduling) in  [("quantile_0.5", 60, 2), ("quantile_0.75", 60, 2),
-                                                                 ("quantile_0.9", 60, 2), ("robust", 60, 2)]:
-
+    for (mode, time_limit_initial, time_limit_rescheduling) in [("quantile_0.9", 60, 2)]:
         # Run the experiments
         for instance_folder in INSTANCE_FOLDERS:
 
@@ -83,8 +80,7 @@ if reactive:
                         data += run_reactive_online(rcpsp_max, duration_sample, data_dict, time_limit_rescheduling)
                         data_df = pd.DataFrame(data)
                         if writing:
-                            data_df.to_csv(f'experiments/aaai25_experiments/results/results_tuning_reactive'
-                                           f'_{instance_folder}.csv', index=False)
+                            data_df.to_csv(f'experiments/aaai25_experiments/results/results_noise_factor={noise_factor}.csv', index=False)
                     else:
                         logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the reactive approach')
 
@@ -95,7 +91,6 @@ if proactive:
     for (mode, time_limit, nb_scenarios_saa) in [("quantile_0.9", 60, 1), ("SAA_smart", 60*3, 4)]:
         # Run the experiments
         for instance_folder in INSTANCE_FOLDERS:
-            data = []
             for instance_id in INSTANCE_IDS:
                 np.random.seed(SEED)
                 rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
@@ -109,8 +104,7 @@ if proactive:
                         data += run_proactive_online(rcpsp_max, duration_sample, data_dict)
                         data_df = pd.DataFrame(data)
                         if writing:
-                            data_df.to_csv(f"experiments/aaai25_experiments/results/results_proactive_"
-                                           f"{instance_folder}_{mode}_{time_limit}_{noise_factor}.csv", index=False)
+                            data_df.to_csv(f'experiments/aaai25_experiments/results/results_noise_factor={noise_factor}.csv', index=False)
                     else:
                         logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: '
                                     f'We can skip the proactive approach')
@@ -123,7 +117,6 @@ if stnu:
     # Run the experiments
     for mode in ["robust"]:
         for instance_folder in INSTANCE_FOLDERS:
-            data = []
             for instance_id in INSTANCE_IDS:
                 rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id,
                                                             noise_factor)
@@ -139,8 +132,7 @@ if stnu:
                         data += run_stnu_online(dc, estnu, duration_sample, rcpsp_max, data_dict)
                         df = pd.DataFrame(data)
                         if writing:
-                            df.to_csv(f"experiments/aaai25_experiments/results/results_stnu_{instance_folder}_"
-                                     f"{mode}_{noise_factor}.csv", index=False)
+                            data_df.to_csv(f'experiments/aaai25_experiments/results/results_noise_factor={noise_factor}.csv', index=False)
                     else:
                         logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the STNU approach')
 

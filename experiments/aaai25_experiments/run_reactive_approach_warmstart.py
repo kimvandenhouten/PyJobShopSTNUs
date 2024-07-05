@@ -21,15 +21,15 @@ def run_reactive_offline(rcpsp_max, time_limit_initial=60, mode="mean"):
     elif mode == "quantile_0.25":
         lb = rcpsp_max.get_bound(mode="lower_bound")
         ub = rcpsp_max.get_bound(mode="upper_bound")
-        durations = [int(lb[i] + 0.25 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = [int(lb[i] + 0.9 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
     elif mode == "quantile_0.75":
         lb = rcpsp_max.get_bound(mode="lower_bound")
         ub = rcpsp_max.get_bound(mode="upper_bound")
-        durations = [int(lb[i] + 0.75 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = [int(lb[i] + 0.9 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
     elif mode == "quantile_0.5":
         lb = rcpsp_max.get_bound(mode="lower_bound")
         ub = rcpsp_max.get_bound(mode="upper_bound")
-        durations = [int(lb[i] + 0.5 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = [int(lb[i] + 0.9 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
     elif mode == "quantile_0.9":
         lb = rcpsp_max.get_bound(mode="lower_bound")
         ub = rcpsp_max.get_bound(mode="upper_bound")
@@ -135,7 +135,8 @@ def run_reactive_online(rcpsp_max, duration_sample, data_dict, time_limit_resche
                 f'Start rescheduling procedure with processing times {estimated_durations} and scheduled start times {scheduled_start_times}')
             if estimated_completion_times[next_completed_job] != real_completion_times[next_completed_job]:
                 estimated_start_times, estimated_makespan = rcpsp_max.solve_reactive(estimated_durations, scheduled_start_times,
-                                                                                current_time, time_limit=time_limit_rescheduling)
+                                                                                current_time, time_limit=time_limit_rescheduling,
+                                                                                     initial_solution=estimated_start_times)
                 solver_calls += 1
 
                 if estimated_start_times is None:

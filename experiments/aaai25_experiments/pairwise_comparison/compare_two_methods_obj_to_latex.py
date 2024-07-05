@@ -4,14 +4,15 @@ import numpy as np
 from scipy.stats import ttest_ind
 from general.latex_table_from_list import generate_latex_table_from_lists
 
+noise_factor = 2
 data = []
 # Compare two methods based on quality
 for instance_folder in ["j10", "j20", "j30", "ubo50", "ubo100"]:
     # Read the CSV files into DataFrames
-    df1 = pd.read_csv(f'experiments/aaai25_experiments/results/results_reactive_{instance_folder}_quantile_0.9.csv')
-    df2 = pd.read_csv(f'experiments/aaai25_experiments/results/results_proactive_{instance_folder}_quantile_0.9.csv')
-    df3 = pd.read_csv(f'experiments/aaai25_experiments/results/results_stnu_{instance_folder}_robust.csv')
-    df4 = pd.read_csv(f'experiments/aaai25_experiments/results/results_proactive_{instance_folder}_SAA_smart_60.csv')
+    df1 = pd.read_csv(f'experiments/aaai25_experiments/results/results_reactive_{instance_folder}_quantile_0.9_{noise_factor}.csv')
+    df2 = pd.read_csv(f'experiments/aaai25_experiments/results/results_proactive_{instance_folder}_quantile_0.9_60_{noise_factor}.csv')
+    df3 = pd.read_csv(f'experiments/aaai25_experiments/results/results_stnu_{instance_folder}_robust_{noise_factor}.csv')
+    df4 = pd.read_csv(f'experiments/aaai25_experiments/results/results_proactive_{instance_folder}_SAA_smart_180_{noise_factor}.csv')
     data = data + [df1, df2, df3, df4]
     # Combine the DataFrames
 
@@ -53,6 +54,7 @@ test_results_magnitude = {}
 test_results_proportion = {}
 # Loop over each problem domain
 for problem in data['instance_folder'].unique():
+    print(f'{problem}')
     method_pairs = method_pairs_problems[problem]
     test_results[problem] = {}
     test_results_double_hits[problem] = {}
@@ -62,6 +64,7 @@ for problem in data['instance_folder'].unique():
     domain_data = data[data['instance_folder'] == problem]
 
     for (method1, method2) in method_pairs:
+        print(f'{(method1, method2)}')
         test_results[problem][(method1, method2)] = {}
 
         # Filter data for both methods
@@ -139,17 +142,6 @@ for problem in data['instance_folder'].unique():
         data2_double_hits = data2.iloc[double_hits_indices]
         data2_double_hits = data2_double_hits.reset_index(drop=True)
 
-        # Do the Wilcoxon rank-sum tests on doulbe hits only
-        res = wilcoxon(data1_double_hits['rel_regret'], data2_double_hits['rel_regret'], method="approx")
-        stat_obj = res.statistic
-        p_obj = res.pvalue
-        z_obj = res.zstatistic
-
-        # Store results
-        test_results_double_hits[problem][(method1, method2)] = {
-            'obj': {'statistic': stat_obj, 'p-value': p_obj, "z-statistic": z_obj, "n_pairs": len(data1_double_hits['obj'].tolist())}
-        }
-
         # Now do the magnitude test on the double hits
         data1_list = data1_double_hits["rel_regret"].tolist()
         data2_list = data2_double_hits["rel_regret"].tolist()
@@ -181,22 +173,27 @@ for problem in data['instance_folder'].unique():
                 num_trials += 1
                 if data1_list[i] < data2_list[i]:
                     num_wins_1 += 1
-
+        if num_trials == 0:
+            print(f'WARNING: only ties for {problem} and {method1, method2}')
         from scipy.stats import binomtest
 
         # Probability under the null hypothesis
-        p = 0.5
-        sample_proportion = num_wins_1 / num_trials
+        if num_trials > 0:
+            p = 0.5
+            sample_proportion = num_wins_1 / num_trials
 
-        # Perform the binomial test
-        result = binomtest(num_wins_1, num_trials, p)
-        p_value_proportion = result.pvalue
-        statistic = result.statistic
-        z_value = (num_wins_1 - num_trials * p) / np.sqrt(num_trials * p * (1 - p))
+            # Perform the binomial test
+            result = binomtest(num_wins_1, num_trials, p)
+            p_value_proportion = result.pvalue
+            statistic = result.statistic
+            z_value = (num_wins_1 - num_trials * p) / np.sqrt(num_trials * p * (1 - p))
+
+            test_results_proportion[problem][(method1, method2)] = {
+                'obj': {'sample_proportion': sample_proportion, 'p-value': p_obj, 'n_pairs': num_trials, 'ties': ties, 'z-statistic': z_value}}
 
         test_results_proportion[problem][(method1, method2)] = {
-            'obj': {'sample_proportion': sample_proportion, 'p-value': p_obj, 'n_pairs': num_trials, 'ties': ties, 'z-statistic': z_value}}
-
+            'obj': {'sample_proportion': 9999, 'p-value': 9999, 'n_pairs': 9999, 'ties': ties,
+                    'z-statistic': 9999}}
 
 # Significance level
 alpha_consistent = 0.001

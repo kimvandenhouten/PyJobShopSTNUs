@@ -76,6 +76,75 @@ class RCPSP_CP_Benchmark:
 
         return rcpsp_max
 
+    def solve_with_warmstart(self, durations=None, time_limit=None, write=False, output_file="results.csv", mode="Quiet",
+              initial_solution=None):
+
+        # Set durations to self.durations if no input vector is given
+        durations = self.durations if durations is None else durations
+        demands = self.needs
+        capacities = self.capacity
+        nb_tasks = len(self.durations)
+        nb_resources = len(capacities)
+
+        # Create model
+        mdl = CpoModel()
+
+        # Create task interval variables
+        tasks = [interval_var(name='T{}'.format(i + 1), size=durations[i]) for i in range(nb_tasks)]
+
+        # Add precedence constraints
+        if self.problem_type == "RCPSP":
+            mdl.add(start_of(tasks[s]) >= end_of(tasks[t]) for t in range(nb_tasks) for s in self.successors[t])
+
+        elif self.problem_type == "RCPSP_max":
+            mdl.add(start_of(tasks[s]) + lag <= start_of(tasks[t]) for (s, lag, t) in self.temporal_constraints)
+
+
+        else:
+            raise NotImplementedError(f"Problem type has not been recognized {self.problem_type}")
+
+        # Constrain capacity of needs
+        mdl.add(sum(pulse(tasks[t], demands[t][r]) for t in range(nb_tasks) if demands[t][r] > 0) <= capacities[r]
+                for r in range(nb_resources))
+
+        # Add objective value
+        mdl.add(minimize(max(end_of(t) for t in tasks)))
+
+        # Apply initial solution if provided
+        if initial_solution:
+            starting_point = CpoModelSolution()
+            for i in range(nb_tasks):
+                task_name = f'T{i}'
+                if task_name in initial_solution:
+                    task_start = initial_solution[task_name]['start']
+                    task_end = initial_solution[task_name]['end']
+                    starting_point.add_interval_var_solution(tasks[i], start=task_start, end=task_end)
+            mdl.set_starting_point(starting_point)
+
+        # Solve model
+        logger.info('Solving model...')
+
+        if mode == "Quiet":
+            res = mdl.solve(TimeLimit=time_limit, Workers=1, LogVerbosity="Quiet")
+        else:
+            res = mdl.solve(TimeLimit=time_limit, Workers=1)
+
+        data = []
+        if res:
+            for i in range(len(self.durations)):
+                start = res.get_var_solution(tasks[i]).start
+                end = res.get_var_solution(tasks[i]).end
+                data.append({"task": i, "start": start, "end": end, })
+            data_df = pd.DataFrame(data)
+            if write:
+                data_df.to_csv(output_file)
+        else:
+            logger.info('WARNING: CP solver failed')
+            data_df = None
+
+        return res, data_df
+
+
     def solve(self, durations=None, time_limit=None, write=False, output_file="results.csv", mode="Quiet"):
 
         # Set durations to self.durations if no input vector is given
@@ -103,8 +172,8 @@ class RCPSP_CP_Benchmark:
             raise NotImplementedError(f"Problem type has not been recognized {self.problem_type}")
 
         # Constrain capacity of needs
-        mdl.add(sum(pulse(tasks[t], demands[t][r]) for t in range(nb_tasks) if demands[t][r] > 0) <= capacities[r] for r in
-                range(nb_resources))
+        mdl.add(sum(pulse(tasks[t], demands[t][r]) for t in range(nb_tasks) if demands[t][r] > 0) <= capacities[r]
+                for r in range(nb_resources))
 
         # Add objective value
         mdl.add(minimize(max(end_of(t) for t in tasks)))
@@ -132,7 +201,7 @@ class RCPSP_CP_Benchmark:
 
         return res, data_df
 
-    def solve_reactive(self, durations, scheduled_start_times, current_time, time_limit=None):
+    def solve_reactive(self, durations, scheduled_start_times, current_time, time_limit=None, initial_solution=None):
 
         # Set durations to self.durations if no input vector is given
         durations = self.durations if durations is None else durations
@@ -171,6 +240,18 @@ class RCPSP_CP_Benchmark:
         # Add objective value
         mdl.add(minimize(max(end_of(t) for t in tasks)))
 
+        # Apply initial solution if provided
+        if initial_solution:
+            logger.warning(f'Set warm start to {initial_solution}')
+            starting_point = CpoModelSolution()
+            for i in range(nb_tasks):
+                task_name = f'T{i}'
+                if task_name in initial_solution:
+                    task_start = initial_solution[i]
+                    task_end = task_start + durations[i]
+                    starting_point.add_interval_var_solution(tasks[i], start=task_start, end=task_end)
+            mdl.set_starting_point(starting_point)
+
         # Solve model
         logger.info('Solving model...')
         res = mdl.solve(TimeLimit=time_limit, Workers=1, LogVerbosity="Quiet")
@@ -182,6 +263,7 @@ class RCPSP_CP_Benchmark:
                 start_times.append(start)
             makespan = res.solution.get_objective_value()
             logger.info(f'Makespan is {makespan}')
+            logger.warning(f'Solve time reactive is {res.get_solve_time()}')
             return start_times, makespan
         else:
             logger.info('WARNING: CP solver failed')

@@ -60,7 +60,7 @@ output_file = f'experiments/aaai25_experiments/results/proactive_vs_reactive_wit
 # Run the experiments
 for instance_folder in INSTANCE_FOLDERS:
     for instance_id in INSTANCE_IDS:
-        for (mode, time_limit, nb_scenarios_saa) in [("quantile_0.5", 60, 1), ("quantile_0.75", 60, 1), ("quantile_0.9", 60, 1)]:
+        for (mode, time_limit, nb_scenarios_saa) in [("quantile_0.5", 60, 1), ("quantile_0.75", 60, 1), ("quantile_0.9", 60, 1), ("robust", 60, 1)]:
                     np.random.seed(SEED)
                     rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
                     test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
@@ -79,7 +79,7 @@ for instance_folder in INSTANCE_FOLDERS:
                                         f'We can skip the proactive approach')
 
         for (mode, time_limit_initial, time_limit_rescheduling) in [("quantile_0.5", 60, 2), ("quantile_0.75", 60, 2),
-                                                                    ("quantile_0.9", 60, 2)]:
+                                                                    ("quantile_0.9", 60, 2), ("robust", 60, 2)]:
                     np.random.seed(SEED)
                     rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
                     test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)

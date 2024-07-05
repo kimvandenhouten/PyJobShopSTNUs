@@ -21,15 +21,15 @@ def run_reactive_offline(rcpsp_max, time_limit_initial=60, mode="mean"):
     elif mode == "quantile_0.25":
         lb = rcpsp_max.get_bound(mode="lower_bound")
         ub = rcpsp_max.get_bound(mode="upper_bound")
-        durations = [int(lb[i] + 0.9 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = [int(lb[i] + 0.25 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
     elif mode == "quantile_0.75":
         lb = rcpsp_max.get_bound(mode="lower_bound")
         ub = rcpsp_max.get_bound(mode="upper_bound")
-        durations = [int(lb[i] + 0.9 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = [int(lb[i] + 0.5 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
     elif mode == "quantile_0.5":
         lb = rcpsp_max.get_bound(mode="lower_bound")
         ub = rcpsp_max.get_bound(mode="upper_bound")
-        durations = [int(lb[i] + 0.9 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = [int(lb[i] + 0.75 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
     elif mode == "quantile_0.9":
         lb = rcpsp_max.get_bound(mode="lower_bound")
         ub = rcpsp_max.get_bound(mode="upper_bound")

@@ -242,7 +242,7 @@ class RCPSP_CP_Benchmark:
 
         # Apply initial solution if provided
         if initial_solution:
-            logger.warning(f'Set warm start to {initial_solution}')
+            logger.info(f'Set warm start to {initial_solution}')
             starting_point = CpoModelSolution()
             for i in range(nb_tasks):
                 task_name = f'T{i}'
@@ -263,7 +263,7 @@ class RCPSP_CP_Benchmark:
                 start_times.append(start)
             makespan = res.solution.get_objective_value()
             logger.info(f'Makespan is {makespan}')
-            logger.warning(f'Solve time reactive is {res.get_solve_time()}')
+            logger.info(f'Solve time reactive is {res.get_solve_time()}')
             return start_times, makespan
         else:
             logger.info('WARNING: CP solver failed')

@@ -39,7 +39,7 @@ mode_stnu = "robust"
 
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["j10", "j20", "j30"]
+INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
 INSTANCE_IDS = range(1, 31)
 noise_factor = 1
 nb_scenarios_test = 10
@@ -108,7 +108,6 @@ for instance_folder in INSTANCE_FOLDERS:
             data_dict_reactive = copy.copy(data_dict_baseline)
             data_dict_reactive["method"] = "reactive"
             data_dict_reactive["estimated_start_times"] = data_dict_reactive["start_times"]
-            print(data_dict_reactive)
 
             for i, duration_sample in enumerate(test_durations_samples):
                 pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)

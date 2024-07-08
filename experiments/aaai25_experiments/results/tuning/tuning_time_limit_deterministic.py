@@ -14,14 +14,14 @@ INSTANCE_IDS = range(1, 11)
 perfect_information = True
 
 data = []
-for time_limit in [60, 600, 6000]:
+for time_limit in [60, 600, 3600]:
 
     # Start solving the instances with perfect information
     for instance_folder in INSTANCE_FOLDERS:
 
         for instance_id in INSTANCE_IDS:
             np.random.seed(SEED)
-            rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id)
+            rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor=1)
             sample = rcpsp_max.durations
             logger.info(f'Start {instance_folder}_PSP{instance_id} timelimit {time_limit} and sample {sample}')
             res, _ = rcpsp_max.solve(sample, time_limit=time_limit, mode="Quiet")

@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 # GENERAL SETTINGS
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
-INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
+INSTANCE_FOLDERS = ["ubo50", "ubo100"]
 INSTANCE_IDS = range(1, 11)
 nb_scenarios_test = 10
 perfect_information = False
@@ -57,39 +57,13 @@ def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sampl
     return feasible, obj_pi
 
 data = []
-output_file = f'experiments/aaai25_experiments/results/results_unlimited_noise_factor={noise_factor}.csv'
-if reactive:
-    # RUN REACTIVE EXPERIMENTS
-    # Settings reactive approach
-    time_limit_initial = None
-    time_limit_rescheduling = 2
-
-    for (mode, time_limit_initial, time_limit_rescheduling) in [("quantile_0.9", None, 2)]:
-        # Run the experiments
-        for instance_folder in INSTANCE_FOLDERS:
-
-            for instance_id in INSTANCE_IDS:
-                np.random.seed(SEED)
-                rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
-                test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
-
-                for i, duration_sample in enumerate(test_durations_samples):
-                    pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
-                    if pi_feasible:
-                        data_dict = run_reactive_offline(rcpsp_max, time_limit_initial, mode)
-                        data_dict["obj_pi"] = obj_pi
-                        data += run_reactive_online(rcpsp_max, duration_sample, data_dict, time_limit_rescheduling)
-                        data_df = pd.DataFrame(data)
-                        if writing:
-                            data_df.to_csv(output_file, index=False)
-                    else:
-                        logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the reactive approach')
+output_file = f'experiments/aaai25_experiments/results/results_time_limit_SAA={noise_factor}.csv'
 
 if proactive:
     # RUN PROACTIVE EXPERIMENTS
     # Settings proactive approach
 
-    for (mode, time_limit, nb_scenarios_saa) in [("quantile_0.9", None, 1), ("SAA_smart", None, 4)]:
+    for (mode, time_limit, nb_scenarios_saa) in [("SAA_smart", 60, 4), ("SAA_smart", 600, 4), ("SAA_smart", 3600, 4)]:
         # Run the experiments
         for instance_folder in INSTANCE_FOLDERS:
             for instance_id in INSTANCE_IDS:
@@ -109,31 +83,3 @@ if proactive:
                     else:
                         logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: '
                                     f'We can skip the proactive approach')
-
-if stnu:
-    # RUN STNU EXPERIMENTS
-    # Settings stnu approach
-    time_limit_cp_stnu = None
-
-    # Run the experiments
-    for mode in ["robust"]:
-        for instance_folder in INSTANCE_FOLDERS:
-            for instance_id in INSTANCE_IDS:
-                rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id,
-                                                            noise_factor)
-                np.random.seed(SEED)
-                test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
-                dc, estnu, data_dict = run_stnu_offline(rcpsp_max, time_limit_cp_stnu=time_limit_cp_stnu, mode=mode)
-
-                for i, duration_sample in enumerate(test_durations_samples):
-                    pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
-                    print(f'Note that the pi objective is {obj_pi}')
-                    data_dict["obj_pi"] = obj_pi
-                    if pi_feasible:
-                        data += run_stnu_online(dc, estnu, duration_sample, rcpsp_max, data_dict)
-                        df = pd.DataFrame(data)
-                        if writing:
-                            data_df.to_csv(output_file, index=False)
-                    else:
-                        logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the STNU approach')
-

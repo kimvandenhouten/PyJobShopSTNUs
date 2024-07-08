@@ -6,17 +6,18 @@ logger = general.logger.get_logger(__name__)
 
 class RCPSP_STNU(STNU):
     def __init__(self, origin_horizon=True):
-
         super().__init__(origin_horizon)
+
+    @classmethod
     def from_rcpsp_instance(cls, durations, needs, capacity, successors):
-    # TODO: can we extract this from the STNU class?
+        # TODO: can we extract this from the STNU class?
         stnu = cls(origin_horizon=False)
         for task, duration in enumerate(durations):
             task_start = stnu.add_node(f'{task}_{STNU.EVENT_START}')
             task_finish = stnu.add_node(f'{task}_{STNU.EVENT_FINISH}')
             if duration == 0:
                 stnu.add_tight_constraint(task_start, task_finish, 0)
-            else:
+
                 lower_bound = int(max(1, duration - np.sqrt(duration)))
                 upper_bound = int(duration + np.sqrt(duration))
                 stnu.add_contingent_link(task_start, task_finish, lower_bound, upper_bound)

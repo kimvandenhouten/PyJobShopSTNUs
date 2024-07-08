@@ -5,20 +5,7 @@ from scipy.stats import ttest_ind
 from general.latex_table_from_list import generate_latex_table_from_lists
 
 noise_factor = 2
-data = []
-# Compare two methods based on quality
-
-for instance_folder in ["j10", "j20", "j30", "ubo50", "ubo100"]:
-    # Read the CSV files into DataFrames
-    df1 = pd.read_csv(f'experiments/aaai25_experiments/results/results_reactive_{instance_folder}_quantile_0.9_{noise_factor}.csv')
-    df2 = pd.read_csv(f'experiments/aaai25_experiments/results/results_proactive_{instance_folder}_quantile_0.9_60_{noise_factor}.csv')
-    df3 = pd.read_csv(f'experiments/aaai25_experiments/results/results_stnu_{instance_folder}_robust_{noise_factor}.csv')
-    df4 = pd.read_csv(f'experiments/aaai25_experiments/results/results_proactive_{instance_folder}_SAA_smart_180_{noise_factor}.csv')
-    data = data + [df1, df2, df3, df4]
-    # Combine the DataFrames
-
-
-data = pd.concat(data, ignore_index=True)
+data = pd.read_csv(f'final_results_1_07_08_2024,09_35.csv')
 
 #data['rel_regret'] = (data['obj'] - data['obj_pi']) / data['obj_pi']
 data['rel_regret'] = data['obj']
@@ -29,18 +16,18 @@ data.replace([np.inf], inf_value, inplace=True)
 
 
 # List of all methods
-methods = ["STNU_robust", "reactive_quantile_0.9", "proactive_quantile_0.9"]
-method_pairs = [("STNU_robust", "reactive_quantile_0.9"), ("STNU_robust", "proactive_SAA_smart"), ("STNU_robust", "proactive_quantile_0.9"),
-               ("reactive_quantile_0.9", "proactive_SAA_smart"), ("reactive_quantile_0.9", "proactive_quantile_0.9"), ("proactive_SAA_smart", "proactive_quantile_0.9")]
+methods = ["STNU_robust", "reactive", "proactive_quantile_0.9"]
+method_pairs = [("STNU_robust", "reactive"), ("STNU_robust", "proactive_SAA_smart"), ("STNU_robust", "proactive_quantile_0.9"),
+               ("reactive", "proactive_SAA_smart"), ("reactive", "proactive_quantile_0.9"), ("proactive_SAA_smart", "proactive_quantile_0.9")]
 
 method_pairs_problems = {}
 for prob in ["j10", "j20", "j30", "ubo50"]:
     method_pairs_problems[prob] = method_pairs
-method_pairs_problems["ubo100"] = [("STNU_robust", "reactive_quantile_0.9"), ("STNU_robust", "proactive_SAA_smart"), ("STNU_robust", "proactive_quantile_0.9"),
-               ("reactive_quantile_0.9", "proactive_SAA_smart"), ("reactive_quantile_0.9", "proactive_quantile_0.9"), ("proactive_quantile_0.9", "proactive_SAA_smart")]
+method_pairs_problems["ubo100"] = [("STNU_robust", "reactive"), ("STNU_robust", "proactive_SAA_smart"), ("STNU_robust", "proactive_quantile_0.9"),
+               ("reactive", "proactive_SAA_smart"), ("reactive", "proactive_quantile_0.9"), ("proactive_quantile_0.9", "proactive_SAA_smart")]
 
 trans_dict = {"STNU_robust": "stnu",
-              "reactive_quantile_0.9": "reactive",
+              "reactive": "reactive",
               "proactive_quantile_0.9": "proactive$_{0.9}$",
              "proactive_SAA_smart": "proactive$_{SAA}$"}
 
@@ -53,7 +40,8 @@ test_results_double_hits = {}
 test_results_magnitude = {}
 test_results_proportion = {}
 # Loop over each problem domain
-for problem in data['instance_folder'].unique():
+problems = ["j10", "j20", "j30"]
+for problem in problems:
     print(f'{problem}')
     method_pairs = method_pairs_problems[problem]
     test_results[problem] = {}
@@ -190,19 +178,19 @@ for problem in data['instance_folder'].unique():
 
             test_results_proportion[problem][(method1, method2)] = {
                 'obj': {'sample_proportion': sample_proportion, 'p-value': p_obj, 'n_pairs': num_trials, 'ties': ties, 'z-statistic': z_value}}
-
-        test_results_proportion[problem][(method1, method2)] = {
-            'obj': {'sample_proportion': 9999, 'p-value': 9999, 'n_pairs': 9999, 'ties': ties,
-                    'z-statistic': 9999}}
+        else:
+            test_results_proportion[problem][(method1, method2)] = {
+                'obj': {'sample_proportion': 9999, 'p-value': 9999, 'n_pairs': 9999, 'ties': ties,
+                        'z-statistic': 9999}}
 
 # Significance level
-alpha_consistent = 0.001
+alpha_consistent = 0.05
 alpha_magnitude = 0.05
 alpha_proportion = 0.05
 
 rows = []
 
-for problem in data['instance_folder'].unique():
+for problem in problems:
     method_pairs = method_pairs_problems[problem]
     method_pairs_to_header = [f"{trans_dict[pair[0]]}-{trans_dict[pair[1]]}" for pair in method_pairs]
     header = [problem] + method_pairs_to_header
@@ -268,7 +256,7 @@ print(latex_code)
 
 rows = []
 
-for problem in data['instance_folder'].unique():
+for problem in problems:
     method_pairs = method_pairs_problems[problem]
     method_pairs_to_header = [f"{trans_dict[pair[0]]}-{trans_dict[pair[1]]}" for pair in method_pairs]
     header = [problem] + method_pairs_to_header

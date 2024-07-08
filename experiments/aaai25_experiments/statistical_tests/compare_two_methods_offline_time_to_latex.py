@@ -2,25 +2,18 @@ import pandas as pd
 from scipy.stats import wilcoxon
 import itertools
 import numpy as np
-import networkx as nx
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind
 import ast
 from general.latex_table_from_list import generate_latex_table_from_lists
+from scipy.stats import binomtest
 
+noise_factor = 1
 data = []
 # Compare two methods based on quality
-for instance_folder in ["j10", "j20", "j30", "ubo50", "ubo100"]:
-    # Read the CSV files into DataFrames
-    df1 = pd.read_csv(f'experiments/aaai25_experiments/results/results_reactive_{instance_folder}_quantile_0.9.csv')
-    df2 = pd.read_csv(f'experiments/aaai25_experiments/results/results_proactive_{instance_folder}_quantile_0.9.csv')
-    df3 = pd.read_csv(f'experiments/aaai25_experiments/results/results_stnu_{instance_folder}_robust.csv')
-    df4 = pd.read_csv(f'experiments/aaai25_experiments/results/results_proactive_{instance_folder}_SAA_smart.csv')
-    data = data + [df1, df2, df3, df4]
-    # Combine the DataFrames
 
-
-data = pd.concat(data, ignore_index=True)
+# Read the CSV files into DataFrames
+data = pd.read_csv(f'final_results_1_07_08_2024,09_35.csv')
 
 objectives = data["time_offline"].tolist()
 objectives = [i for i in objectives if i < np.inf]
@@ -28,11 +21,11 @@ inf_value = max(objectives) * 5
 data.replace([np.inf], inf_value, inplace=True)
 
 
-methods = ["proactive_quantile_0.9", "STNU_robust", "reactive_quantile_0.9", "proactive_SAA_smart"]
+methods = ["proactive_quantile_0.9", "STNU_robust", "reactive", "proactive_SAA_smart"]
 
 
-method_pairs = [("reactive_quantile_0.9", "proactive_quantile_0.9"), ("reactive_quantile_0.9", "STNU_robust"),
-                ("reactive_quantile_0.9", "proactive_SAA_smart"), ("proactive_quantile_0.9", "STNU_robust"),
+method_pairs = [("reactive", "proactive_quantile_0.9"), ("reactive", "STNU_robust"),
+                ("reactive", "proactive_SAA_smart"), ("proactive_quantile_0.9", "STNU_robust"),
                 ("proactive_quantile_0.9", "proactive_SAA_smart"), ("proactive_SAA_smart", "STNU_robust")]
 
 
@@ -42,13 +35,13 @@ for prob in ["j10"]:
     method_pairs_problems[prob] = method_pairs
 
 for prob in ["j20", "j30", "ubo50", "ubo100"]:
-    method_pairs_problems[prob] = [("reactive_quantile_0.9", "proactive_quantile_0.9"), ("reactive_quantile_0.9", "STNU_robust"),
-                ("reactive_quantile_0.9", "proactive_SAA_smart"), ("proactive_quantile_0.9", "STNU_robust"),
+    method_pairs_problems[prob] = [("reactive", "proactive_quantile_0.9"), ("reactive", "STNU_robust"),
+                ("reactive", "proactive_SAA_smart"), ("proactive_quantile_0.9", "STNU_robust"),
                 ("proactive_quantile_0.9", "proactive_SAA_smart"), ("STNU_robust", "proactive_SAA_smart"), ]
 
 
 trans_dict = {"STNU_robust": "stnu",
-              "reactive_quantile_0.9": "reactive",
+              "reactive": "reactive",
               "proactive_quantile_0.9": "proactive$_{0.9}$",
                "proactive_SAA_smart": "proactive$_{SAA}$"}
 
@@ -58,7 +51,9 @@ test_results_double_hits = {}
 test_results_magnitude = {}
 test_results_proportion = {}
 # Loop over each problem domain
-for problem in data['instance_folder'].unique():
+problems = [problem for problem in data['instance_folder'].unique()]
+problems = ["j10"]
+for problem in problems:
     test_results[problem] = {}
     test_results_double_hits[problem] = {}
     test_results_magnitude[problem] = {}
@@ -96,40 +91,44 @@ for problem in data['instance_folder'].unique():
         print(f'{method2} list with length {len(data2_list)} is {data2_list}')
         inf_count = sum(1 for item in data2_list if item == inf_value)
 
-        # TODO: what we could do before running this test is excluding all the double failures
-        res = wilcoxon(data1_at_least_one_feasible['time_offline'], data2_at_least_one_feasible['time_offline'],
-                       method="approx", zero_method="pratt")
-
         differences = np.array(data1_at_least_one_feasible['time_offline'].tolist()) - np.array(data2_at_least_one_feasible['time_offline'].tolist())
-        import scipy
-        ranks = scipy.stats.rankdata([abs(x) for x in differences])
-        signed_ranks = []
-        for diff, rank in zip(differences, ranks):
-            # Pratt method ignores zero ranks, although there were included in the ranking process
-            if diff > 0:
-                signed_ranks.append(rank)
-            elif diff < 0:
-                signed_ranks.append(-rank)
-
-        # Sum of positive and negative ranks
-        sum_positive_ranks = sum(rank for rank in signed_ranks if rank > 0)
-        sum_negative_ranks = sum(-rank for rank in signed_ranks if rank < 0)
-
-        if sum_positive_ranks > sum_negative_ranks:
-            print(f'{method2} is probably better')
+        if sum(differences) == 0:
+            test_results[problem][(method1, method2)] = {
+                'obj': {'statistic': 9999, 'p-value': 9999, 'z-statistic': 9999,
+                        "n_pairs": len(data1_at_least_one_feasible['time_offline'].tolist()),
+                        "sum_pos_ranks": 0, 'sum_neg_ranks': 0}}
         else:
-            print(f'{method1} is probably better')
+            res = wilcoxon(data1_at_least_one_feasible['time_offline'], data2_at_least_one_feasible['time_offline'],
+                           method="approx", zero_method="pratt")
+            import scipy
+            ranks = scipy.stats.rankdata([abs(x) for x in differences])
+            signed_ranks = []
+            for diff, rank in zip(differences, ranks):
+                # Pratt method ignores zero ranks, although there were included in the ranking process
+                if diff > 0:
+                    signed_ranks.append(rank)
+                elif diff < 0:
+                    signed_ranks.append(-rank)
 
-        stat_obj = res.statistic
-        p_obj = res.pvalue
-        z_obj = res.zstatistic
+            # Sum of positive and negative ranks
+            sum_positive_ranks = sum(rank for rank in signed_ranks if rank > 0)
+            sum_negative_ranks = sum(-rank for rank in signed_ranks if rank < 0)
 
-        # Store results
-        test_results[problem][(method1, method2)] = {
-            'obj': {'statistic': stat_obj, 'p-value': p_obj, 'z-statistic': z_obj,
-                    "n_pairs": len(data1_at_least_one_feasible['time_offline'].tolist()),
-                    "sum_pos_ranks": sum_positive_ranks, 'sum_neg_ranks': sum_negative_ranks}
-        }
+            if sum_positive_ranks > sum_negative_ranks:
+                print(f'{method2} is probably better')
+            else:
+                print(f'{method1} is probably better')
+
+            stat_obj = res.statistic
+            p_obj = res.pvalue
+            z_obj = res.zstatistic
+
+            # Store results
+            test_results[problem][(method1, method2)] = {
+                'obj': {'statistic': stat_obj, 'p-value': p_obj, 'z-statistic': z_obj,
+                        "n_pairs": len(data1_at_least_one_feasible['time_offline'].tolist()),
+                        "sum_pos_ranks": sum_positive_ranks, 'sum_neg_ranks': sum_negative_ranks}
+            }
 
         # Now we will only use double hits.
         data1_list = data1["time_offline"].tolist()
@@ -146,17 +145,6 @@ for problem in data['instance_folder'].unique():
         data1_double_hits = data1_double_hits.reset_index(drop=True)
         data2_double_hits = data2.iloc[double_hits_indices]
         data2_double_hits = data2_double_hits.reset_index(drop=True)
-
-        # Do the Wilcoxon rank-sum tests on doulbe hits only
-        res = wilcoxon(data1_double_hits['time_offline'], data2_double_hits['time_offline'], method="approx", zero_method="pratt")
-        stat_obj = res.statistic
-        p_obj = res.pvalue
-        z_obj = res.zstatistic
-
-        # Store results
-        test_results_double_hits[problem][(method1, method2)] = {
-            'obj': {'statistic': stat_obj, 'p-value': p_obj, "z-statistic": z_obj, "n_pairs": len(data1_double_hits['time_offline'].tolist())}
-        }
 
         # Now do the magnitude test on the double hits
         data1_list = data1_double_hits['time_offline'].tolist()
@@ -190,19 +178,24 @@ for problem in data['instance_folder'].unique():
                 if data1_list[i] < data2_list[i]:
                     num_wins_1 += 1
 
-        from scipy.stats import binomtest
+        if num_trials > 0:
 
-        # Probability under the null hypothesis
-        p = 0.5
-        sample_proportion = num_wins_1 / num_trials
 
-        # Perform the binomial test
-        result = binomtest(num_wins_1, num_trials, p)
-        p_value_proportion = result.pvalue
-        statistic = result.statistic
-        z_value = (num_wins_1 - num_trials * p) / np.sqrt(num_trials * p * (1 - p))
-        test_results_proportion[problem][(method1, method2)] = {
-            'obj': {'sample_proportion': sample_proportion, 'p-value': p_obj, 'n_pairs': num_trials, 'ties': ties, 'z-statistic': z_value}}
+            # Probability under the null hypothesis
+            p = 0.5
+            sample_proportion = num_wins_1 / num_trials
+
+            # Perform the binomial test
+            result = binomtest(num_wins_1, num_trials, p)
+            p_value_proportion = result.pvalue
+            statistic = result.statistic
+            z_value = (num_wins_1 - num_trials * p) / np.sqrt(num_trials * p * (1 - p))
+            test_results_proportion[problem][(method1, method2)] = {
+                'obj': {'sample_proportion': sample_proportion, 'p-value': p_obj, 'n_pairs': num_trials, 'ties': ties, 'z-statistic': z_value}}
+        else:
+            test_results_proportion[problem][(method1, method2)] = {'obj': {'sample_proportion': 9999, 'p-value': 9999,
+                                                                            'n_pairs': 9999, 'ties': ties,
+                                                                            'z-statistic': 9999}}
 
 
 # Significance level
@@ -212,7 +205,8 @@ alpha_proportion = 0.05
 
 rows = []
 
-for problem in data['instance_folder'].unique():
+
+for problem in problems:
     print(f'\nStart evaluation for new problem set {problem}')
 
     # Obtain Wilcoxon-stats and make overleaf cell
@@ -278,7 +272,7 @@ print(latex_code)
 
 rows = []
 
-for problem in data['instance_folder'].unique():
+for problem in problems:
     method_pairs = method_pairs_problems[problem]
     method_pairs_to_header = [f"{trans_dict[pair[0]]}-{trans_dict[pair[1]]}" for pair in method_pairs]
     header = [problem] + method_pairs_to_header

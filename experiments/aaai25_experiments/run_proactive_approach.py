@@ -33,12 +33,14 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
     if mode == "robust":
         durations = ub
         logger.debug(f'Start solving upper bound schedule {durations}')
+        data_dict["estimated_durations"] = durations
         res, data = rcpsp_max.solve(durations, time_limit=time_limit, mode="Quiet")
         if res:
             start_times = data['start'].tolist()
 
     elif mode == "quantile_0.25":
         durations = [int(lb[i] + 0.25 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        data_dict["estimated_durations"] = durations
         logger.debug(f'Start solving upper bound schedule {durations}')
         res, data = rcpsp_max.solve(durations, time_limit=time_limit, mode="Quiet")
         if res:
@@ -46,6 +48,7 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
 
     elif mode == "quantile_0.75":
         durations = [int(lb[i] + 0.75 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        data_dict["estimated_durations"] = durations
         logger.debug(f'Start solving upper bound schedule {durations}')
         res, data = rcpsp_max.solve(durations, time_limit=time_limit, mode="Quiet")
         if res:
@@ -53,6 +56,7 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
 
     elif mode == "quantile_0.5":
         durations = [int(lb[i] + 0.5 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        data_dict["estimated_durations"] = durations
         logger.debug(f'Start solving upper bound schedule {durations}')
         res, data = rcpsp_max.solve(durations, time_limit=time_limit, mode="Quiet")
         if res:
@@ -60,6 +64,7 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
 
     elif mode == "quantile_0.9":
         durations = [int(lb[i] + 0.9 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        data_dict["estimated_durations"] = durations
         logger.debug(f'Start solving upper bound schedule {durations}')
         res, data = rcpsp_max.solve(durations, time_limit=time_limit, mode="Quiet")
         if res:
@@ -85,6 +90,7 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
         logger.debug(f'Robust start times are {start_times}')
         data_dict["start_times"] = start_times
         data_dict["time_offline"] = time.time() - start_offline
+        data_dict["estimated_start_times"] = start_times
 
     else:
         logger.debug(f'No robust schedule exists')

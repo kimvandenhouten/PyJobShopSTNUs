@@ -9,7 +9,7 @@ import scipy
 
 ### SETTINGS ###
 # Please refer to the csv file including all results from the experiments
-data = pd.read_csv(f'final_results_1_07_08_2024,09_35.csv')
+data = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_08_2024,09_35.csv')
 
 # DEFINE PAIRS OF METHOD THAT MUST BE COMPARED
 # Note that these pairs are used to determine the ordering in the results table that is printed for overleaf
@@ -35,7 +35,7 @@ trans_dict = {"STNU_robust": "stnu",
                "proactive_SAA_smart": "proactive$_{SAA}$"}
 
 # Define problem domains (instance sets PSPlib)
-problems = ["j10"]
+problems = ["j10", "j20", "j30", "ubo50", "ubo100"]
 
 # Significance levels for the different tests
 alpha_consistent = 0.05

@@ -16,7 +16,7 @@ be `/path/to/stochasticRCPSPmax`, and for this directory to be in
 `PYTHONPATH`.
 
 ## CSTNU tool
-The STNU-based algorithms make use of the Java CSTNU tool* by Robert Posenato. This repository contains a JAR file that enables running the Java code from Python. Please refer to ... to find more information about the CSTNU tool.
+The STNU-based algorithms make use of the Java CSTNU tool* by Robert Posenato. This repository contains a JAR file that enables running the Java code from Python. Please refer to the reference below to find more information about the CSTNU tool.
 
 * Posenato, R. (2022). CSTNU Tool: A Java library for checking temporal networks. SoftwareX, 17, 100905.
   

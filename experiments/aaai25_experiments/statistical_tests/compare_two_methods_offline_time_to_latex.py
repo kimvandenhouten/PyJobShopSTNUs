@@ -1,63 +1,66 @@
 import pandas as pd
-from scipy.stats import wilcoxon
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import ttest_ind
-import ast
 from general.latex_table_from_list import generate_latex_table_from_lists
 from scipy.stats import binomtest
+from scipy.stats import wilcoxon
+from scipy.stats import ttest_ind
+import scipy
 
-noise_factor = 1
-data = []
-# Compare two methods based on quality
-
-# Read the CSV files into DataFrames
+### SETTINGS ###
+# Please refer to the csv file including all results from the experiments
 data = pd.read_csv(f'final_results_1_07_08_2024,09_35.csv')
 
-objectives = data["time_offline"].tolist()
-objectives = [i for i in objectives if i < np.inf]
-inf_value = max(objectives) * 5
-data.replace([np.inf], inf_value, inplace=True)
-
-
+# DEFINE PAIRS OF METHOD THAT MUST BE COMPARED
+# Note that these pairs are used to determine the ordering in the results table that is printed for overleaf
+# List of all methods
 methods = ["proactive_quantile_0.9", "STNU_robust", "reactive", "proactive_SAA_smart"]
-
-
-method_pairs = [("reactive", "proactive_quantile_0.9"), ("reactive", "STNU_robust"),
+method_pairs_default = [("reactive", "proactive_quantile_0.9"), ("reactive", "STNU_robust"),
                 ("reactive", "proactive_SAA_smart"), ("proactive_quantile_0.9", "STNU_robust"),
                 ("proactive_quantile_0.9", "proactive_SAA_smart"), ("proactive_SAA_smart", "STNU_robust")]
 
-
-
 method_pairs_problems = {}
 for prob in ["j10"]:
-    method_pairs_problems[prob] = method_pairs
+    method_pairs_problems[prob] = method_pairs_default
 
 for prob in ["j20", "j30", "ubo50", "ubo100"]:
     method_pairs_problems[prob] = [("reactive", "proactive_quantile_0.9"), ("reactive", "STNU_robust"),
                 ("reactive", "proactive_SAA_smart"), ("proactive_quantile_0.9", "STNU_robust"),
                 ("proactive_quantile_0.9", "proactive_SAA_smart"), ("STNU_robust", "proactive_SAA_smart"), ]
 
-
+# This translation dict is used to translate the methods as described in the csv file to shorter version for overleaf
 trans_dict = {"STNU_robust": "stnu",
               "reactive": "reactive",
               "proactive_quantile_0.9": "proactive$_{0.9}$",
                "proactive_SAA_smart": "proactive$_{SAA}$"}
 
+# Define problem domains (instance sets PSPlib)
+problems = ["j10"]
+
+# Significance levels for the different tests
+alpha_consistent = 0.05
+alpha_magnitude = 0.05
+alpha_proportion = 0.05
+### END OF SETTINGS ###
+
+# Prepare the data, substitute inf values with a high enough value
+objectives = data["time_offline"].tolist()
+objectives = [i for i in objectives if i < np.inf]
+inf_value = max(objectives) * 5
+data.replace([np.inf], inf_value, inplace=True)
+
 # Dictionary to store test results
 test_results = {}
-test_results_double_hits = {}
 test_results_magnitude = {}
 test_results_proportion = {}
+
 # Loop over each problem domain
-problems = [problem for problem in data['instance_folder'].unique()]
-problems = ["j10"]
 for problem in problems:
+    # Make dicts for test results
     test_results[problem] = {}
-    test_results_double_hits[problem] = {}
     test_results_magnitude[problem] = {}
     test_results_proportion[problem] = {}
+
     # Filter data for the current problem domain
     domain_data = data[data['instance_folder'] == problem]
     method_pairs = method_pairs_problems[problem]
@@ -71,36 +74,34 @@ for problem in problems:
         data1_list = data1["time_offline"].tolist()
         data2_list = data2["time_offline"].tolist()
 
-        # Remove infeasible by both methods
+        # Remove instances that were not solved by both methods
         at_least_one_feasible_indices = []
         for i in range(len(data1_list)):
             if data1_list[i] < inf_value or data2_list[i] < inf_value:
-                # print(f'Double hit for {data1_list[i]} and {data2_list[i]}')
                 at_least_one_feasible_indices.append(i)
-
         data1_at_least_one_feasible = data1.iloc[at_least_one_feasible_indices]
         data1_at_least_one_feasible = data1_at_least_one_feasible.reset_index(drop=True)
         data2_at_least_one_feasible = data2.iloc[at_least_one_feasible_indices]
         data2_at_least_one_feasible = data2_at_least_one_feasible.reset_index(drop=True)
 
-        # Wilcoxon rank-sum test for 'obj'
+        # Prepare data for Wilcoxon test
         data1_list = data1_at_least_one_feasible["time_offline"].tolist()
-        inf_count = sum(1 for item in data1_list if item == inf_value)
-
         data2_list = data2_at_least_one_feasible['time_offline'].tolist()
-        print(f'{method2} list with length {len(data2_list)} is {data2_list}')
-        inf_count = sum(1 for item in data2_list if item == inf_value)
-
         differences = np.array(data1_at_least_one_feasible['time_offline'].tolist()) - np.array(data2_at_least_one_feasible['time_offline'].tolist())
+
+        # Note that we cannot run this test if all differences are zero
         if sum(differences) == 0:
             test_results[problem][(method1, method2)] = {
                 'obj': {'statistic': 9999, 'p-value': 9999, 'z-statistic': 9999,
                         "n_pairs": len(data1_at_least_one_feasible['time_offline'].tolist()),
                         "sum_pos_ranks": 0, 'sum_neg_ranks': 0}}
         else:
+            # Run the test using the SciPy implementation, with the normal approximation (method="approx"), and the pratt
+            # method for handling zero differences (zero_method="pratt"), and a correction for continuity (correction=True)
             res = wilcoxon(data1_at_least_one_feasible['time_offline'], data2_at_least_one_feasible['time_offline'],
                            method="approx", zero_method="pratt")
-            import scipy
+
+            # Analyze the ranks to find which of the methods is outperforming
             ranks = scipy.stats.rankdata([abs(x) for x in differences])
             signed_ranks = []
             for diff, rank in zip(differences, ranks):
@@ -110,7 +111,7 @@ for problem in problems:
                 elif diff < 0:
                     signed_ranks.append(-rank)
 
-            # Sum of positive and negative ranks
+            # Sum of positive and negative ranks which is needed to
             sum_positive_ranks = sum(rank for rank in signed_ranks if rank > 0)
             sum_negative_ranks = sum(-rank for rank in signed_ranks if rank < 0)
 
@@ -119,6 +120,7 @@ for problem in problems:
             else:
                 print(f'{method1} is probably better')
 
+            # Obtain the test statistics
             stat_obj = res.statistic
             p_obj = res.pvalue
             z_obj = res.zstatistic
@@ -130,6 +132,7 @@ for problem in problems:
                         "sum_pos_ranks": sum_positive_ranks, 'sum_neg_ranks': sum_negative_ranks}
             }
 
+        ### START MAGNITUDE TEST ###
         # Now we will only use double hits.
         data1_list = data1["time_offline"].tolist()
         data2_list = data2["time_offline"].tolist()
@@ -137,7 +140,6 @@ for problem in problems:
         double_hits_indices = []
         for i in range(len(data1_list)):
             if data1_list[i] < inf_value and data2_list[i] < inf_value:
-                #print(f'Double hit for {data1_list[i]} and {data2_list[i]}')
                 double_hits_indices.append(i)
 
         # Select only double hits
@@ -150,6 +152,7 @@ for problem in problems:
         data1_list = data1_double_hits['time_offline'].tolist()
         data2_list = data2_double_hits['time_offline'].tolist()
 
+        # First we need to normalize the data
         normalized_data1 = []
         normalized_data2 = []
         for i in range(len(data1_list)):
@@ -161,13 +164,16 @@ for problem in problems:
                 normalized_data1.append(1)
                 normalized_data2.append(1)
 
+        # We run the independent t-test using the SciPy package
         stat_obj, p_obj = ttest_ind(normalized_data1, normalized_data2)
 
+        # We store the test results
         test_results_magnitude[problem][(method1, method2)] = {
         'obj': {'statistic': stat_obj, 'p-value': p_obj, "n_pairs": len(normalized_data1),
                 "mean_method1": np.mean(normalized_data1), "mean_method2": np.mean(normalized_data2)}}
 
-        # Now do a proportion test
+        ### START PROPORTION TEST ###
+        # For this test we must count the number of trials, wins and ties
         num_wins_1, num_trials, ties = 0, 0, 0
         for i in range(len(data1_list)):
             if data1_list[i] == data2_list[i]:
@@ -178,9 +184,8 @@ for problem in problems:
                 if data1_list[i] < data2_list[i]:
                     num_wins_1 += 1
 
+        # We can only run this test if not all pairs are ties
         if num_trials > 0:
-
-
             # Probability under the null hypothesis
             p = 0.5
             sample_proportion = num_wins_1 / num_trials
@@ -198,14 +203,8 @@ for problem in problems:
                                                                             'z-statistic': 9999}}
 
 
-# Significance level
-alpha_consistent = 0.001
-alpha_magnitude = 0.05
-alpha_proportion = 0.05
-
+### START MAKING THE OVERLEAF TABLES ###
 rows = []
-
-
 for problem in problems:
     print(f'\nStart evaluation for new problem set {problem}')
 

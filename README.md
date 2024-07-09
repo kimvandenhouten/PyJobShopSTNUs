@@ -14,3 +14,13 @@ ln -s /opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer/bin/x86-64_linux
 Note that all scripts in this repository require the working directory to 
 be `/path/to/stochasticRCPSPmax`, and for this directory to be in 
 `PYTHONPATH`.
+
+
+## Run experiments
+To reproduce the results from our experiments run:
+experiments/aaai25/experiments/run_experiments.py
+
+To reproduce the tables that are provided in the supplementary material and that include the test results from the Wilcoxon test, Proportion test, and Magnitude test, run the following scripts:
+statistical_tests/compare_two_methods_obj_to_latex.py
+statistical_tests/compare_two_methods_offline_time_to_latex.py
+statistical_tests/compare_two_methods_online_time_to_latex.py

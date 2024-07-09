@@ -1,5 +1,5 @@
 # stochasticRCPSPmax
-This repository implements a proactive, reactive, and a hybrid approach for stochastic RCPSP/max. It uses state-of-the-art techniques from Constraint Programming (CP) and Temporal Planning, namely Simple Temporal Networks with Uncertainty.  
+This repository implements a proactive, reactive, and a hybrid approach for stochastic RCPSP/max. It uses state-of-the-art techniques from Constraint Programming (CP) and Temporal Planning, namely Simple Temporal Networks with Uncertainty (STNUs).  
 
 
 ## Installation and practical issues
@@ -15,6 +15,8 @@ Note that all scripts in this repository require the working directory to
 be `/path/to/stochasticRCPSPmax`, and for this directory to be in 
 `PYTHONPATH`.
 
+## CSTNU tool
+The STNU-based algorithms make use of the Java CSTNU tool by Robert Posenato. This repository contains a JAR file that enables running the Java code from Python. Please refer to ... to find more information about the CSTNU tool.
 
 ## Run experiments
 To reproduce the results from our experiments run:

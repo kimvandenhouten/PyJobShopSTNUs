@@ -41,7 +41,7 @@ mode_stnu = "robust"
 # SETTINGS EXPERIMENTS
 INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
 INSTANCE_IDS = range(1, 31)
-noise_factor = 1
+noise_factor = 2
 nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True

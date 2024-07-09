@@ -11,7 +11,7 @@ from scipy.stats import wilcoxon
 
 ### START SETTINGS ###
 # Read CSV with results
-data = pd.read_csv(f'final_results_1_07_08_2024,09_35.csv')
+data = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_08_2024,09_35.csv')
 
 methods = ["proactive_quantile_0.9", "STNU_robust", "reactive", "proactive_SAA_smart"]
 method_pairs_default = [("proactive_quantile_0.9", "proactive_SAA_smart"),("proactive_quantile_0.9", "STNU_robust"),
@@ -19,7 +19,7 @@ method_pairs_default = [("proactive_quantile_0.9", "proactive_SAA_smart"),("proa
                 ("proactive_SAA_smart", "reactive"), ("STNU_robust", "reactive")]
 
 method_pairs_problems = {}
-for prob in ["j10", "j20", "j30"]:
+for prob in ["j10", "j20", "j30", "ubo50", "ubo100"]:
     method_pairs_problems[prob] = method_pairs_default
 
 method_pairs = [("proactive_SAA_smart", "proactive_quantile_0.9"),("proactive_quantile_0.9", "STNU_robust"),
@@ -35,7 +35,7 @@ trans_dict = {"STNU_robust": "stnu",
                "proactive_SAA_smart": "proactive$_{SAA}$"}
 
 # Define problem domains on which we will do the tests (from PSPlib instance sets)
-problems = ["j10"]
+problems = ["j10", "j20", "j30", "ubo50", "ubo100"]
 
 # Significant levels for the different tests
 alpha_consistent = 0.05
@@ -203,9 +203,8 @@ for problem in problems:
                                                                             'z-statistic': 9999}}
 
 
-
-
 ### START PREPARING THE LATEX TABLES ###
+rows = []
 for problem in problems:
     print(f'\nStart evaluation for new problem set {problem}')
 

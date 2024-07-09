@@ -7,8 +7,12 @@ from general.latex_table_from_list import generate_latex_table_from_lists
 import scipy
 
 ### SETTINGS ###
+noise_factor = 1
 # Please refer to the csv file including all results from the experiments
-data = pd.read_csv(f'final_results_1_07_08_2024,09_35.csv')
+if noise_factor == 1:
+    data = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_08_2024,09_35.csv')
+else:
+    data = pd.read_csv(f'final_results_2_07_09_2024,07_10.csv')
 standardize = False  # indicate if the objectives must be standardized by dividing by obj under perfect information
 
 # DEFINE PAIRS OF METHOD THAT MUST BE COMPARED
@@ -31,7 +35,10 @@ trans_dict = {"STNU_robust": "stnu",
              "proactive_SAA_smart": "proactive$_{SAA}$"}
 
 # DEFINE PROBLEM DOMAINS (I.E. INSTANCE SETS FROM PSPLIB)
-problems = ["j10", "j20", "j30"]
+if noise_factor == 1:
+    problems = ["j10", "j20", "j30", "ubo50", "ubo100"]
+else:
+    problems = ["j10", "j20", "j30", "ubo50"]
 
 # DEFINE ALPHA VALUES FOR SIGNIFICANCE
 alpha_consistent = 0.05

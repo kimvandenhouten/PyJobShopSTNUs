@@ -40,15 +40,14 @@ mode_stnu = "robust"
 
 # SETTINGS EXPERIMENTS
 INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
-INSTANCE_IDS = range(1, 31)
-noise_factor = 2
+INSTANCE_IDS = range(31, 51)
 nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
 stnu = True
 writing = True
 now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
-output_file = f'final_results_{noise_factor}_{now}.csv'
+
 
 def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
     df = pd.read_csv(f'experiments/aaai25_experiments/results/results_pi_{instance_folder}_{noise_factor}.csv')
@@ -77,83 +76,85 @@ def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sampl
     return feasible, obj_pi
 
 
-data = []
-for instance_folder in INSTANCE_FOLDERS:
-    for instance_id in INSTANCE_IDS:
+for noise_factor in [1, 2]:
+    output_file = f'final_results_{noise_factor}_{now}.csv'
+    data = []
+    for instance_folder in INSTANCE_FOLDERS:
+        for instance_id in INSTANCE_IDS:
 
-        # PREPARE DATA AND DURATION SAMPLES
-        rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
-        np.random.seed(SEED)
-        test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
+            # PREPARE DATA AND DURATION SAMPLES
+            rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
+            np.random.seed(SEED)
+            test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
 
-        # RUN PROACTIVE / REACTIVE OFFLINE
-        data_dict_baseline = run_proactive_offline(rcpsp_max, time_limit_proactive, mode_proactive, nb_scenarios_saa)
+            # RUN PROACTIVE / REACTIVE OFFLINE
+            data_dict_baseline = run_proactive_offline(rcpsp_max, time_limit_proactive, mode_proactive, nb_scenarios_saa)
 
-        if proactive_reactive:
-            # RUN PROACTIVE ONLINE
-            data_dict_proactive = copy.copy(data_dict_baseline)
-            for i, duration_sample in enumerate(test_durations_samples):
-                pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
-                data_dict_proactive["obj_pi"] = obj_pi
-                if pi_feasible:
-                    data += run_proactive_online(rcpsp_max, duration_sample, data_dict_proactive)
-                    data_df = pd.DataFrame(data)
-                    if writing:
-                        data_df.to_csv(output_file, index=False)
-                else:
-                    logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: '
-                                f'We can skip the proactive approach')
+            if proactive_reactive:
+                # RUN PROACTIVE ONLINE
+                data_dict_proactive = copy.copy(data_dict_baseline)
+                for i, duration_sample in enumerate(test_durations_samples):
+                    pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
+                    data_dict_proactive["obj_pi"] = obj_pi
+                    if pi_feasible:
+                        data += run_proactive_online(rcpsp_max, duration_sample, data_dict_proactive)
+                        data_df = pd.DataFrame(data)
+                        if writing:
+                            data_df.to_csv(output_file, index=False)
+                    else:
+                        logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: '
+                                    f'We can skip the proactive approach')
 
-            # RUN REACTIVE ONLINE
-            data_dict_reactive = copy.copy(data_dict_baseline)
-            data_dict_reactive["method"] = "reactive"
-            data_dict_reactive["estimated_start_times"] = data_dict_reactive["start_times"]
+                # RUN REACTIVE ONLINE
+                data_dict_reactive = copy.copy(data_dict_baseline)
+                data_dict_reactive["method"] = "reactive"
+                data_dict_reactive["estimated_start_times"] = data_dict_reactive["start_times"]
 
-            for i, duration_sample in enumerate(test_durations_samples):
-                pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
-                if pi_feasible:
-                    data_dict_reactive["obj_pi"] = obj_pi
-                    data += run_reactive_online(rcpsp_max, duration_sample, data_dict_reactive, time_limit_rescheduling)
-                    data_df = pd.DataFrame(data)
-                    if writing:
-                        data_df.to_csv(output_file, index=False)
-                else:
-                    logger.info(
-                        f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the reactive approach')
+                for i, duration_sample in enumerate(test_durations_samples):
+                    pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
+                    if pi_feasible:
+                        data_dict_reactive["obj_pi"] = obj_pi
+                        data += run_reactive_online(rcpsp_max, duration_sample, data_dict_reactive, time_limit_rescheduling)
+                        data_df = pd.DataFrame(data)
+                        if writing:
+                            data_df.to_csv(output_file, index=False)
+                    else:
+                        logger.info(
+                            f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: We can skip the reactive approach')
 
-        # RUN PROACTIVE SAA OFFLINE
-        if proactive_saa:
-            data_dict_saa = run_proactive_offline(rcpsp_max, time_limit_saa, mode_saa, nb_scenarios_saa)
+            # RUN PROACTIVE SAA OFFLINE
+            if proactive_saa:
+                data_dict_saa = run_proactive_offline(rcpsp_max, time_limit_saa, mode_saa, nb_scenarios_saa)
 
-            # RUN PROACTIVE SAA ONLINE
-            for i, duration_sample in enumerate(test_durations_samples):
-                pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
-                data_dict_saa["obj_pi"] = obj_pi
-                if pi_feasible:
-                    data += run_proactive_online(rcpsp_max, duration_sample, data_dict_saa)
-                    data_df = pd.DataFrame(data)
-                    if writing:
-                        data_df.to_csv(output_file, index=False)
-                else:
-                    logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: '
-                                f'We can skip the proactive approach')
+                # RUN PROACTIVE SAA ONLINE
+                for i, duration_sample in enumerate(test_durations_samples):
+                    pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
+                    data_dict_saa["obj_pi"] = obj_pi
+                    if pi_feasible:
+                        data += run_proactive_online(rcpsp_max, duration_sample, data_dict_saa)
+                        data_df = pd.DataFrame(data)
+                        if writing:
+                            data_df.to_csv(output_file, index=False)
+                    else:
+                        logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}: '
+                                    f'We can skip the proactive approach')
 
-        # RUN STNU EXPERIMENTS
-        if stnu:
-            rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id,
-                                                        noise_factor)
-            dc, estnu, data_dict_stnu = run_stnu_offline(rcpsp_max, time_limit_cp_stnu=time_limit_cp_stnu, mode=mode_stnu)
+            # RUN STNU EXPERIMENTS
+            if stnu:
+                rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id,
+                                                            noise_factor)
+                dc, estnu, data_dict_stnu = run_stnu_offline(rcpsp_max, time_limit_cp_stnu=time_limit_cp_stnu, mode=mode_stnu)
 
-            for i, duration_sample in enumerate(test_durations_samples):
-                pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
-                data_dict_stnu["obj_pi"] = obj_pi
-                if pi_feasible:
-                    data += run_stnu_online(dc, estnu, duration_sample, rcpsp_max, data_dict_stnu)
-                    data_df = pd.DataFrame(data)
-                    if writing:
-                        data_df.to_csv(output_file, index=False)
-                else:
-                    logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}:'
-                                f' We can skip the STNU approach')
+                for i, duration_sample in enumerate(test_durations_samples):
+                    pi_feasible, obj_pi = check_pi_feasible(instance_folder, instance_id, i, duration_sample, noise_factor)
+                    data_dict_stnu["obj_pi"] = obj_pi
+                    if pi_feasible:
+                        data += run_stnu_online(dc, estnu, duration_sample, rcpsp_max, data_dict_stnu)
+                        data_df = pd.DataFrame(data)
+                        if writing:
+                            data_df.to_csv(output_file, index=False)
+                    else:
+                        logger.info(f'Instance {rcpsp_max.instance_folder}PSP{rcpsp_max.instance_id}, sample {i}:'
+                                    f' We can skip the STNU approach')
 
 

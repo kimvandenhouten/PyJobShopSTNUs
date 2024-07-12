@@ -6,8 +6,9 @@ def generate_latex_table_from_lists(rows, caption="", label=""):
     column_format = 'l' * num_columns  # Simple format, all columns left-aligned
 
     # Start building the LaTeX table code
-    latex_table = r"\begin{table}[htb!]" + "\n"
+    latex_table = r"\begin{table*}[htb!]" + "\n"
     latex_table += r"    \centering" + "\n"
+    latex_table += r"     \scalebox{0.8}{" + "\n"
     latex_table += r"    \begin{tabular}{" + column_format + r"} \hline" + "\n"
 
     # Add rows to the table
@@ -17,12 +18,12 @@ def generate_latex_table_from_lists(rows, caption="", label=""):
 
     # Close the tabular environment and add caption and label
     latex_table += r"    \hline" + "\n"
-    latex_table += r"    \end{tabular}" + "\n"
+    latex_table += r"    \end{tabular}}" + "\n"
     if caption:
         latex_table += r"    \caption{" + caption + "}" + "\n"
     if label:
         latex_table += r"    \label{" + label + "}" + "\n"
-    latex_table += r"\end{table}"
+    latex_table += r"\end{table*}"
 
     return latex_table
 

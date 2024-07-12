@@ -7,12 +7,19 @@ from general.latex_table_from_list import generate_latex_table_from_lists
 import scipy
 
 ### SETTINGS ###
-noise_factor = 1
+noise_factor = 2
+printing_insignificant = False
 # Please refer to the csv file including all results from the experiments
 if noise_factor == 1:
-    data = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_08_2024,09_35.csv')
+    data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_08_2024,09_35.csv')
+    data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_10_2024,10_17.csv')
+    data = pd.concat([data_1, data_2])
 else:
-    data = pd.read_csv(f'final_results_2_07_09_2024,07_10.csv')
+    data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_09_2024,07_10.csv')
+    data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_10_2024,10_17.csv')
+    data_3 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_11_2024,10_51.csv')
+    data = pd.concat([data_1, data_2, data_3])
+data.to_csv(f'experiments/aaai25_experiments/final_results/combined_results_noise_factor={noise_factor}.csv')
 standardize = False  # indicate if the objectives must be standardized by dividing by obj under perfect information
 
 # DEFINE PAIRS OF METHOD THAT MUST BE COMPARED
@@ -23,22 +30,18 @@ method_pairs_default = [("STNU_robust", "reactive"), ("STNU_robust", "proactive_
                ("reactive", "proactive_SAA_smart"), ("reactive", "proactive_quantile_0.9"), ("proactive_SAA_smart", "proactive_quantile_0.9")]
 
 method_pairs_problems = {}
-for prob in ["j10", "j20", "j30", "ubo50"]:
+for prob in ["j10", "j20", "j30", "ubo50", "ubo100"]:
     method_pairs_problems[prob] = method_pairs_default
-method_pairs_problems["ubo100"] = [("STNU_robust", "reactive"), ("STNU_robust", "proactive_SAA_smart"), ("STNU_robust", "proactive_quantile_0.9"),
-               ("reactive", "proactive_SAA_smart"), ("reactive", "proactive_quantile_0.9"), ("proactive_quantile_0.9", "proactive_SAA_smart")]
 
 # This translation dict is used to translate the methods as described in the csv file to shorter version for overleaf
-trans_dict = {"STNU_robust": "stnu",
-              "reactive": "reactive",
-              "proactive_quantile_0.9": "proactive$_{0.9}$",
-             "proactive_SAA_smart": "proactive$_{SAA}$"}
+trans_dict = {"STNU_robust": "$stnu$",
+              "reactive": "$react$",
+              "proactive_quantile_0.9": "$proact_{0.9}$",
+               "proactive_SAA_smart": "$proact_{SAA}$"}
 
 # DEFINE PROBLEM DOMAINS (I.E. INSTANCE SETS FROM PSPLIB)
-if noise_factor == 1:
-    problems = ["j10", "j20", "j30", "ubo50", "ubo100"]
-else:
-    problems = ["j10", "j20", "j30", "ubo50"]
+problems = ["j10", "j20", "j30", "ubo50", "ubo100"]
+
 
 # DEFINE ALPHA VALUES FOR SIGNIFICANCE
 alpha_consistent = 0.05
@@ -239,14 +242,15 @@ for problem in problems:
                 worser = pair[1]
 
             print(
-                f"Wilcoxon objective: {better} performs significantly better than {worser} with z-stat {np.round(result['z-statistic'], 3)} and p-value "
+                f"Wilcoxon objective {pair}: {better} performs significantly better than {worser} with z-stat {np.round(result['z-statistic'], 3)} and p-value "
                 f"{result['p-value']}")
             overleaf_string = f"[{result['n_pairs']}] {np.round(result['z-statistic'], 3)} (*)"
             print(f"Overleaf string: {overleaf_string}")
         else:
-            print(
-                f"Wilcoxon objective: No significant difference between {pair} with z-stat {np.round(result['z-statistic'], 3)} and p-value "
-                f"{result['p-value']}.")
+            if printing_insignificant:
+                print(
+                    f"Wilcoxon objective {pair}: No significant difference between with z-stat {np.round(result['z-statistic'], 3)} and p-value "
+                    f"{result['p-value']}.")
             overleaf_string = f"[{result['n_pairs']}] {np.round(result['z-statistic'], 3)} ({np.round(result['p-value'], 3)})"
             print(f"Overleaf string: {overleaf_string}")
         new_row.append(overleaf_string)
@@ -262,23 +266,29 @@ for problem in problems:
             else:
                 better = pair[1]
                 print("WARNING: better is the second of the pair")
-            print(f"  There is a significant proportion of wins in objective {better} "
+            print(f"{pair}: There is a significant proportion of wins in objective {better} "
                   f"performs significantly better with proportion {result['sample_proportion']} and p-value "
                   f"{result['p-value']} and z-value {np.round(result['z-statistic'], 3)}.")
-            overleaf_string = f"[{result['n_pairs']}] {np.round(result['z-statistic'], 3)} (*)"
+            overleaf_string = f"[{result['n_pairs']}] {np.round(result['sample_proportion'], 3)} (*)"
             print(f"Overleaf string: {overleaf_string}")
         else:
-            print(f"  There is no significant proportion of wins in obj: No significant difference."
-                  f"proportion {result['sample_proportion']} and p-value {result['p-value']} and z-value {np.round(result['z-statistic'], 3)}")
-            overleaf_string = f"[{result['n_pairs']}] {np.round(result['z-statistic'], 3)} ({result['p-value']})"
-            print(f"Overleaf string: {overleaf_string}")
+            overleaf_string = f"[{result['n_pairs']}] {np.round(result['sample_proportion'], 3)} ({np.round(result['p-value'],3)})"
+            if printing_insignificant:
+                print(f"{pair}: There is no significant proportion of wins in obj : No significant difference."
+                      f"proportion {result['sample_proportion']} and p-value {result['p-value']} and z-value {np.round(result['z-statistic'], 3)}")
+                print(f"Overleaf string: {overleaf_string}")
         new_row.append(overleaf_string)
     rows.append(new_row)
 
 print(rows)
-caption = "Pairwise comparison on schedule quality (makespan). Using a Wilcoxon test and a proportion test. Including all instances for which at least one of the two methods found a feasible solution."
-latex_code = generate_latex_table_from_lists(rows, caption=caption, label="tab:obj_pairwise")
-print(latex_code)
+caption = (f"Pairwise comparison on schedule quality (makespan) for noise factor c={noise_factor}."
+           f" Using a Wilcoxon test and a proportion test. Including all instances for which at least one"
+           f" of the two methods found a feasible solution. Note that the ordering matters: the first"
+           f" method showed is the better of the two in each paier method 1 - method 2. Each cell shows"
+           f" on the first row [nr pairs] z-value (p-value) of the Wilcoxon test with (*) for p  $<$ 0.05."
+           f" Each cell shows on the second row [nr pairs] z-value (p-value) with (*) for p $<$ 0.05 ")
+latex_code_wilcox = generate_latex_table_from_lists(rows, caption=caption, label=f"tab:obj_pairwise_{noise_factor}")
+
 
 
 rows = []
@@ -299,9 +309,11 @@ for problem in problems:
         if result['p-value'] < alpha_magnitude:
             if result['statistic'] < 0:
                 better = pair[0]
+                worser = pair[1]
             else:
                 better = pair[1]
-            print(f"Double hits magnitude: {better} performs significantly better with"
+                worser = pair[0]
+            print(f"Double hits magnitude: {better} performs significantly better than {worser} with"
                   f" stat {np.round(result['statistic'], 3)} and p-value {result['p-value']}.")
             overleaf_1 = f"[{result['n_pairs']}] {np.round(result['statistic'], 3)} (*) "
             overleaf_2 = f"{trans_dict[pair[0]]}: {np.round(result['mean_method1'], 3)}"
@@ -311,9 +323,9 @@ for problem in problems:
             print(overleaf_3)
 
         else:
-            print(f"Double hits magnitude: No significant difference. With stat"
-                  f" {np.round(result['statistic'], 3)} and p-value {result['p-value']}")
-            overleaf_1 = f"[{result['n_pairs']}] {np.round(result['statistic'], 3)} ({result['p-value']})"
+            print(f"Double hits magnitude: No significant difference between {pair}. With stat"
+                  f" {np.round(result['statistic'], 3)} and p-value {np.round(result['p-value'],3)}")
+            overleaf_1 = f"[{result['n_pairs']}] {np.round(result['statistic'], 3)} ({np.round(result['p-value'], 3)})"
             overleaf_2 = f"{trans_dict[pair[0]]}: {np.round(result['mean_method1'], 3)}"
             overleaf_3 = f"{trans_dict[pair[1]]}: {np.round(result['mean_method2'], 3)}"
             print(overleaf_1)
@@ -326,6 +338,13 @@ for problem in problems:
     rows.append(new_row_2)
     rows.append(new_row_3)
 
-caption = "Magnitude test on solution quality. Using a pairwise t-test, including all instances for which both methods found a feasible solution, and for which earlier tests indicated a significant consistent or proportional difference."
-latex_code = generate_latex_table_from_lists(rows, caption=caption, label="tab:obj_magnitude")
-print(latex_code)
+caption = (f"Magnitude test on solution quality for noise factor c={noise_factor}."
+           f" Using a pairwise t-test, including all instances for which both methods found a feasible solution,"
+           f" and for which earlier tests indicated a significant consistent or proportional difference. Each cell "
+           f" shows on the first row [nr pairs] t-stat (p-value) with (*) for p $<$ 0.05 and on the second row the normalized average of method 1"
+           f" and on the third row the normalized average of method 2.")
+latex_code_magnitude = generate_latex_table_from_lists(rows, caption=caption, label=f"tab:obj_magnitude_{noise_factor}")
+
+
+print(latex_code_wilcox)
+print(latex_code_magnitude)

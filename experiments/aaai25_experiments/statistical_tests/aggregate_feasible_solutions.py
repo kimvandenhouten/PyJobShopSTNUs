@@ -1,17 +1,17 @@
 import pandas as pd
 
-noise_factor = 2
-# Please refer to the csv file including all results from the experiments
+noise_factor = 0.5
 if noise_factor == 1:
     data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_08_2024,09_35.csv')
     data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_10_2024,10_17.csv')
-
-else:
+    data = pd.concat([data_1, data_2])
+elif noise_factor == 2:
     data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_09_2024,07_10.csv')
     data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_10_2024,10_17.csv')
-
-
-data = pd.concat([data_1, data_2])
+    data_3 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_11_2024,10_51.csv')
+    data = pd.concat([data_1, data_2, data_3])
+elif noise_factor == 0.5:
+    data = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_0.5_07_12_2024,14_41.csv')
 
 aggregation = data.groupby(['method', 'instance_folder', 'feasibility']).size().unstack(fill_value=0)
 

@@ -7,18 +7,20 @@ from general.latex_table_from_list import generate_latex_table_from_lists
 import scipy
 
 ### SETTINGS ###
-noise_factor = 2
+noise_factor = 0.5
 printing_insignificant = False
 # Please refer to the csv file including all results from the experiments
 if noise_factor == 1:
     data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_08_2024,09_35.csv')
     data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_10_2024,10_17.csv')
     data = pd.concat([data_1, data_2])
-else:
+elif noise_factor == 2:
     data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_09_2024,07_10.csv')
     data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_10_2024,10_17.csv')
     data_3 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_11_2024,10_51.csv')
     data = pd.concat([data_1, data_2, data_3])
+elif noise_factor == 0.5:
+    data = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_0.5_07_12_2024,14_41.csv')
 data.to_csv(f'experiments/aaai25_experiments/final_results/combined_results_noise_factor={noise_factor}.csv')
 standardize = False  # indicate if the objectives must be standardized by dividing by obj under perfect information
 
@@ -40,7 +42,10 @@ trans_dict = {"STNU_robust": "$stnu$",
                "proactive_SAA_smart": "$proact_{SAA}$"}
 
 # DEFINE PROBLEM DOMAINS (I.E. INSTANCE SETS FROM PSPLIB)
-problems = ["j10", "j20", "j30", "ubo50", "ubo100"]
+if noise_factor == 0.5:
+    problems = ["j10", "j20", "j30", "ubo50"]
+else:
+    problems = ["j10", "j20", "j30", "ubo50", "ubo100"]
 
 
 # DEFINE ALPHA VALUES FOR SIGNIFICANCE

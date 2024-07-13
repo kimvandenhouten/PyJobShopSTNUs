@@ -30,6 +30,13 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
     lb = rcpsp_max.get_bound(mode="lower_bound")
     ub = rcpsp_max.get_bound(mode="upper_bound")
 
+    def get_quantile(lb, ub, p):
+        if lb == ub:
+            quantile = lb
+        quantile = [int(lb[i] + p * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+
+        return quantile
+
     if mode == "robust":
         durations = ub
         logger.debug(f'Start solving upper bound schedule {durations}')
@@ -39,7 +46,7 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
             start_times = data['start'].tolist()
 
     elif mode == "quantile_0.25":
-        durations = [int(lb[i] + 0.25 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = get_quantile(lb, ub, 0.25)
         data_dict["estimated_durations"] = durations
         logger.debug(f'Start solving upper bound schedule {durations}')
         res, data = rcpsp_max.solve(durations, time_limit=time_limit, mode="Quiet")
@@ -47,7 +54,7 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
             start_times = data['start'].tolist()
 
     elif mode == "quantile_0.75":
-        durations = [int(lb[i] + 0.75 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = get_quantile(lb, ub, 0.75)
         data_dict["estimated_durations"] = durations
         logger.debug(f'Start solving upper bound schedule {durations}')
         res, data = rcpsp_max.solve(durations, time_limit=time_limit, mode="Quiet")
@@ -55,7 +62,7 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
             start_times = data['start'].tolist()
 
     elif mode == "quantile_0.5":
-        durations = [int(lb[i] + 0.5 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = get_quantile(lb, ub, 0.5)
         data_dict["estimated_durations"] = durations
         logger.debug(f'Start solving upper bound schedule {durations}')
         res, data = rcpsp_max.solve(durations, time_limit=time_limit, mode="Quiet")
@@ -63,7 +70,7 @@ def run_proactive_offline(rcpsp_max, time_limit=60, mode="robust", nb_scenarios_
             start_times = data['start'].tolist()
 
     elif mode == "quantile_0.9":
-        durations = [int(lb[i] + 0.9 * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        durations = get_quantile(lb, ub, 0.9)
         data_dict["estimated_durations"] = durations
         logger.debug(f'Start solving upper bound schedule {durations}')
         res, data = rcpsp_max.solve(durations, time_limit=time_limit, mode="Quiet")

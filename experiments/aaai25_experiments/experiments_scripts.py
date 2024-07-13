@@ -39,8 +39,8 @@ mode_stnu = "robust"
 
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["ubo100"]
-INSTANCE_IDS = range(1, 51)
+INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
+INSTANCE_IDS = range(1, 4)
 nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
@@ -86,6 +86,7 @@ for noise_factor in [0.5]:
             rcpsp_max = RCPSP_CP_Benchmark.parsche_file(DIRECTORY_INSTANCES, instance_folder, instance_id, noise_factor)
             np.random.seed(SEED)
             test_durations_samples = rcpsp_max.sample_durations(nb_scenarios_test)
+            print(test_durations_samples)
 
             # RUN PROACTIVE / REACTIVE OFFLINE
             data_dict_baseline = run_proactive_offline(rcpsp_max, time_limit_proactive, mode_proactive, nb_scenarios_saa)

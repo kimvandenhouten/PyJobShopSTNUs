@@ -331,32 +331,36 @@ class RCPSP_CP_Benchmark:
         return res, start_times
 
     def get_bound(self, mode="upper_bound"):
-        scenario = []
+        lb = []
+        ub = []
         for duration in self.durations:
             if duration == 0:
-                scenario.append(0)
+                lb.append(0)
+                ub.append(0)
             else:
-                if mode == "lower_bound":
-                    bound = int(max(1, duration - self.noise_factor * np.sqrt(duration)))
-                else:
-                    bound = int(duration + self.noise_factor * np.sqrt(duration))
-                scenario.append(bound)
-        return scenario
+                lower_bound = int(max(1, duration - self.noise_factor * np.sqrt(duration)))
+                upper_bound = int(duration + self.noise_factor * np.sqrt(duration))
+                if lower_bound == upper_bound:
+                    upper_bound += 1
+                lb.append(lower_bound)
+                ub.append(upper_bound)
+        if mode == "upper_bound":
+            return ub
+        else:
+            return lb
 
     def sample_durations(self, nb_scenarios=1):
         scenarios = []
+        lower_bound = self.get_bound("lower_bound")
+        upper_bound = self.get_bound("upper_bound")
         for _ in range(nb_scenarios):
             scenario = []
-            for duration in self.durations:
-                if duration == 0:
-                    scenario.append(0)
+            for i in range(0, len(self.durations)):
+                if lower_bound[i] == 0 and upper_bound[i] == 0:
+                    duration_sample = 0
                 else:
-                    lower_bound = int(max(1, duration - self.noise_factor * np.sqrt(duration)))
-                    upper_bound = int(duration + self.noise_factor * np.sqrt(duration))
-                    if lower_bound == upper_bound:
-                        upper_bound += 1
-                    duration_sample = np.random.randint(lower_bound, upper_bound)
-                    scenario.append(duration_sample)
+                    duration_sample = np.random.randint(lower_bound[i], upper_bound[i])
+                scenario.append(duration_sample)
             scenarios.append(scenario)
 
         return scenarios

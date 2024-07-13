@@ -353,6 +353,8 @@ class RCPSP_CP_Benchmark:
                 else:
                     lower_bound = int(max(1, duration - self.noise_factor * np.sqrt(duration)))
                     upper_bound = int(duration + self.noise_factor * np.sqrt(duration))
+                    if lower_bound == upper_bound:
+                        upper_bound += 1
                     duration_sample = np.random.randint(lower_bound, upper_bound)
                     scenario.append(duration_sample)
             scenarios.append(scenario)

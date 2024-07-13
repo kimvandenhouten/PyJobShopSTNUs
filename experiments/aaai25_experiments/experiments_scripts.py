@@ -39,8 +39,8 @@ mode_stnu = "robust"
 
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
-INSTANCE_IDS = range(31, 51)
+INSTANCE_FOLDERS = ["ubo100"]
+INSTANCE_IDS = range(1, 51)
 nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
@@ -76,7 +76,7 @@ def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sampl
     return feasible, obj_pi
 
 
-for noise_factor in [1, 2]:
+for noise_factor in [0.5]:
     output_file = f'final_results_{noise_factor}_{now}.csv'
     data = []
     for instance_folder in INSTANCE_FOLDERS:

@@ -309,7 +309,7 @@ def determine_dc(stnu, dispatchability=False):
     for node, negative in enumerate(negative_nodes):
         if negative:
             # To keep track of within the backprop loop started from this source the same source is repeated in the
-            # recursion, this can be reset for every backprop call (Kim's assumption), global variable
+            # recursion, this can be reset for every backprop call (our assumption), global variable
             ancestor = [float("inf") for i in range(N)]
             if dc_backprop(node) is False:
                 logger.debug(f'network after dc-checking \n{network}')

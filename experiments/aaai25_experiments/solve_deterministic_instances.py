@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 """
 This script contains the experiments for solving the deterministic instances with perfect information. Note that 
 the setting "writing=False" means that no csv is written while running this script. Please be aware that the script
-experiments_scripts.py uses the csv files with the perfect information results to check whether the perfect information
+run_experiments.py uses the csv files with the perfect information results to check whether the perfect information
 problem is feasible before running one of the stochastic scheduling methods.
 """
 

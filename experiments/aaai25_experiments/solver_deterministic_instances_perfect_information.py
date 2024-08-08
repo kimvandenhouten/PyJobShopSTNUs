@@ -6,6 +6,13 @@ from rcpsp_max.solvers.RCPSP_CP_benchmark import RCPSP_CP_Benchmark
 from general.logger import get_logger
 logger = get_logger(__name__)
 
+"""
+This script contains the experiments for solving the deterministic instances with perfect information. Note that 
+the setting "writing=False" means that no csv is written while running this script. Please be aware that the script
+experiments_scripts.py uses the csv files with the perfect information results to check whether the perfect information
+problem is feasible before running one of the stochastic scheduling methods.
+"""
+
 # GENERAL SETTINGS
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
@@ -14,8 +21,9 @@ INSTANCE_IDS = range(1, 51)
 nb_scenarios_test = 10
 perfect_information = True
 time_limit = 600
+writing = False
 
-for noise_factor in [0.5]:
+for noise_factor in [1, 2]:
     # Settings perfect information
     # Start solving the instances with perfect information
     for instance_folder in INSTANCE_FOLDERS:
@@ -47,5 +55,7 @@ for noise_factor in [0.5]:
                                      "solve_time": res.get_solve_time(), "solver_status": res.get_solve_status()})
 
                 data_df = pd.DataFrame(data)
-                data_df.to_csv(f"experiments/aaai25_experiments/results_perfect_inforation/results_pi_{instance_folder}_{noise_factor}.csv")
+
+                if writing:
+                    data_df.to_csv(f"experiments/aaai25_experiments/results_perfect_information/results_pi_{instance_folder}_{noise_factor}.csv")
 

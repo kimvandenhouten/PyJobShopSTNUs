@@ -8,6 +8,12 @@ import scipy
 from experiments.aaai25_experiments.statistical_tests.proportion_test import proportion_test
 from experiments.aaai25_experiments.statistical_tests.magnitude_test import magnitude_test
 
+"""
+This script contains the statistical tests that generate the tables that are presented in the Technical Appendix
+of the AAAI25 submission "Proactive and Reactive Constraint Programming for Stochastic Project Scheduling with Maximal
+ Time-Lags" including the Wilcoxon, proportion test, and magnitude test for solution quality (makespan).
+"""
+
 ### SETTINGS ###
 noise_factor = 1
 printing_insignificant = True
@@ -41,10 +47,7 @@ trans_dict = {"STNU_robust": "$stnu$",
               "proactive_SAA_smart": "$proact_{SAA}$"}
 
 # DEFINE PROBLEM DOMAINS (I.E. INSTANCE SETS FROM PSPLIB)
-if noise_factor == 0.5:
-    problems = ["j10", "j20", "j30", "ubo50"]
-else:
-    problems = ["j10", "j20", "j30", "ubo50", "ubo100"]
+problems = ["j10", "j20", "j30", "ubo50", "ubo100"]
 
 
 # DEFINE ALPHA VALUES FOR SIGNIFICANCE

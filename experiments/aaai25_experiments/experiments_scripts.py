@@ -6,17 +6,22 @@ import ast
 import copy
 import datetime
 # Import reactive approach
-from experiments.aaai25_experiments.run_reactive_approach import run_reactive_offline, run_reactive_online
+from experiments.aaai25_experiments.scheduling_methods.run_reactive_approach import run_reactive_online
 
 # Import proactive approach
-from experiments.aaai25_experiments.run_proactive_approach import run_proactive_offline, run_proactive_online
+from experiments.aaai25_experiments.scheduling_methods.run_proactive_approach import run_proactive_offline, run_proactive_online
 
 # Import STNU approach
-from experiments.aaai25_experiments.run_stnu_approach import run_stnu_offline, run_stnu_online
-
+from experiments.aaai25_experiments.scheduling_methods.run_stnu_approach import run_stnu_offline, run_stnu_online
 
 from general.logger import get_logger
 logger = get_logger(__name__)
+
+"""
+This script contains the experiments that are presented in the AAAI'25 submission "Proactive and Reactive
+Constraint Programming for Stochastic Project Scheduling with Maximal Time-Lags". Note that while running 
+these experiments a new csv file is generated including the results with a time stamp in the filename
+"""
 
 # GENERAL SETTINGS
 SEED = 1
@@ -40,7 +45,8 @@ mode_stnu = "robust"
 
 # SETTINGS EXPERIMENTS
 INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
-INSTANCE_IDS = range(1, 4)
+INSTANCE_IDS = range(1, 51)
+NOISE_FACTORS = [1, 2]
 nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
@@ -76,7 +82,7 @@ def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sampl
     return feasible, obj_pi
 
 
-for noise_factor in [1, 2]:
+for noise_factor in NOISE_FACTORS:
     output_file = f'final_results_{noise_factor}_{now}.csv'
     data = []
     for instance_folder in INSTANCE_FOLDERS:

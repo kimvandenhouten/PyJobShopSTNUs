@@ -8,6 +8,11 @@ import scipy
 from experiments.aaai25_experiments.statistical_tests.proportion_test import proportion_test
 from experiments.aaai25_experiments.statistical_tests.magnitude_test import magnitude_test
 
+"""
+This script contains the statistical tests that generate the tables that are presented in the Technical Appendix
+of the AAAI25 submission "Proactive and Reactive Constraint Programming for Stochastic Project Scheduling with Maximal
+Time-Lags" including the Wilcoxon, proportion test, and magnitude test for offline runtime.
+"""
 
 ### SETTINGS ###
 noise_factor = 1

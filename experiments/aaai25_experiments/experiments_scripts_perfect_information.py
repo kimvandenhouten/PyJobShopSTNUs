@@ -47,5 +47,5 @@ for noise_factor in [0.5]:
                                      "solve_time": res.get_solve_time(), "solver_status": res.get_solve_status()})
 
                 data_df = pd.DataFrame(data)
-                data_df.to_csv(f"experiments/aaai25_experiments/results/results_pi_{instance_folder}_{noise_factor}.csv")
+                data_df.to_csv(f"experiments/aaai25_experiments/results_perfect_inforation/results_pi_{instance_folder}_{noise_factor}.csv")
 

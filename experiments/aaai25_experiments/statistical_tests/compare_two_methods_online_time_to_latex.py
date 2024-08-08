@@ -8,6 +8,8 @@ import scipy
 from scipy.stats import binomtest
 from scipy.stats import ttest_ind
 from scipy.stats import wilcoxon
+from experiments.aaai25_experiments.statistical_tests.proportion_test import proportion_test
+from experiments.aaai25_experiments.statistical_tests.magnitude_test import magnitude_test
 
 ### START SETTINGS ###
 noise_factor = 2
@@ -178,75 +180,59 @@ for problem in problems:
                         "sum_pos_ranks": sum_positive_ranks, 'sum_neg_ranks': sum_negative_ranks}
             }
 
+            ### START PROPORTION TEST ###
+            # For the proportion test we must count trials, wins and ties
+            num_wins_1, num_trials, ties = 0, 0, 0
+            for i in range(len(data1_list)):
+                if data1_list[i] == data2_list[i]:
+                    ties += 1
+                else:
+                    num_trials += 1
+                    if data1_list[i] < data2_list[i]:
+                        num_wins_1 += 1
+
+            # We can only run the proportion test (binomtest) if not all trials were ties
+            if num_trials > 0:
+                z_value, p_value, null, sample_proportion = proportion_test(n=num_trials, k=num_wins_1, p_zero=0.5,
+                                                                            z_crit=1.96)
+                test_results_proportion[problem][(method1, method2)] = {
+                    'obj': {'sample_proportion': sample_proportion, 'p-value': p_value, 'n_pairs': num_trials,
+                            'ties': ties, 'z-statistic': z_value}}
+            # If all trials were ties no test results exists
+            else:
+                test_results_proportion[problem][(method1, method2)] = {
+                    'obj': {'sample_proportion': 9999, 'p-value': 9999,
+                            'n_pairs': 9999, 'ties': ties,
+                            'z-statistic': 9999}}
+
         ### START MAGNITUDE TEST ###
         # Now we will only use double hits.
-        data1_list = data1["time_online"].tolist()
-        data2_list = data2["time_online"].tolist()
+            # Now we will only use double hits.
+            data1_list = data1["time_online"].tolist()
+            data2_list = data2["time_online"].tolist()
 
-        double_hits_indices = []
-        for i in range(len(data1_list)):
-            if data1_list[i] < inf_value and data2_list[i] < inf_value:
-                double_hits_indices.append(i)
+            double_hits_indices = []
+            for i in range(len(data1_list)):
+                if data1_list[i] < inf_value and data2_list[i] < inf_value:
+                    double_hits_indices.append(i)
 
-        # Select only double hits
-        data1_double_hits = data1.iloc[double_hits_indices]
-        data1_double_hits = data1_double_hits.reset_index(drop=True)
-        data2_double_hits = data2.iloc[double_hits_indices]
-        data2_double_hits = data2_double_hits.reset_index(drop=True)
+            # Select only double hits
+            data1_double_hits = data1.iloc[double_hits_indices]
+            data1_double_hits = data1_double_hits.reset_index(drop=True)
+            data2_double_hits = data2.iloc[double_hits_indices]
+            data2_double_hits = data2_double_hits.reset_index(drop=True)
 
-        # Now do the magnitude test on the double hits
-        data1_list_double_hits = data1_double_hits['time_online'].tolist()
-        data2_list_double_hits = data2_double_hits['time_online'].tolist()
+            # Now do the magnitude test on the double hits
+            data1_list = data1_double_hits['time_online'].tolist()
+            data2_list = data2_double_hits['time_online'].tolist()
 
-        # For t-test first normalize the data such that all values are between 0 and 2.
-        normalized_data1 = []
-        normalized_data2 = []
-        for i in range(len(data1_list_double_hits)):
-            mean = (data1_list_double_hits[i] + data2_list_double_hits[i]) / 2
-            if mean > 0:
-                normalized_data1.append(data1_list_double_hits[i] / mean)
-                normalized_data2.append(data2_list_double_hits[i] / mean)
-            else:
-                normalized_data1.append(1)
-                normalized_data2.append(1)
+            # Run the test on the normalized data using the SciPy t-test
+            result, mean_1, mean_2, n = magnitude_test(obs_1=data1_list, obs_2=data2_list)
 
-        # Run independent t-test from SciPy package
-        stat_obj, p_obj = ttest_ind(normalized_data1, normalized_data2)
-
-        # Store test results
-        test_results_magnitude[problem][(method1, method2)] = {
-        'obj': {'statistic': stat_obj, 'p-value': p_obj, "n_pairs": len(normalized_data1),
-                "mean_method1": np.mean(normalized_data1), "mean_method2": np.mean(normalized_data2)}}
-
-        ### START PROPORTION TEST ###
-        # For the proportion test we must count trials, wins and ties
-        num_wins_1, num_trials, ties = 0, 0, 0
-        for i in range(len(data1_list)):
-            if data1_list[i] == data2_list[i]:
-                ties += 1
-            else:
-                num_trials += 1
-                if data1_list[i] < data2_list[i]:
-                    num_wins_1 += 1
-
-        # We can only run the proportion test (binomtest) if not all trials were ties
-        if num_trials > 0:
-            # Probability under the null hypothesis
-            p = 0.5
-            sample_proportion = num_wins_1 / num_trials
-
-            # Perform the binomial test
-            result = binomtest(num_wins_1, num_trials, p)
-            p_value_proportion = result.pvalue
-            statistic = result.statistic
-            z_value = (num_wins_1 - num_trials * p) / np.sqrt(num_trials * p * (1 - p))
-            test_results_proportion[problem][(method1, method2)] = {
-                'obj': {'sample_proportion': sample_proportion, 'p-value': p_obj, 'n_pairs': num_trials, 'ties': ties, 'z-statistic': z_value}}
-        # If all trials were ties no test results exists
-        else:
-            test_results_proportion[problem][(method1, method2)] = {'obj': {'sample_proportion': 9999, 'p-value': 9999,
-                                                                            'n_pairs': 9999, 'ties': ties,
-                                                                            'z-statistic': 9999}}
+            # We store the test results
+            test_results_magnitude[problem][(method1, method2)] = {
+                'obj': {'statistic': result.statistic, 'p-value': result.pvalue, "n_pairs": n,
+                        "mean_method1": mean_1, "mean_method2": mean_2}}
 
 
 ### START PREPARING THE LATEX TABLES ###

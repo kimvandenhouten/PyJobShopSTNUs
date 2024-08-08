@@ -50,7 +50,7 @@ now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
 
 
 def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
-    df = pd.read_csv(f'experiments/aaai25_experiments/results/results_pi_{instance_folder}_{noise_factor}.csv')
+    df = pd.read_csv(f'experiments/aaai25_experiments/results_perfect_information/results_pi_{instance_folder}_{noise_factor}.csv')
     filtered_df = df[(df['instance_id'] == instance_id) & (df['sample'] == sample_index)]
     assert len(filtered_df) == 1
 
@@ -76,7 +76,7 @@ def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sampl
     return feasible, obj_pi
 
 
-for noise_factor in [0.5]:
+for noise_factor in [1, 2]:
     output_file = f'final_results_{noise_factor}_{now}.csv'
     data = []
     for instance_folder in INSTANCE_FOLDERS:

@@ -4,7 +4,7 @@ This repository implements a proactive, reactive, and a hybrid approach for stoc
 
 ## Installation and practical issues
 From a terminal session:
-```
+```shell
 cd /path/to/stochasticRCPSPmax      # Go to the directory where you downloaded the repository
 python3 -m venv venv                # Create a new virtual environment
 . venv/bin/activate                 # Activate it
@@ -15,7 +15,7 @@ You then need to make the CPLEX optimizer available to the scripts by
 creating a symbolic link in the virtualenv; for example (adjust paths 
 for your system):
 
-```
+```shell
 ln -s /opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer/bin/x86-64_linux/cpoptimizer /path/to/stochasticRCPSPmax/venv/bin/
 ```
 

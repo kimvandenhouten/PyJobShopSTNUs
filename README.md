@@ -3,12 +3,20 @@ This repository implements a proactive, reactive, and a hybrid approach for stoc
 
 
 ## Installation and practical issues
-Besides the installation of the requirements.txt, it is needed to install the IBM CPLEX Optimization Studio (full edition, available via an academic licence) in order to be able to run all experiments in this repository.
-You may need to make the CPLEX optimizer available to the scripts by creating a symbolic link in the virtualenv, for example (adjust paths for your system):
+From a terminal session:
+```
+cd /path/to/stochasticRCPSPmax      # Go to the directory where you downloaded the repository
+python3 -m venv venv                # Create a new virtual environment
+. venv/bin/activate                 # Activate it
+pip install -r requirements.txt     # Install dependencies
+```
+Besides the installation of the dependencies from requirements.txt, it is needed to install the IBM CPLEX Optimization Studio (full edition, available via an academic licence) in order to be able to run all experiments in this repository.
+You then need to make the CPLEX optimizer available to the scripts by 
+creating a symbolic link in the virtualenv; for example (adjust paths 
+for your system):
 
 ```
-ln -s /opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer/bin/x86-64_linux
-/cpoptimizer /path/to/stochasticRCPSPmax/venv/bin/
+ln -s /opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer/bin/x86-64_linux/cpoptimizer /path/to/stochasticRCPSPmax/venv/bin/
 ```
 
 Note that all scripts in this repository require the working directory to 

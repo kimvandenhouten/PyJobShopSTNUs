@@ -1,5 +1,5 @@
 # stochasticRCPSPmax
-This repository implements a proactive, reactive, and a hybrid approach for stochastic RCPSP/max. It uses state-of-the-art techniques from Constraint Programming (CP) and Simple Temporal Networks with Uncertainty (STNUs).  
+This repository implements a proactive, a reactive, and a hybrid approach for stochastic RCPSP/max. It uses state-of-the-art techniques from Constraint Programming (CP) and Simple Temporal Networks with Uncertainty (STNUs).  
 
 
 ## Installation and practical issues
@@ -23,7 +23,7 @@ For running scripts from this repository, make sure that:
 * the virtual environment is activated
 
 ## CSTNU tool
-The STNU-based algorithms make use of the Java CSTNU Tool by Robert Posenato[^1]. Our Python repository already includes a JAR file for running the CSTNU-Tool, so no further action is needed.
+The STNU-based algorithms make use of the Java CSTNU Tool by Roberto Posenato[^1]. Our Python repository already includes a JAR file for running the CSTNU-Tool, so no further action is needed.
 
 [^1]: **Posenato, R. (2022)**. *CSTNU Tool: A Java library for checking temporal networks.* SoftwareX, 17, 100905. [http://dx.doi.org/10.1016/j.softx.2021.100905]
   
@@ -32,7 +32,7 @@ To reproduce the results from our experiments, run:
 ```
 python3 aaai25/experiments/run_experiments.py
 ```
-To solver the deterministic instances with perfect information, run:
+To solve the deterministic instances with perfect information, run:
 ```
 python3 aaai25/experiments/run_deterministic_instances.py
 ```
@@ -47,4 +47,4 @@ python3 aaai25/generate_tables/compare_two_methods_offline_time_to_latex.py
 python3 aaai25/generate_tables/compare_two_methods_online_time_to_latex.py
 ```
 
-Note that Table 1 of the main paper "Proactive and Reactive Constraint Programming for Stochastic Project Scheduling with Maximal Time-Lags" shows a subset of the results in the tables that are output of the scripts above.
+Note that Table 1 of the main paper "Proactive and Reactive Constraint Programming for Stochastic Project Scheduling with Maximal Time-Lags" shows a subset of the results in the tables that are output by the scripts above.

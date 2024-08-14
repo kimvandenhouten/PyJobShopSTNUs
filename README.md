@@ -25,7 +25,7 @@ For running scripts from this repository, make sure that:
 ```shell
 cd /path/to/stochasticRCPSPmax
 . venv/bin/activate  
-export PYTHONPATH=/path/to/stochasticRCPSPmax-main:$PYTHONPATH
+export PYTHONPATH=/path/to/stochasticRCPSPmax:$PYTHONPATH
 ```
 
 ## CSTNU tool

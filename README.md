@@ -19,8 +19,14 @@ ln -s /opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer/bin/x86-64_linux/cpoptimizer /p
 
 For running scripts from this repository, make sure that:
 * the working directory is `/path/to/stochasticRCPSPmax`
-* `/path/to/stochasticRCPSPmax` is in `PYTHONPATH`
 * the virtual environment is activated
+* `/path/to/stochasticRCPSPmax` is in `PYTHONPATH
+
+```shell
+cd /path/to/stochasticRCPSPmax
+. venv/bin/activate  
+export PYTHONPATH=/path/to/stochasticRCPSPmax-main:$PYTHONPATH
+```
 
 ## CSTNU tool
 The STNU-based algorithms make use of the Java CSTNU Tool by Roberto Posenato[^1]. Our Python repository already includes a JAR file for running the CSTNU-Tool, so no further action is needed.

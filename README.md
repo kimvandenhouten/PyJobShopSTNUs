@@ -11,10 +11,23 @@ python3 -m venv venv                # Create a new virtual environment
 pip install -r requirements.txt     # Install dependencies
 ```
 To be able to run all experiments in this repository, you also need to install the IBM CPLEX Optimization Studio (full edition, available via an academic licence).
-The CPLEX optimizer must then be made available to the scripts by creating a symbolic link in the virtualenv; for example (adjust paths for your system):
+The CPLEX optimizer must then be made available to the scripts by creating a symbolic link in the virtualenv. It depends on your system where to find the original
+location of the cpoptimizer.  The general form is to make the symbolic link is (adjust paths for your system):
+
+```shell
+ln -s /path/to/cpoptimizer /path/to/stochasticRCPSPmax/venv/bin/
+```
+
+To give an example of where to find the cpoptimizer, see:
 
 ```shell
 ln -s /opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer/bin/x86-64_linux/cpoptimizer /path/to/stochasticRCPSPmax/venv/bin/
+```
+
+or:
+
+```shell
+ln -s /Applications/CPLEX_Studio2211/cpoptimizer/bin/x86-64_osx/cpoptimizer /path/to/stochasticRCPSPmax/venv/bin/
 ```
 
 For running scripts from this repository, make sure that:

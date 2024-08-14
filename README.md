@@ -33,7 +33,7 @@ ln -s /Applications/CPLEX_Studio2211/cpoptimizer/bin/x86-64_osx/cpoptimizer /pat
 For running scripts from this repository, make sure that:
 * the working directory is `/path/to/stochasticRCPSPmax`
 * the virtual environment is activated
-* `/path/to/stochasticRCPSPmax` is in `PYTHONPATH'
+* `/path/to/stochasticRCPSPmax` is in `PYTHONPATH`
 
 ```shell
 cd /path/to/stochasticRCPSPmax

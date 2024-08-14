@@ -1,39 +1,41 @@
 import pandas as pd
-import itertools
 import numpy as np
-import matplotlib.pyplot as plt
-import ast
 from general.latex_table_from_list import generate_latex_table_from_lists
 import scipy
 from scipy.stats import binomtest
-from scipy.stats import ttest_ind
 from scipy.stats import wilcoxon
-from experiments.aaai25_experiments.statistical_tests.proportion_test import proportion_test
-from experiments.aaai25_experiments.statistical_tests.magnitude_test import magnitude_test
+from aaai25.statistical_tests.proportion_test import proportion_test
+from aaai25.statistical_tests.magnitude_test import magnitude_test
 
 """
 This script contains the statistical tests that generate the tables that are presented in the Technical Appendix
 of the AAAI25 submission "Proactive and Reactive Constraint Programming for Stochastic Project Scheduling with Maximal
 Time-Lags" including the Wilcoxon, proportion test, and magnitude test for online runtime.
+
+Note that this script generates Table 18 and Table 19 from the Supplementary Material when noise_factor=1, and this
+script generates Table 20 and Table 21 from the Supplementary Material when noise_factor=2.
 """
 
-### START SETTINGS ###
-noise_factor = 2
+
+# SETTINGS
+RESULTS_DIR = "aaai25/final_results"
+noise_factor = 1
+printing_insignificant = True
 # Please refer to the csv file including all results from the experiments
 if noise_factor == 1:
-    data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_08_2024,09_35.csv')
-    data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_10_2024,10_17.csv')
+    data_1 = pd.read_csv(f'{RESULTS_DIR}/final_results_1_07_08_2024,09_35.csv')
+    data_2 = pd.read_csv(f'{RESULTS_DIR}/final_results_1_07_10_2024,10_17.csv')
     data = pd.concat([data_1, data_2])
-else:
-    data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_09_2024,07_10.csv')
-    data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_10_2024,10_17.csv')
-    data_3 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_11_2024,10_51.csv')
+elif noise_factor == 2:
+    data_1 = pd.read_csv(f'{RESULTS_DIR}/final_results_2_07_09_2024,07_10.csv')
+    data_2 = pd.read_csv(f'{RESULTS_DIR}/final_results_2_07_10_2024,10_17.csv')
+    data_3 = pd.read_csv(f'{RESULTS_DIR}/final_results_2_07_11_2024,10_51.csv')
     data = pd.concat([data_1, data_2, data_3])
 
 # Correct infeasibilities
 data.loc[data['feasibility'] == False, 'time_online'] = np.inf
 
-data.to_csv(f'experiments/aaai25_experiments/final_results/combined_results_noise_factor={noise_factor}.csv')
+data.to_csv(f'{RESULTS_DIR}/combined_results_noise_factor={noise_factor}.csv')
 methods = ["proactive_quantile_0.9", "STNU_robust", "reactive", "proactive_SAA_smart"]
 
 if noise_factor == 1:

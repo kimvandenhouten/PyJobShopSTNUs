@@ -57,5 +57,5 @@ for noise_factor in [1, 2]:
                 data_df = pd.DataFrame(data)
 
                 if writing:
-                    data_df.to_csv(f"experiments/aaai25_experiments/results_perfect_information/results_pi_{instance_folder}_{noise_factor}.csv")
+                    data_df.to_csv(f"aaai25/results_perfect_information/results_pi_{instance_folder}_{noise_factor}.csv")
 

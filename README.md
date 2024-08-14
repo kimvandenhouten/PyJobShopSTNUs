@@ -30,12 +30,21 @@ The STNU-based algorithms make use of the Java CSTNU Tool by Robert Posenato[^1]
 ## Reproduction of experiments and tables
 To reproduce the results from our experiments, run:
 ```
-python3 experiments/aaai25/experiments/run_experiments.py
+python3 aaai25/experiments/run_experiments.py
 ```
-
+To solver the deterministic instances with perfect information, run:
+```
+python3 aaai25/experiments/run_deterministic_instances.py
+```
+To reproduce the table with the comparison of the feasibility ratios, run:
+```
+python3 aaai25/generate_tables_compare_feasibility_ratios.py
+```
 To reproduce the tables that are provided in the supplementary material and that include the test results from the Wilcoxon test, Proportion test, and Magnitude test, run the following:
 ```
-python3 statistical_tests/compare_two_methods_obj_to_latex.py
-python3 statistical_tests/compare_two_methods_offline_time_to_latex.py
-python3 statistical_tests/compare_two_methods_online_time_to_latex.py
+python3 aaai25/generate_tables/compare_two_methods_obj_to_latex.py
+python3 aaai25/generate_tables/compare_two_methods_offline_time_to_latex.py
+python3 aaai25/generate_tables/compare_two_methods_online_time_to_latex.py
 ```
+
+Note that Table 1 of the main paper "Proactive and Reactive Constraint Programming for Stochastic Project Scheduling with Maximal Time-Lags" shows a subset of the results in the tables that are output of the scripts above.

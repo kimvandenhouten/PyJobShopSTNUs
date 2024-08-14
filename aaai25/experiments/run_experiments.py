@@ -6,13 +6,13 @@ import ast
 import copy
 import datetime
 # Import reactive approach
-from experiments.aaai25_experiments.scheduling_methods.run_reactive_approach import run_reactive_online
+from scheduling_methods.reactive_method import run_reactive_online
 
 # Import proactive approach
-from experiments.aaai25_experiments.scheduling_methods.run_proactive_approach import run_proactive_offline, run_proactive_online
+from scheduling_methods.proactive_method import run_proactive_offline, run_proactive_online
 
 # Import STNU approach
-from experiments.aaai25_experiments.scheduling_methods.run_stnu_approach import run_stnu_offline, run_stnu_online
+from scheduling_methods.stnu_method import run_stnu_offline, run_stnu_online
 
 from general.logger import get_logger
 logger = get_logger(__name__)
@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 This script contains the experiments that are presented in the AAAI'25 submission "Proactive and Reactive
 Constraint Programming for Stochastic Project Scheduling with Maximal Time-Lags". Note that while running 
 these experiments a new csv file is generated including the results with a time stamp in the filename
+
 """
 
 # GENERAL SETTINGS
@@ -44,6 +45,7 @@ mode_stnu = "robust"
 
 
 # SETTINGS EXPERIMENTS
+DIRECTORY_PI = "aaai25/results_perfect_information"
 INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
 INSTANCE_IDS = range(1, 51)
 NOISE_FACTORS = [1, 2]
@@ -51,12 +53,12 @@ nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
 stnu = True
-writing = True
+writing = False
 now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
 
 
 def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
-    df = pd.read_csv(f'experiments/aaai25_experiments/results_perfect_information/results_pi_{instance_folder}_{noise_factor}.csv')
+    df = pd.read_csv(f'{DIRECTORY_PI}/results_pi_{instance_folder}_{noise_factor}.csv')
     filtered_df = df[(df['instance_id'] == instance_id) & (df['sample'] == sample_index)]
     assert len(filtered_df) == 1
 

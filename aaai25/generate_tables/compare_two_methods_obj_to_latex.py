@@ -2,32 +2,35 @@ import pandas as pd
 import numpy as np
 from scipy.stats import ttest_ind
 from scipy.stats import wilcoxon
-from scipy.stats import binomtest
 from general.latex_table_from_list import generate_latex_table_from_lists
 import scipy
-from experiments.aaai25_experiments.statistical_tests.proportion_test import proportion_test
-from experiments.aaai25_experiments.statistical_tests.magnitude_test import magnitude_test
+from aaai25.statistical_tests.proportion_test import proportion_test
+from aaai25.statistical_tests.magnitude_test import magnitude_test
 
 """
 This script contains the statistical tests that generate the tables that are presented in the Technical Appendix
 of the AAAI25 submission "Proactive and Reactive Constraint Programming for Stochastic Project Scheduling with Maximal
- Time-Lags" including the Wilcoxon, proportion test, and magnitude test for solution quality (makespan).
+Time-Lags" including the Wilcoxon, proportion test, and magnitude test for solution quality (makespan).
+
+Note that this script generates Table 10 and Table 11 from the Supplementary Material when noise_factor=1, and this
+script generates Table 12 and Table 13 from the Supplementary Material when noise_factor=2.
 """
 
+RESULTS_DIR = "aaai25/final_results"
 ### SETTINGS ###
-noise_factor = 1
+noise_factor = 1 # Switch to 1 or 2 to get tables for noise factor c
 printing_insignificant = True
 # Please refer to the csv file including all results from the experiments
 if noise_factor == 1:
-    data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_08_2024,09_35.csv')
-    data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_1_07_10_2024,10_17.csv')
+    data_1 = pd.read_csv(f'{RESULTS_DIR}/final_results_1_07_08_2024,09_35.csv')
+    data_2 = pd.read_csv(f'{RESULTS_DIR}/final_results_1_07_10_2024,10_17.csv')
     data = pd.concat([data_1, data_2])
 elif noise_factor == 2:
-    data_1 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_09_2024,07_10.csv')
-    data_2 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_10_2024,10_17.csv')
-    data_3 = pd.read_csv(f'experiments/aaai25_experiments/final_results/final_results_2_07_11_2024,10_51.csv')
+    data_1 = pd.read_csv(f'{RESULTS_DIR}/final_results/final_results_2_07_09_2024,07_10.csv')
+    data_2 = pd.read_csv(f'{RESULTS_DIR}/final_results/final_results_2_07_10_2024,10_17.csv')
+    data_3 = pd.read_csv(f'{RESULTS_DIR}/final_results/final_results_2_07_11_2024,10_51.csv')
     data = pd.concat([data_1, data_2, data_3])
-data.to_csv(f'experiments/aaai25_experiments/final_results/combined_results_noise_factor={noise_factor}.csv')
+data.to_csv(f'{RESULTS_DIR}/combined_results_noise_factor={noise_factor}.csv')
 
 # DEFINE PAIRS OF METHOD THAT MUST BE COMPARED
 # Note that these pairs are used to determine the ordering in the results table that is printed for overleaf

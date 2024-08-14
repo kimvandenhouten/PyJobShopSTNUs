@@ -3,4 +3,4 @@
 __pycache__/
 venv/
 pyproject.toml
-experiments/aaai25_experiments/results
+aaai25/results

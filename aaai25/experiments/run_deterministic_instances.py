@@ -17,7 +17,7 @@ problem is feasible before running one of the stochastic scheduling methods.
 SEED = 1
 DIRECTORY_INSTANCES = 'rcpsp_max/data'
 INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
-INSTANCE_IDS = range(1, 51)
+INSTANCE_IDS = range(50, 51)
 nb_scenarios_test = 10
 perfect_information = True
 time_limit = 600

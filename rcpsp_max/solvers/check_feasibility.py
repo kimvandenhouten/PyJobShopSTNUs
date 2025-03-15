@@ -4,6 +4,7 @@ import general.logger
 
 logger = general.logger.get_logger(__name__)
 
+
 def check_resources_schedule(earliest_start, durations, capacity, needs):
     num_resources = len(capacity)
     num_jobs = len(durations)

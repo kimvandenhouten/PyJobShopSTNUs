@@ -9,3 +9,4 @@ docplex==2.25.236
 scipy==1.13.1
 matplotlib==3.9.1
 pytest==8.2.2
+pyjobshop==0.0.4

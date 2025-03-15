@@ -220,6 +220,13 @@ class STNU:
         description = self.translation_dict.pop(node_idx)
         self.translation_dict_reversed.pop(description)
 
+    def count_edges(self):
+        count = 0
+        for key, inner_dict in self.edges.items():
+            for inner_key, edge in inner_dict.items():
+                count +=1
+        print(f'Nr of edges {count}')
+
     def get_executable_time_points(self):
         return [node for node in self.nodes if self.node_types[node] in (STNU.EXECUTABLE_TP, STNU.ACTIVATION_TP)]
 

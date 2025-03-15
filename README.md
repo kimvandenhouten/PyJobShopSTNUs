@@ -11,35 +11,16 @@ python3 -m venv venv                # Create a new virtual environment
 pip install -r requirements.txt     # Install dependencies
 ```
 To be able to run all experiments in this repository, you also need to install the IBM CPLEX Optimization Studio (full edition, available via an academic licence).
-The CPLEX optimizer must then be made available to the scripts by creating a symbolic link in the virtualenv. It depends on your system where to find the original
-location of the cpoptimizer.  The general form is to make the symbolic link is (adjust paths for your system):
-
-```shell
-ln -s /path/to/cpoptimizer /path/to/stochasticRCPSPmax/venv/bin/
-```
-
-To give an example of where to find the cpoptimizer, see:
+The CPLEX optimizer must then be made available to the scripts by creating a symbolic link in the virtualenv; for example (adjust paths for your system):
 
 ```shell
 ln -s /opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer/bin/x86-64_linux/cpoptimizer /path/to/stochasticRCPSPmax/venv/bin/
 ```
 
-or:
-
-```shell
-ln -s /Applications/CPLEX_Studio2211/cpoptimizer/bin/x86-64_osx/cpoptimizer /path/to/stochasticRCPSPmax/venv/bin/
-```
-
 For running scripts from this repository, make sure that:
 * the working directory is `/path/to/stochasticRCPSPmax`
-* the virtual environment is activated
 * `/path/to/stochasticRCPSPmax` is in `PYTHONPATH`
-
-```shell
-cd /path/to/stochasticRCPSPmax
-. venv/bin/activate  
-export PYTHONPATH=/path/to/stochasticRCPSPmax:$PYTHONPATH
-```
+* the virtual environment is activated
 
 ## CSTNU tool
 The STNU-based algorithms make use of the Java CSTNU Tool by Roberto Posenato[^1]. Our Python repository already includes a JAR file for running the CSTNU-Tool, so no further action is needed.

@@ -1,6 +1,7 @@
 [tool.cstnutool]
 # The location of the CSTNUTool JAR file to run. If not specified, we will look for CSTNU-Tool.jar in the project root.
-jar_location = "temporal_networks/cstnu_tool/CSTNU-Tool-4.12.jar"
+#jar_location = "temporal_networks/cstnu_tool/CSTNU-Tool-4.12.jar"
+jar_location = "temporal_networks/cstnu_tool/CSTNU-Tool-4.12-ai4b.io-2.jar"
 
 # Location of logging properties to use when running the CSTNUTool
 logging_properties = "temporal_networks/cstnu_tool/logging.properties"

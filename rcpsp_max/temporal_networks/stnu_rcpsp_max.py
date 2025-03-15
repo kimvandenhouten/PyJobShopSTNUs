@@ -63,6 +63,8 @@ from temporal_networks.stnu import STNU
 import numpy as np
 import general.logger
 logger = general.logger.get_logger(__name__)
+
+
 def remove_all_duplicates(tuples_list):
     unique_tuples = []
     seen = set()
@@ -74,6 +76,7 @@ def remove_all_duplicates(tuples_list):
 
     return unique_tuples
 
+
 def get_resource_chains(schedule, capacity, resources, complete=False):
     # schedule is a list of dicts of this form:
     # {"task": i, " "start": start, "end": end}
@@ -84,6 +87,7 @@ def get_resource_chains(schedule, capacity, resources, complete=False):
     resource_use = {}
 
     resource_assignment = []
+    print(schedule)
     for d in sorted(schedule, key=lambda d: d['start']):
         for resource_index, required in enumerate(resources[d['task']]):
             reservations = reserved_until[resource_index]

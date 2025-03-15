@@ -269,7 +269,7 @@ class RCPSP_CP_Benchmark:
             logger.info('WARNING: CP solver failed')
             return None, np.inf
 
-    def solve_saa(self, durations: list[list[int]], time_limit=None,  write=False, output_file="results.csv"):
+    def solve_saa(self, durations, time_limit=None,  write=False, output_file="results.csv"):
         # Create model
         mdl = CpoModel()
         demands = self.needs

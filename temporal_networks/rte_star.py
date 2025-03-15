@@ -478,7 +478,7 @@ def get_enabled_tp(D: RTEdata, S: STNU):
 
                     if rigid_component is False:
                         enabled = False
-                        logger.debug(f'{tp} {S.translation_dict[tp]} is not '
+                        logger.debug(f'{tp} {S.translation_dict[tp]} is not enabled because'
                                      f'{suc_node} {S.translation_dict[suc_node]} with weight 0 not yet executed')
 
         if enabled:

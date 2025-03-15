@@ -3,7 +3,7 @@ import numpy as np
 from temporal_networks.stnu import STNU
 from pyjobshop.Model import Model, Solution
 from pyjobshop.Model import StartBeforeEnd, StartBeforeStart, EndBeforeEnd, EndBeforeStart, SetupTime
-from PyJobShopIntegration.pyjobshop_models.utils import find_schedule_per_resource
+from PyJobShopIntegration.utils import find_schedule_per_resource
 from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 logger = general.logger.get_logger(__name__)

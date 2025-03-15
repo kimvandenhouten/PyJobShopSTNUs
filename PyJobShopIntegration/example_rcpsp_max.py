@@ -11,7 +11,7 @@ If we would continue with this code, improvements can be in the direction of:
 
 from pyjobshop import Model
 from typing import NamedTuple
-from PyJobShopIntegration.pyjobshop_models.utils import find_schedule_per_resource
+from PyJobShopIntegration.utils import find_schedule_per_resource
 from temporal_networks.stnu import STNU
 
 
@@ -25,7 +25,7 @@ class Mode(NamedTuple):
 from rcpsp_max.solvers.RCPSP_CP_benchmark import RCPSP_CP_Benchmark
 from general.logger import get_logger
 from rcpsp_max.temporal_networks.stnu_rcpsp_max import RCPSP_STNU, get_resource_chains, add_resource_chains
-from PyJobShopIntegration.pyjobshop_models.example_fjsp import PyJobShopSTNU
+from PyJobShopIntegration.example_fjsp import PyJobShopSTNU
 from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 logger = get_logger(__name__)

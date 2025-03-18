@@ -4,8 +4,10 @@ from temporal_networks.stnu import STNU
 from pyjobshop.Model import Model, Solution
 from pyjobshop.Model import StartBeforeEnd, StartBeforeStart, EndBeforeEnd, EndBeforeStart, SetupTime
 from PyJobShopIntegration.utils import find_schedule_per_resource
+from PyJobShopIntegration.Sampler import DiscreteRVSampler
 from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
+
 logger = general.logger.get_logger(__name__)
 
 
@@ -14,16 +16,15 @@ class PyJobShopSTNU(STNU):
         super().__init__(origin_horizon)
 
     @classmethod
-    def from_concrete_model(cls, model: Model):
+    def from_concrete_model(cls, model: Model, duration_distributions: DiscreteRVSampler):
         stnu = cls(origin_horizon=False)
+
+        lower_bounds, upper_bounds = duration_distributions.get_bounds()
         for task_idx, task in enumerate(model.tasks):
             task_start = stnu.add_node(f'{task_idx}_{STNU.EVENT_START}')
             task_finish = stnu.add_node(f'{task_idx}_{STNU.EVENT_FINISH}')
 
-            # TODO: add contingent links now with dummy data but this should come from a data source
-            logger.warning(f'Contingent link for task {task_idx} set with bound (2, 7) but in an'
-                           f'correct implementation this should be read from problem data')
-            stnu.add_contingent_link(task_start, task_finish, 2, 7)
+            stnu.add_contingent_link(task_start, task_finish, lower_bounds[task_idx], upper_bounds[task_idx])
 
         for cons in model.constraints.end_before_start:
             stnu.add_end_before_start_constraints(cons)
@@ -48,8 +49,6 @@ class PyJobShopSTNU(STNU):
         """
         pred_idx = self.translation_dict_reversed[f'{cons.task1}_{STNU.EVENT_FINISH}']
         suc_idx = self.translation_dict_reversed[f'{cons.task2}_{STNU.EVENT_FINISH}']
-
-        # TODO: check if delay is correctly set in STNU
         self.set_ordinary_edge(suc_idx, pred_idx, -cons.delay)
 
     def add_end_before_start_constraints(self, cons: EndBeforeStart):
@@ -58,8 +57,6 @@ class PyJobShopSTNU(STNU):
         """
         pred_idx = self.translation_dict_reversed[f'{cons.task1}_{STNU.EVENT_FINISH}']
         suc_idx = self.translation_dict_reversed[f'{cons.task2}_{STNU.EVENT_START}']
-
-        # TODO: check if delay is correctly set in STNU
         self.set_ordinary_edge(suc_idx, pred_idx, -cons.delay)
 
     def add_start_before_end_constraints(self, cons: StartBeforeEnd):
@@ -68,8 +65,6 @@ class PyJobShopSTNU(STNU):
         """
         pred_idx = self.translation_dict_reversed[f'{cons.task1}_{STNU.EVENT_START}']
         suc_idx = self.translation_dict_reversed[f'{cons.task2}_{STNU.EVENT_FINISH}']
-
-        # TODO: check if delay is correctly set in STNU
         self.set_ordinary_edge(suc_idx, pred_idx, -cons.delay)
 
     def add_start_before_start_constraints(self, cons: StartBeforeStart):
@@ -78,8 +73,6 @@ class PyJobShopSTNU(STNU):
         """
         pred_idx = self.translation_dict_reversed[f'{cons.task1}_{STNU.EVENT_START}']
         suc_idx = self.translation_dict_reversed[f'{cons.task2}_{STNU.EVENT_START}']
-
-        # TODO: check if delay is correctly set in STNU
         self.set_ordinary_edge(suc_idx, pred_idx, -cons.delay)
 
     def add_setup_times(self, cons: SetupTime):

@@ -147,17 +147,38 @@ def get_start_and_finish_from_rte(estnu: STNU, rte_data:RTEdata, num_tasks: int)
         finish_times.append(rte_data.f[node_idx_finish])
     return start_times, finish_times
 
+def get_start_and_finish_from_rte(estnu: STNU, rte_data:RTEdata, num_tasks: int) -> (list[int], list[int]):
+    """
+    This function can be used to link the start times and finish times from the rte_dta
+    to the task indices
+    """
+    # TODO: can we make this faster / vectorize, or should it even be integrated in the RTE*?
+    start_times, finish_times = [], []
+    for task in range(num_tasks):
+        node_idx_start = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_START}']
+        node_idx_finish = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_FINISH}']
+        start_times.append(rte_data.f[node_idx_start])
+        finish_times.append(rte_data.f[node_idx_finish])
+    return start_times, finish_times
+
+def overwrite_pyjobshop_solution(solution: Solution, start_times: list[int], finish_times: list[int])\
+        -> (Solution, int):
+    simulated_solution = copy.deepcopy(solution)
+
+    for i in range(len(solution.tasks)):
+        simulated_solution.tasks[i].start = start_times[i]
+        simulated_solution.tasks[i].end = finish_times[i]
+
+    return simulated_solution
+
 
 def rte_data_to_pyjobshop_solution(solution: Solution, estnu: STNU, rte_data: RTEdata, num_tasks: int,
                                    objective: str="makespan") -> (Solution, int):
     """
     This function transforms the output of an RTE simulation into a PyJobShop solution
     """
-    simulated_solution = copy.deepcopy(solution)
     start_times, finish_times = get_start_and_finish_from_rte(estnu, rte_data, num_tasks)
-    for i in range(num_tasks):
-        simulated_solution.tasks[i].start = start_times[i]
-        simulated_solution.tasks[i].end = finish_times[i]
+    simulated_solution = overwrite_pyjobshop_solution(solution, start_times, finish_times)
 
     # TODO: can we make this automatically aligned with the PyJobShop model? Compute the objective given new
     #  start and finish times

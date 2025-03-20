@@ -12,7 +12,6 @@ import general.logger
 logger = general.logger.get_logger(__name__)
 
 
-
 class VertexOrdering(Iterable[int], ABC):
     """Abstract base class for vertex orderings"""
 
@@ -223,7 +222,7 @@ class STN:
         self.shortest_distances = w
         return self.shortest_distances
 
-    def add_node(self, *description):
+    def add_node(self, description):
         if self.removed_nodes:
             node_idx = self.removed_nodes.pop()
         else:

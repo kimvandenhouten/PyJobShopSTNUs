@@ -56,6 +56,8 @@ model = Model()
 # It's not necessary to define jobs, but it will add coloring to the plot.
 jobs = [model.add_job() for _ in range(instance.num_tasks)]
 tasks = [model.add_task(job=jobs[idx]) for idx in range(instance.num_tasks)]
+
+# RCPSP uses renewable resources
 resources = [model.add_renewable(capacity) for capacity in instance.capacity]
 
 for idx in range(instance.num_tasks):

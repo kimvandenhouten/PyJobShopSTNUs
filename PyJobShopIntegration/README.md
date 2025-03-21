@@ -7,10 +7,10 @@ This folder provides a startpoint for this research project, as it shows some in
 AAAI code to generalized code that can be integrated with PyJobShop. Note that the other folders in this repo origin from
 the original AAAI github repository, for which the READ.me is located in the root folder.
 
-### stnu_fjsp.py
+### example_fjsp.py
 This script uses a PyJobShop example for the FJSP, and converts it's solution into a STNU and runs the DC-checking algorithm.
 
-### stnu_rcpsp_max.py
+### example_rcpsp_max.py
 This script uses the uses an instance from RCPSP/max and our code, but now uses a PyJobShop model to solve the deterministic problem and to construct the STNU.
 
 ### rcpsp_example_pyjobshop.py
@@ -47,7 +47,7 @@ Policella, N., Cesta, A., Oddi, A., & Smith, S. F. (2007). From precedence const
 
 Hunsberger, L., & Posenato, R. (2024). Foundations of Dispatchability for Simple Temporal Networks with Uncertainty. In ICAART (2) (pp. 253-263).
 
-Morris, P. (2014, May). Dynamic controllability and dispatchability relationships. In International Conference on Integration of Constraint Programming, Artificial Intelligence, and Operations Research (pp. 464-479). Cham: Springer International Publishing.
+Morris, P. (2014, May). Dynamic controllability and Dispatchability relationships. In International Conference on Integration of Constraint Programming, Artificial Intelligence, and Operations Research (pp. 464-479). Cham: Springer International Publishing.
 
 
 

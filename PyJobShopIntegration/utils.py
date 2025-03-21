@@ -147,6 +147,7 @@ def get_start_and_finish_from_rte(estnu: STNU, rte_data:RTEdata, num_tasks: int)
         finish_times.append(rte_data.f[node_idx_finish])
     return start_times, finish_times
 
+
 def get_start_and_finish_from_rte(estnu: STNU, rte_data:RTEdata, num_tasks: int) -> (list[int], list[int]):
     """
     This function can be used to link the start times and finish times from the rte_dta

@@ -25,16 +25,17 @@ class DiscreteUniformSampler(DiscreteRVSampler):
         """
 
         self.lower_bounds = np.array(lower_bounds)
-        self.upper_bounds = np.array(upper_bounds) + 1  # Make upper bounds inclusive
+        self.upper_bounds = np.array(upper_bounds)
 
         if len(self.lower_bounds) != len(self.upper_bounds):
             raise ValueError("Lower and upper bounds must have the same length.")
 
-        if np.any(self.upper_bounds <= self.lower_bounds):
+        if np.any(self.upper_bounds < self.lower_bounds):
             raise ValueError("Each upper bound must be strictly greater than the corresponding lower bound.")
 
         # Create scipy.stats.randint distributions for each dimension
-        self.distributions = [randint(low, high) for low, high in zip(self.lower_bounds, self.upper_bounds)]
+        # Make upper bounds inclusive
+        self.distributions = [randint(low, high) for low, high in zip(self.lower_bounds, self.upper_bounds+1)]
 
     def sample(self, num_samples=1):
         """
@@ -48,7 +49,6 @@ class DiscreteUniformSampler(DiscreteRVSampler):
             return samples[0]
         else:
             return samples
-
 
     def get_bounds(self):
         return self.lower_bounds, self.upper_bounds

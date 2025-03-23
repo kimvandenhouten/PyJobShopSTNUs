@@ -24,7 +24,10 @@ class PyJobShopSTNU(STNU):
             task_start = stnu.add_node(f'{task_idx}_{STNU.EVENT_START}')
             task_finish = stnu.add_node(f'{task_idx}_{STNU.EVENT_FINISH}')
 
-            stnu.add_contingent_link(task_start, task_finish, lower_bounds[task_idx], upper_bounds[task_idx])
+            if lower_bounds[task_idx] == upper_bounds[task_idx]:
+                stnu.add_tight_constraint(task_start, task_finish, lower_bounds[task_idx])
+            else:
+                stnu.add_contingent_link(task_start, task_finish, lower_bounds[task_idx], upper_bounds[task_idx])
 
         for cons in model.constraints.end_before_start:
             stnu.add_end_before_start_constraints(cons)

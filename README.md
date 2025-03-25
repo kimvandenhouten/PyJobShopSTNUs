@@ -38,7 +38,7 @@ python3 aaai25/experiments/run_deterministic_instances.py
 ```
 To reproduce the table with the comparison of the feasibility ratios, run:
 ```
-python3 aaai25/generate_tables_compare_feasibility_ratios.py
+python3 aaai25/generate_tables/compare_feasibility_ratios.py
 ```
 To reproduce the tables that are provided in the supplementary material and that include the test results from the Wilcoxon test, Proportion test, and Magnitude test, run the following:
 ```

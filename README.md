@@ -5,7 +5,7 @@ This repository implements a proactive, a reactive, and a hybrid approach for st
 ## Installation and practical issues
 From a terminal session:
 ```shell
-cd /path/to/stochasticRCPSPmax      # Go to the directory where you downloaded the repository
+cd /path/to/PyJobShopSTNUs     # Go to the directory where you downloaded the repository
 python3 -m venv venv                # Create a new virtual environment
 . venv/bin/activate                 # Activate it
 pip install -r requirements.txt     # Install dependencies

@@ -26,6 +26,8 @@ This script contains a piece of code from Joost Berkhout which is close to what 
 4. Multi-mode RCPSP (optional with deadlines deadlines)
 5. Multi-mode RCPSP/max (with generalized time-lags/no-wait constraints)
 
+Other variants like permutation flowshop, hybrid flowshop (with deadlines and no-wait constraints or max time-lags, or sequence-dependent set-up times) can also be discussed/ 
+
 
 # Suggestions for benchmark instances 
 

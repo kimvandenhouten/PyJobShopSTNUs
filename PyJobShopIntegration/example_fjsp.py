@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt
 
 logger = general.logger.get_logger(__name__)
 
-
 # FJSP example from PyJobShop documentation
 NUM_MACHINES = 3
 

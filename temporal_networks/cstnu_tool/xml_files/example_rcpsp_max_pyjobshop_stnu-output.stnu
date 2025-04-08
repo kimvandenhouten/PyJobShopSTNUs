@@ -49,48 +49,48 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="nVertices">11</data>
 <data key="Name">example_rcpsp_max_pyjobshop_stnu.stnu</data>
 <node id="0_start">
-<data key="x">171.0</data>
-<data key="y">110.0</data>
+<data key="x">142.0</data>
+<data key="y">101.0</data>
 </node>
 <node id="1_start">
-<data key="x">86.0</data>
-<data key="y">94.0</data>
+<data key="x">99.0</data>
+<data key="y">154.0</data>
 </node>
 <node id="3_start">
-<data key="x">129.0</data>
-<data key="y">87.0</data>
+<data key="x">131.0</data>
+<data key="y">66.0</data>
 </node>
 <node id="2_start">
-<data key="x">79.0</data>
-<data key="y">136.0</data>
+<data key="x">168.0</data>
+<data key="y">106.0</data>
 </node>
 <node id="4_start">
-<data key="x">128.0</data>
-<data key="y">147.0</data>
+<data key="x">41.0</data>
+<data key="y">139.0</data>
 </node>
 <node id="4_finish">
-<data key="x">120.0</data>
-<data key="y">128.0</data>
+<data key="x">176.0</data>
+<data key="y">168.0</data>
 </node>
 <node id="Z">
 <data key="x">10.0</data>
 <data key="y">10.0</data>
 </node>
 <node id="0_finish">
-<data key="x">49.0</data>
-<data key="y">90.0</data>
+<data key="x">42.0</data>
+<data key="y">200.0</data>
 </node>
 <node id="1_finish">
-<data key="x">120.0</data>
-<data key="y">118.0</data>
+<data key="x">121.0</data>
+<data key="y">47.0</data>
 </node>
 <node id="3_finish">
-<data key="x">177.0</data>
-<data key="y">119.0</data>
+<data key="x">140.0</data>
+<data key="y">135.0</data>
 </node>
 <node id="2_finish">
-<data key="x">102.0</data>
-<data key="y">116.0</data>
+<data key="x">180.0</data>
+<data key="y">170.0</data>
 </node>
 <edge id="4_finish_Z" source="4_finish" target="Z">
 <data key="Type">derived</data>

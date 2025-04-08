@@ -1,6 +1,4 @@
-# stochasticRCPSPmax
 This repository implements a proactive, a reactive, and a hybrid approach for stochastic RCPSP/max. It uses state-of-the-art techniques from Constraint Programming (CP) and Simple Temporal Networks with Uncertainty (STNUs).  
-
 
 ## Installation and practical issues
 From a terminal session:

@@ -1,4 +1,4 @@
-from PyJobShopIntegration.PyJobShopSTN import PyJobShopSTN
+from PyJobShopIntegration.dump.PyJobShopSTN import PyJobShopSTN
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 
 from pyjobshop.Model import Model

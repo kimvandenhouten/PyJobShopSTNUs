@@ -19,39 +19,50 @@ logger = general.logger.get_logger(__name__)
 NUM_MACHINES = 3
 
 job_deadlines = {
-    0: 28,
-    1: 27,
-    2: 30,
+    0: 18,
+    1: 19,
+    2: 18,
 }
 
 data = [
-    [  # Job 0
-        [(2, 0), (3, 1)],
-        [(3, 1), (4, 2)],
-        [(2, 0), (3, 2)],
-        [(4, 2), (3, 1)],
+    [
+        [(3, 0), (1, 1), (5, 2)],
+        [(2, 0), (4, 1), (6, 2)],
+        [(2, 0), (3, 1), (1, 2)],
+        [(2, 0), (3, 1), (1, 2)],
     ],
-    [  # Job 1
-        [(3, 2), (4, 0)],
-        [(3, 0), (2, 1)],
-        [(4, 2), (2, 0)],
-        [(3, 1), (3, 2)],
+    [
+        [(2, 0), (3, 1), (4, 2)],
+        [(1, 0), (5, 1), (4, 2)],
+        [(2, 0), (1, 1), (4, 2)],
+        [(2, 1), (3, 0), (1, 2)],
+
     ],
-    [  # Job 2
-        [(2, 1), (3, 0)],
-        [(4, 2), (3, 1)],
-        [(3, 0), (2, 2)],
-        [(3, 2), (4, 1)],
+    [
+        [(2, 0), (1, 1), (4, 2)],
+        [(2, 0), (3, 1), (4, 2)],
+        [(3, 0), (1, 1), (5, 2)],
+        [(2, 0), (3, 1), (1, 2)],
     ],
 ]
 
 model = Model()
+model.set_objective(
+    weight_makespan=1,
+    weight_total_tardiness=1,
+    weight_max_lateness=10,
+    weight_total_earliness=10,
+)
+
+
 machines = [model.add_machine(name=f"Machine {idx}") for idx in range(NUM_MACHINES)]
 jobs = {}
 tasks = {}
 
+deadline_resource = model.add_renewable(capacity=999, name="DeadlineResource")
+
 for job_idx, job_data in enumerate(data):
-    job = model.add_job(name=f"Job {job_idx}")
+    job = model.add_job(name=f"Job {job_idx}", due_date=job_deadlines[job_idx])
     jobs[job_idx] = job
 
     for idx in range(len(job_data)):
@@ -66,24 +77,26 @@ for job_idx, job_data in enumerate(data):
 
     for idx in range(len(job_data) - 1):
         model.add_end_before_start(tasks[(job_idx, idx)], tasks[(job_idx, idx + 1)], delay=0)
+
     last_task = tasks[(job_idx, len(job_data) - 1)]
     deadline = job_deadlines[job_idx]
 
+    # Dummy task to mark the end of the job, we want to encourage early completion
     deadline_task = model.add_task(
         name=f"Deadline for Job {job_idx}",
         earliest_start=0,
         latest_end=deadline,
     )
-    model.add_mode(deadline_task, machines[0], duration=1)
+    model.add_mode(deadline_task, deadline_resource, duration=1)
     model.add_end_before_end(last_task, deadline_task)
-    model.set_objective(weight_makespan=1)
+    model.add_end_before_start(last_task, deadline_task)
 
 result = model.solve(display=False)
 solution = result.best
 
 duration_distributions = DiscreteUniformSampler(
-    lower_bounds=np.random.randint(2, 4, len(model.tasks)),
-    upper_bounds=np.random.randint(5, 7, len(model.tasks))
+    lower_bounds=np.full(len(model.tasks), 1),
+    upper_bounds=np.full(len(model.tasks), 3),
 )
 
 stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
@@ -98,7 +111,6 @@ for job_idx, deadline in job_deadlines.items():
 
     stnu.set_ordinary_edge(finish_node, origin_node, -deadline)
 
-
 os.makedirs("temporal_networks/cstnu_tool/xml_files", exist_ok=True)
 stnu_to_xml(stnu, f"fjsp_deadlines_stnu", "temporal_networks/cstnu_tool/xml_files")
 
@@ -108,6 +120,7 @@ if dc:
     logger.info(f"The network is dynamically controllable.")
 else:
     logger.info(f"The network is NOT dynamically controllable.")
+
 if dc:
     estnu = STNU.from_graphml(output_location)
     sample_duration = duration_distributions.sample()

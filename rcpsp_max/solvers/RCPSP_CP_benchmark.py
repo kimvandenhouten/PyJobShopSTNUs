@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from docplex.cp.model import *
 import general.logger
-from general.utils import get_project_root
+from PyJobShopIntegration.utils import get_project_root
 
 logger = general.logger.get_logger(__name__)
 

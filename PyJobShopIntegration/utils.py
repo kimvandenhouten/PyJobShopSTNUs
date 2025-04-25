@@ -1,6 +1,6 @@
 import copy
 from typing import Dict
-
+from pathlib import Path
 import numpy as np
 from pyjobshop import Solution
 from temporal_networks.stnu import STNU
@@ -201,3 +201,5 @@ def sample_for_rte(sample_duration: np.ndarray, estnu: STNU) -> dict[int, int]:
         find_contingent_node = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_FINISH}']
         sample[find_contingent_node] = duration
     return sample
+def get_project_root() -> Path:
+    return Path(__file__).resolve().parents[1]

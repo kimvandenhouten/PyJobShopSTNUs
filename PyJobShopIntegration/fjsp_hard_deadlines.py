@@ -19,9 +19,9 @@ logger = general.logger.get_logger(__name__)
 NUM_MACHINES = 3
 
 job_deadlines = {
-    0: 18,
-    1: 19,
-    2: 18,
+    0: 9,
+    1: 9,
+    2: 9,
 }
 
 data = [
@@ -49,9 +49,9 @@ data = [
 model = Model()
 model.set_objective(
     weight_makespan=1,
-    weight_total_tardiness=1,
-    weight_max_lateness=10,
     weight_total_earliness=10,
+    weight_total_tardiness=0,
+    weight_max_lateness=1000,
 )
 
 
@@ -78,7 +78,6 @@ for job_idx, job_data in enumerate(data):
     for idx in range(len(job_data) - 1):
         model.add_end_before_start(tasks[(job_idx, idx)], tasks[(job_idx, idx + 1)], delay=0)
 
-    last_task = tasks[(job_idx, len(job_data) - 1)]
     deadline = job_deadlines[job_idx]
 
     # Dummy task to mark the end of the job, we want to encourage early completion
@@ -87,10 +86,12 @@ for job_idx, job_data in enumerate(data):
         earliest_start=0,
         latest_end=deadline,
     )
+    last_task = tasks[(job_idx, len(job_data) - 1)]
     model.add_mode(deadline_task, deadline_resource, duration=1)
-    model.add_end_before_end(last_task, deadline_task)
+    model.add_end_before_start(last_task, deadline_task)
 
 result = model.solve(display=False)
+print(result)
 solution = result.best
 
 duration_distributions = DiscreteUniformSampler(

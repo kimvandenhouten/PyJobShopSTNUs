@@ -89,7 +89,6 @@ for job_idx, job_data in enumerate(data):
     )
     model.add_mode(deadline_task, deadline_resource, duration=1)
     model.add_end_before_end(last_task, deadline_task)
-    model.add_end_before_start(last_task, deadline_task)
 
 result = model.solve(display=False)
 solution = result.best

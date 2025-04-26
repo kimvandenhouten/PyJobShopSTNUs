@@ -5,7 +5,11 @@ import numpy as np
 from pyjobshop import Solution
 from temporal_networks.stnu import STNU
 from temporal_networks.rte_star import RTEdata
+from pathlib import Path
 
+def get_project_root()->Path:
+    """Returns the root path of the project."""
+    return Path(__file__).resolve().parents[1]
 
 def find_schedule_per_resource(solution: Solution) -> Dict[int, list[int]]:
     """

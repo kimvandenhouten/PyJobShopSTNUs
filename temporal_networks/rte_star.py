@@ -68,7 +68,8 @@ class RTEdata:
         # Initialize enabled timepoints
         rte_data.enabled_tp = get_enabled_tp(rte_data, estnu)
 
-        for tp in u_x:
+        # for tp in u_x:
+        for tp in estnu.get_executable_time_points():
             # Initialize time windows
             rte_data.time_windows[tp] = TimeWindow(tp)
 
@@ -519,6 +520,8 @@ def hxe_update(S: STNU, D: RTEdata, t: float, V: int):
         # Line 6: Foreach (Y, C:-w, V) \in Edges_w (wait edges) do:
         for (X, label, weight, Y) in S.get_wait_edges():
             if Y == V:
+                if X not in D.act_waits:
+                    D.act_waits[X] = []
                 D.act_waits[X].append((t - weight, label))
                 logger.debug(f'Activated wait for {X} with {(t-weight, label)}')
     return D

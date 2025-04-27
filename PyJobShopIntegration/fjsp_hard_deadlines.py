@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 
 from pyjobshop.Model import Model
 from pyjobshop.plot import plot_machine_gantt
+
+from PyJobShopIntegration.reactive_left_shift import group_shift_solution_resequenced
 from PyJobShopIntegration.utils import rte_data_to_pyjobshop_solution, sample_for_rte
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
@@ -110,6 +112,12 @@ for job_idx, job_data in enumerate(data):
 result = model.solve(display=True)
 solution = result.best
 print(f"Objective value: {result.objective}")
+solution = group_shift_solution_resequenced(solution, model)
+
+print("\n[DEBUG] Tasks after shifting:")
+for idx, task in enumerate(solution.tasks):
+    task_name = model.tasks[idx].name if idx < len(model.tasks) else f"Task {idx}"
+    print(f"{task_name}: start={task.start}, end={task.end}, duration={task.end - task.start}")
 
 # -------------------------
 # PHASE 3: STNU Construction
@@ -120,16 +128,17 @@ duration_distributions = DiscreteUniformSampler(
     upper_bounds=np.full(len(model.tasks), 3),
 )
 
+# 3. Build the STNU
 stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
 stnu.add_resource_chains(solution, model)
 
-# Add deadline constraints into STNU
+# Add deadline edges again:
 for job_idx, deadline in job_deadlines.items():
     last_task = tasks[(job_idx, len(data[job_idx]) - 1)]
     task_index = model.tasks.index(last_task)
-    finish_node = stnu.translation_dict_reversed[f"{task_index}_{STNU.EVENT_FINISH}"]
-    stnu.set_ordinary_edge(finish_node, STNU.ORIGIN_IDX, -deadline)
 
+    finish_node = stnu.translation_dict_reversed[f"{task_index}_{STNU.EVENT_FINISH}"]
+    origin_node = STNU.ORIGIN_IDX
 # -------------------------
 # PHASE 4: Check Dynamic Controllability
 # -------------------------

@@ -1,3 +1,4 @@
+import os
 import random
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
@@ -106,6 +107,6 @@ def stnu_to_xml(stnu, name_graph, directory):
     networktype = "STNU"
     nedges = len(edges)
     nvertices = len(stnu.nodes)
-    write_graphml(f"{directory}/{name_graph}.stnu", ncontingent, networktype, nedges, nvertices, name_graph, edges, nodes)
+    write_graphml(os.path.join(directory, f"{name_graph}.stnu"), ncontingent, networktype, nedges, nvertices, name_graph, edges, nodes)
 
 

@@ -1,6 +1,10 @@
 # Import
+import os
+
 import numpy as np
 import pandas as pd
+
+from PyJobShopIntegration.utils import get_project_root
 from rcpsp_max.solvers.RCPSP_CP_benchmark import RCPSP_CP_Benchmark
 import ast
 import copy
@@ -56,9 +60,10 @@ stnu = True
 writing = False
 now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
 
+project_root = get_project_root()
 
 def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
-    df = pd.read_csv(f'{DIRECTORY_PI}/results_pi_{instance_folder}_{noise_factor}.csv')
+    df = pd.read_csv(os.path.join(project_root, f'{DIRECTORY_PI}', f'results_pi_{instance_folder}_{noise_factor}.csv'))
     filtered_df = df[(df['instance_id'] == instance_id) & (df['sample'] == sample_index)]
     assert len(filtered_df) == 1
 

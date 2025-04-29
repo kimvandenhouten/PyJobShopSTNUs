@@ -9,7 +9,7 @@ logger = general.logger.get_logger(__name__)
 
 class RCPSP_CP_Benchmark:
     def __init__(self, capacity, durations, successors, needs, temporal_constraints=None, problem_type="RCPSP",
-                 instance_folder="", instance_id="", noise_factor=1):
+                 instance_folder="", instance_id="", noise_factor=1, modes=[]):
         # convert to RCPSP instance
         self.capacity = capacity
         self.durations = durations
@@ -21,6 +21,7 @@ class RCPSP_CP_Benchmark:
         self.instance_id = instance_id
         self.num_tasks = len(self.durations)
         self.noise_factor = noise_factor
+        self.modes = modes
 
     @classmethod
     def parsche_file(cls, directory, instance_folder, instance_id, noise_factor):
@@ -80,6 +81,73 @@ class RCPSP_CP_Benchmark:
 
         rcpsp_max = cls(capacity, durations, None, needs, temporal_relations, "RCPSP_max",
                         instance_folder, instance_id, noise_factor)
+
+        return rcpsp_max
+
+    @classmethod
+    def parsche_file_mm(cls, directory, instance_folder, instance_id, instance_sub_id, noise_factor):
+        directory = get_project_root() / directory
+
+        filename = directory / f"{instance_folder}_mm" / f"{instance_folder}{instance_id}_{instance_sub_id}"
+
+        print(f"[DEBUG] Loading MM file from: {filename}")
+        if not filename.exists():
+            raise FileNotFoundError(f"Could not find: {filename}")
+
+        with open(filename, "r") as file:
+            lines = [line.strip() for line in file if line.strip()]
+
+        # Initialize structures
+        durations = []
+        modes = []
+        needs = []
+        successors = [[] for _ in range(0)]  # Will resize later if needed
+        temporal_constraints = []
+
+        # Read task lines
+        idx = 0
+        while idx < len(lines) and not lines[idx].lower().startswith('precedence'):
+            parts = lines[idx].split()
+            task_id = int(parts[0])
+            duration = int(parts[2])
+            resource_needs = list(map(int, parts[3:]))
+
+            # Ensure correct size of lists
+            while len(durations) <= task_id:
+                durations.append(0)
+                needs.append([])
+
+            durations[task_id] = duration
+            needs[task_id] = resource_needs
+
+            idx += 1
+
+        # Read precedence constraints
+        idx += 1  # Skip the 'precedence:' line
+        while idx < len(lines) and not lines[idx].lower().startswith('capacity'):
+            parts = lines[idx].split()
+            if len(parts) == 3:
+                from_task = int(parts[0])
+                to_task = int(parts[1])
+                lag = int(parts[2])
+                temporal_constraints.append((from_task, lag, to_task))
+            idx += 1
+
+        # Read capacity
+        idx += 1  # Skip the 'capacity:' line
+        capacity = list(map(int, lines[idx].split()))
+
+        rcpsp_max = cls(
+            capacity=capacity,
+            durations=durations,
+            successors=None,
+            needs=needs,
+            temporal_constraints=temporal_constraints,
+            problem_type="RCPSP_max",
+            instance_folder=instance_folder,
+            instance_id=instance_id,
+            noise_factor=noise_factor
+        )
 
         return rcpsp_max
 

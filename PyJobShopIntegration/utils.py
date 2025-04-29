@@ -7,6 +7,8 @@ from temporal_networks.stnu import STNU
 from temporal_networks.rte_star import RTEdata
 from pathlib import Path
 
+import networkx as nx
+import matplotlib.pyplot as plt
 def get_project_root()->Path:
     """Returns the root path of the project."""
     return Path(__file__).resolve().parents[1]
@@ -204,3 +206,51 @@ def sample_for_rte(sample_duration: np.ndarray, estnu: STNU) -> dict[int, int]:
         find_contingent_node = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_FINISH}']
         sample[find_contingent_node] = duration
     return sample
+
+
+def plot_stnu(stnu: STNU):
+    G = nx.DiGraph()
+
+    # Add nodes with their names from the translation dict
+    for node in stnu.nodes:
+        label = stnu.translation_dict.get(node, str(node))
+        G.add_node(node, label=label)
+
+    # Add ordinary edges
+    for u, outgoing in stnu.edges.items():
+        for v, edge in outgoing.items():
+            if edge.weight is not None:
+                G.add_edge(u, v, label=str(edge.weight), style='solid', color='black')
+
+            # Labeled edges (UC / LC)
+            if edge.uc_weight is not None:
+                G.add_edge(u, v, label=f"UC {edge.uc_weight}", style='dashed', color='red')
+            if edge.lc_weight is not None:
+                G.add_edge(v, u, label=f"LC {-edge.lc_weight}", style='dashed', color='blue')
+
+    # Draw graph
+    pos = nx.spring_layout(G, seed=42)  # or use nx.planar_layout / nx.shell_layout
+
+    # Draw nodes with labels
+    node_labels = nx.get_node_attributes(G, 'label')
+    nx.draw_networkx_nodes(G, pos, node_size=800, node_color='lightgray')
+    nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=10)
+
+    # Draw edges by style
+    edges_by_style = {}
+    for u, v, d in G.edges(data=True):
+        style = d.get('style', 'solid')
+        edges_by_style.setdefault(style, []).append((u, v))
+
+    for style, edges in edges_by_style.items():
+        edge_color = [G[u][v].get('color', 'black') for (u, v) in edges]
+        nx.draw_networkx_edges(G, pos, edgelist=edges, style=style, edge_color=edge_color)
+
+    # Draw edge labels
+    edge_labels = nx.get_edge_attributes(G, 'label')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=8)
+
+    plt.title("STNU Visualization")
+    plt.axis('off')
+    plt.tight_layout()
+    plt.show()

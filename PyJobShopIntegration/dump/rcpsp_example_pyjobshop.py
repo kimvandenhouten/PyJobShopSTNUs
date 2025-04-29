@@ -4,7 +4,7 @@ https://pyjobshop.org/latest/examples/project_scheduling.html
 """
 
 
-from pyjobshop import Model, MAX_VALUE
+from pyjobshop import Model
 
 import re
 from dataclasses import dataclass
@@ -23,6 +23,7 @@ from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 from temporal_networks.stnu import STNU
 from temporal_networks.rte_star import rte_star
+from PyJobShopIntegration.utils import plot_stnu
 import numpy as np
 from general.logger import get_logger
 import matplotlib.pyplot as plt
@@ -52,7 +53,6 @@ class Instance:
     modes: list[Mode]
     capacities: list[int]
     renewable: list[bool]
-    deadlines: dict[int, int]
 
     @classmethod
     def read_instance(cls, path: str) -> "Instance":
@@ -66,7 +66,6 @@ class Instance:
         prec_idx = lines.index("PRECEDENCE RELATIONS:\n")
         req_idx = lines.index("REQUESTS/DURATIONS:\n")
         avail_idx = lines.index("RESOURCEAVAILABILITIES:\n")
-        deadlines_idx = lines.index("DEADLINES:\n")
 
         successors = []
 
@@ -111,11 +110,6 @@ class Instance:
             if x in ["R", "N"]  # R: renewable, N: non-renewable
         ]
 
-        deadlines = {
-            int(line.split()[0]) - 1: int(line.split()[1])
-            for line in lines[deadlines_idx + 2 : -1]
-        }
-
         return Instance(
             int(job_idx),
             len(capacities),
@@ -124,19 +118,15 @@ class Instance:
             modes,
             capacities,
             renewable,
-            deadlines,
         )
-directory = os.path.join(os.getcwd(), "PyJobShopIntegration", "data", "mmrcpspd", "j10")
+directory = os.path.join("PyJobShopIntegration", "data")
 filename = "j102_2.mm"
 instance = Instance.read_instance(os.path.join(directory, filename))
 model = Model()
 
 # It's not necessary to define jobs, but it will add coloring to the plot.
 jobs = [model.add_job() for _ in range(instance.num_jobs)]
-tasks = [
-    model.add_task(job=jobs[idx], latest_end=instance.deadlines[idx] if idx in instance.deadlines else MAX_VALUE)
-    for idx in range(instance.num_jobs)
-]
+tasks = [model.add_task(job=jobs[idx]) for idx in range(instance.num_jobs)]
 # resources = [model.add_renewable(capacity) for capacity in instance.capacities]
 resources = [
     model.add_renewable(capacity) if instance.renewable[idx] else model.add_non_renewable(capacity)
@@ -194,10 +184,7 @@ if dc:
     # TODO: we could have some sort of Simulator/Evaluator class to do all of this
     # Read ESTNU xml file into Python object that was the output from the previous step
     estnu = STNU.from_graphml(output_location)
-    print("ESTNU: ", estnu.translation_dict_reversed)
     sample_duration = duration_distributions.sample()
-    print("Sample duration: ", sample_duration)
-    print("ESTNU: ", estnu)
     sample = sample_for_rte(sample_duration, estnu)  # TODO: this could then be integrated in a Simulator Class
     logger.debug(f'Sample dict that will be given to RTE star is {sample_duration}')
 

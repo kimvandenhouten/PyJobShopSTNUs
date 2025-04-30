@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 
 from pyjobshop.Model import Model
 from pyjobshop.plot import plot_machine_gantt
-
 from PyJobShopIntegration.reactive_left_shift import group_shift_solution_resequenced
 from PyJobShopIntegration.utils import rte_data_to_pyjobshop_solution, sample_for_rte
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
+from general.deadline_utils import check_deadline_feasibility, compute_slack_weights
 
 from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
@@ -27,11 +27,11 @@ logger = general.logger.get_logger(__name__)
 NUM_MACHINES = 3
 
 job_deadlines = {
-    0: 30,
-    1: 30,
-    2: 27,
-    3: 27,
-    4: 27,
+    0: 17,
+    1: 17,
+    2: 17,
+    3: 17,
+    4: 17,
 }
 
 data = [
@@ -70,6 +70,13 @@ data = [
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
+infeasible_jobs = check_deadline_feasibility(data, job_deadlines)
+
+if infeasible_jobs:
+    print("[WARNING] Infeasible jobs found:")
+    for job_idx, needed, deadline in infeasible_jobs:
+        print(f" - Job {job_idx}: needs ≥ {needed}, deadline = {deadline}")
+
 
 model = Model()
 model.set_objective(
@@ -78,6 +85,7 @@ model.set_objective(
     weight_total_tardiness=0,
     weight_max_lateness=1000,
 )
+weights = compute_slack_weights(data, job_deadlines)
 
 machines = [model.add_machine(name=f"Machine {idx}") for idx in range(NUM_MACHINES)]
 tasks = {}

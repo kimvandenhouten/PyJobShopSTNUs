@@ -95,6 +95,7 @@ def run_stnu_offline(rcpsp_max, time_limit_cp_stnu=60, mode="mean"):
         data_dict['can_build_stnu'] = True
         # Build the STNU using the instance information and the resource chains
         schedule = schedule.to_dict('records')
+        rcpsp_max.update_needs(schedule)
         resource_chains, resource_assignments = get_resource_chains(schedule, rcpsp_max.capacity, rcpsp_max.needs,
                                                                     complete=True)
         stnu = RCPSP_STNU.from_rcpsp_max_instance(rcpsp_max.durations, rcpsp_max.temporal_constraints, noise_factor=rcpsp_max.noise_factor)

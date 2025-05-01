@@ -4,7 +4,7 @@ https://pyjobshop.org/latest/examples/project_scheduling.html
 """
 
 
-from pyjobshop import Model
+from pyjobshop import Model, MAX_VALUE
 
 import re
 from dataclasses import dataclass
@@ -53,6 +53,7 @@ class Instance:
     modes: list[Mode]
     capacities: list[int]
     renewable: list[bool]
+    deadlines: dict[int, int]
 
     @classmethod
     def read_instance(cls, path: str) -> "Instance":
@@ -66,6 +67,7 @@ class Instance:
         prec_idx = lines.index("PRECEDENCE RELATIONS:\n")
         req_idx = lines.index("REQUESTS/DURATIONS:\n")
         avail_idx = lines.index("RESOURCEAVAILABILITIES:\n")
+        deadlines_idx = lines.index("DEADLINES:\n")
 
         successors = []
 
@@ -110,6 +112,11 @@ class Instance:
             if x in ["R", "N"]  # R: renewable, N: non-renewable
         ]
 
+        deadlines = {
+            int(line.split()[0]) - 1: int(line.split()[1])
+            for line in lines[deadlines_idx + 2 : -1]
+        }
+
         return Instance(
             int(job_idx),
             len(capacities),
@@ -118,15 +125,19 @@ class Instance:
             modes,
             capacities,
             renewable,
+            deadlines,
         )
-directory = os.path.join("PyJobShopIntegration", "data")
+directory = os.path.join("PyJobShopIntegration", "data", "instances_with_deadlines")
 filename = "j102_2.mm"
 instance = Instance.read_instance(os.path.join(directory, filename))
 model = Model()
 
 # It's not necessary to define jobs, but it will add coloring to the plot.
 jobs = [model.add_job() for _ in range(instance.num_jobs)]
-tasks = [model.add_task(job=jobs[idx]) for idx in range(instance.num_jobs)]
+tasks = [
+    model.add_task(job=jobs[idx], latest_end=instance.deadlines[idx] if idx in instance.deadlines else MAX_VALUE)
+    for idx in range(instance.num_jobs)
+]
 # resources = [model.add_renewable(capacity) for capacity in instance.capacities]
 resources = [
     model.add_renewable(capacity) if instance.renewable[idx] else model.add_non_renewable(capacity)

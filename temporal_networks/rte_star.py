@@ -328,6 +328,9 @@ def rte_oracle_sample(S: STNU, D: RTEdata, delta: RTEdecision, sample: dict):
     finish = {}
     t_c = np.inf  # Keep track of the earliest finishing contingent TP
     for (A, C, x, y) in active_links:
+        print("Sample: ", sample)
+        print("A: ", A)
+        print("C: ", C)
         logger.debug(f'{(A, C, x, y)} has sample {sample[C]} and f[A] {f[A]} and f[C] {f[A] + sample[C]}')
         finish[C] = f[A] + sample[C]
         f_act_tp[C] = f[A]

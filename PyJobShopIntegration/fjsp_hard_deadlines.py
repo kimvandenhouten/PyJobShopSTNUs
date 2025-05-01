@@ -27,44 +27,47 @@ logger = general.logger.get_logger(__name__)
 NUM_MACHINES = 3
 
 job_deadlines = {
-    0: 17,
-    1: 17,
-    2: 17,
-    3: 17,
-    4: 17,
+    0: 80,
+    1: 80,
+    2: 80,
+    3: 80,
+    4: 80,
+    5 : 8,
 }
 
+
 data = [
-    [
-        [(6, 0), (4, 1), (3, 2)],
-        [(2, 0), (5, 1), (3, 2)],
-        [(3, 0), (6, 1), (5, 2)],
-        [(1, 0), (2, 1), (4, 2)],
+    [  # Job 0 (total min duration = 3+2+3+2 = 10)
+        [(3, 0), (5, 1)],    # Task 0
+        [(2, 1), (4, 2)],    # Task 1
+        [(3, 0), (3, 2)],    # Task 2
+        [(2, 1), (4, 2)],    # Task 3
     ],
-    [
-        [(6, 0), (3, 1), (4, 2)],
-        [(6, 0), (3, 1), (4, 2)],
-        [(3, 0), (5, 1), (1, 2)],
-        [(2, 0), (1, 1), (3, 2)],
+    [  # Job 1 (total min duration = 4+3+2+2 = 11)
+        [(4, 0), (5, 1)],    # Task 0
+        [(3, 1), (6, 2)],    # Task 1
+        [(2, 0), (3, 2)],    # Task 2
+        [(2, 1), (3, 2)],    # Task 3
     ],
-    [
-        [(3, 0), (6, 1), (1, 2)],
-        [(6, 0), (3, 1), (6, 2)],
-        [(5, 0), (4, 1), (1, 2)],
-        [(4, 0), (1, 1), (3, 2)],
+    [  # Job 2 (min total duration = 4+3+3+2 = 12)
+        [(4, 2), (6, 0)],    # Task 0
+        [(3, 0), (4, 1)],    # Task 1
+        [(3, 1), (5, 2)],    # Task 2
+        [(2, 0), (3, 2)],    # Task 3
     ],
-    [
-        [(5, 0), (3, 1), (4, 2)],
-        [(3, 0), (5, 1), (3, 2)],
-        [(3, 0), (1, 1), (2, 2)],
-        [(6, 0), (2, 1), (5, 2)],
+    [  # Job 3 (min total duration = 5+4+2+3 = 14)
+        [(5, 0), (6, 2)],    # Task 0
+        [(4, 1), (5, 2)],    # Task 1
+        [(2, 0), (4, 1)],    # Task 2
+        [(3, 1), (3, 2)],    # Task 3
     ],
-    [
-        [(6, 0), (2, 1), (2, 2)],
-        [(3, 0), (3, 1), (2, 2)],
-        [(1, 0), (2, 1), (1, 2)],
-        [(4, 0), (3, 1), (3, 2)],
+    [  # Job 4 (min total duration = 3+4+3+2 = 12)
+        [(3, 0), (4, 2)],    # Task 0
+        [(4, 1), (5, 2)],    # Task 1
+        [(3, 0), (3, 1)],    # Task 2
+        [(2, 2), (4, 1)],    # Task 3
     ],
+    [[(1,2)]],
 ]
 
 # -------------------------
@@ -133,7 +136,7 @@ for idx, task in enumerate(solution.tasks):
 
 duration_distributions = DiscreteUniformSampler(
     lower_bounds=np.full(len(model.tasks), 1),
-    upper_bounds=np.full(len(model.tasks), 3),
+    upper_bounds=np.full(len(model.tasks), 9),
 )
 
 # 3. Build the STNU
@@ -161,33 +164,64 @@ else:
     logger.warning("The network is NOT dynamically controllable.")
 
 # -------------------------
-# PHASE 5: Real-Time Execution Simulation
+# PHASE 5: Real-Time Execution Simulation & Plots
 # -------------------------
-
 if dc:
     estnu = STNU.from_graphml(output_location)
-    sample_duration = duration_distributions.sample()
-    sample = sample_for_rte(sample_duration, estnu)
 
-    rte_data = rte_star(estnu, oracle="sample", sample=sample)
+    total_runs = 1000
+    makespans = []
+    violations = 0
+    first_solution = None
 
-    simulated_solution, objective = rte_data_to_pyjobshop_solution(
-        solution, estnu, rte_data, len(model.tasks), "makespan"
-    )
+    for run in range(total_runs):
+        sample_duration = duration_distributions.sample()
+        sample = sample_for_rte(sample_duration, estnu)
+        rte_data = rte_star(estnu, oracle="sample", sample=sample)
+        simulated_solution, objective = rte_data_to_pyjobshop_solution(
+            solution, estnu, rte_data, len(model.tasks), "makespan"
+        )
+        makespans.append(objective)
 
-    # Check deadlines
-    for job_idx, deadline in job_deadlines.items():
-        last_task = simulated_solution.tasks[len(data[job_idx]) * job_idx + len(data[job_idx]) - 1]
-        if last_task.end > deadline:
-            logger.warning(f"Job {job_idx} missed its deadline! Ended at {last_task.end}, deadline was {deadline}")
-        else:
-            logger.info(f"Job {job_idx} met its deadline: finished at {last_task.end} / deadline {deadline}")
+        missed = False
+        for job_idx, deadline in job_deadlines.items():
+            last_task = simulated_solution.tasks[len(data[job_idx]) * job_idx + len(data[job_idx]) - 1]
+            if last_task.end > deadline:
+                missed = True
+                break
+
+        if missed:
+            violations += 1
+        if run == 0:
+            first_solution = simulated_solution
+
+    logger.info(f"Deadline violations in {total_runs} runs: {violations}")
 
     # -------------------------
-    # PHASE 6: Visualization
+    # Gantt Chart for First Run
     # -------------------------
-
-    plot_machine_gantt(simulated_solution, model.data(), plot_labels=True)
+    plot_machine_gantt(first_solution, model.data(), plot_labels=True)
     os.makedirs("PyJobShopIntegration/images", exist_ok=True)
     plt.savefig('PyJobShopIntegration/images/fjsp_with_deadlines.png')
     plt.show()
+
+    # -------------------------
+    # Statistics Plots
+    # -------------------------
+    def plot_simulation_statistics(makespans, violations, total_runs):
+        plt.figure()
+        plt.bar(["Met", "Violated"], [total_runs - violations, violations])
+        plt.title("Deadline Compliance")
+        plt.ylabel("Number of Runs")
+        plt.savefig("PyJobShopIntegration/images/deadline_violations.png")
+        plt.show()
+
+        plt.figure()
+        plt.hist(makespans, bins=15)
+        plt.title("Makespan Distribution")
+        plt.xlabel("Makespan")
+        plt.ylabel("Frequency")
+        plt.savefig("PyJobShopIntegration/images/makespan_distribution.png")
+        plt.show()
+
+    plot_simulation_statistics(makespans, violations, total_runs)

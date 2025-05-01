@@ -43,3 +43,44 @@ def compute_slack_weights(raw_data, job_deadlines, high=10, medium=5, low=1, sla
         else:
             weights[job_idx] = low
     return weights
+
+
+
+def estimate_deadline_violation_probabilities(solution, model, sampler, job_deadlines, num_samples=1000):
+    """
+    Estimate probability of deadline violation per job using sampled durations.
+
+    Parameters:
+    - solution: Static schedule solution from PyJobShop.
+    - model: The CP model.
+    - sampler: An instance of DiscreteUniformSampler.
+    - job_deadlines: Dict mapping job indices to deadline values.
+    - num_samples: Number of duration samples to draw.
+
+    Returns:
+    - Dict[job_idx] = estimated violation probability
+    """
+    job_violations = {j: 0 for j in job_deadlines}
+
+    for _ in range(num_samples):
+        durations = sampler.sample()
+
+        # Build simulated task end times
+        task_end_times = [0] * len(solution.tasks)
+
+        for idx, task in enumerate(solution.tasks):
+            start = task.start
+            duration = durations[idx]
+            end = start + duration
+            task_end_times[idx] = end
+
+        # Check job deadline satisfaction
+        for job_idx, deadline in job_deadlines.items():
+            last_task_idx = max(
+                idx for idx, task in enumerate(model.tasks)
+                if task.job == job_idx and "Deadline" not in task.name
+            )
+            if task_end_times[last_task_idx] > deadline:
+                job_violations[job_idx] += 1
+
+    return {job: job_violations[job] / num_samples for job in job_violations}

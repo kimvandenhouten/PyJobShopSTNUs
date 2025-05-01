@@ -2,8 +2,6 @@ def group_shift_solution_resequenced(solution, model, buffer_time=1, split_time=
     """
     Shift the 'right cluster' of tasks to the first safe point, and resequence them on machines.
     """
-    from pyjobshop import Machine
-
     """
         Translate the entire right cluster (tasks starting after split_time) to shift_start_time.
         """

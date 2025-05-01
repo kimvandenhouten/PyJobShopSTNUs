@@ -36,5 +36,5 @@ RUN pip3 install numpy matplotlib pandas
 RUN ln -s /opt/ibm/ILOG/CPLEX_Studio2212/cpoptimizer/bin/x86-64_linux/cpoptimizer /usr/local/bin/cpoptimizer
 
 WORKDIR /workspace
-
+ENV PYTHONPATH=/workspace
 CMD ["/bin/bash"]

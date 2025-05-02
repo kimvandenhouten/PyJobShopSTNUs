@@ -201,7 +201,7 @@ if dc:
 
     # Run RTE algorithm with sample
     rte_data = rte_star(estnu, oracle="sample", sample=sample)
-
+    print("RTE data: ", rte_data)
     # Convert to PyJobShop solution for visualization
     ## TODO: currently objective is not overwritten in Solution object
     simulated_solution, objective = rte_data_to_pyjobshop_solution(solution, estnu, rte_data, len(model.tasks), "makespan")

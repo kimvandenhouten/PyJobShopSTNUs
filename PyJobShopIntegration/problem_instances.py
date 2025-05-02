@@ -16,9 +16,6 @@ class Instance():
 
     def check_feasibility(self, start_times, finish_times, *args):
         raise NotImplementedError("Subclasses should implement this method.")
-
-    def get_sample_length(self):
-        raise NotImplementedError("Subclasses should implement this method.")
 class MMRCPSP(Instance):
     """
     Class to represent a Multi-mode Resource-Constrained Project Scheduling Problem (MMRCPSP).
@@ -61,13 +58,6 @@ class MMRCPSP(Instance):
     def check_feasibility(self, start_times, finish_times, *args):
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def get_sample_length(self):
-        """
-        Get the length of the sample.
-        This method should be implemented in subclasses.
-        """
-        return len(self.modes)
-
 class MMRCPSPD(MMRCPSP):
     """
     Class to represent a Multi-mode Resource-Constrained Project Scheduling Problem with Deadlines (MMRCPSPD).
@@ -105,15 +95,8 @@ class MMRCPSPD(MMRCPSP):
             for succ in self.successors[idx]:
                 model.add_end_before_start(task, tasks[succ])
         return model
-    # TODO change this to add uncertainty
     def sample_durations(self, nb_scenarios):
-        """
-        Sample durations for the tasks in the project.
-        :param nb_scenarios: Number of scenarios to sample.
-        :return: List of sampled durations.
-        """
-        # TODO implement sampling logic
-        return [[mode.duration for mode in self.modes] for _ in range(nb_scenarios)]
+        pass
 
     # TODO potentially need more checks
     def check_feasibility(self, start_times, finish_times, *args):
@@ -124,7 +107,7 @@ class MMRCPSPD(MMRCPSP):
         :return: True if feasible, False otherwise.
         """
         for idx in range(self.num_tasks):
-            if idx in self.deadlines and finish_times[idx] > self.deadlines[idx]:
+            if finish_times[idx] > self.deadlines[idx]:
                 return False
         return True
 

@@ -127,7 +127,7 @@ class Instance:
             renewable,
             deadlines,
         )
-directory = os.path.join("PyJobShopIntegration", "data", "instances_with_deadlines")
+directory = os.path.join("PyJobShopIntegration", "data", "mmrcpspwd", "j10")
 filename = "j102_2.mm"
 instance = Instance.read_instance(os.path.join(directory, filename))
 model = Model()

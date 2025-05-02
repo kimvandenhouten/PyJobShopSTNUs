@@ -2,7 +2,7 @@ from problem_instances import *
 import re
 from typing import NamedTuple
 def parse_data(file, problem_type):
-    if problem_type.startswith("rcpsp"):
+    if problem_type.startswith("mmrcpsp"):
         return parse_data_rcpsp(file, problem_type)
     elif problem_type.startswith("fjsp", problem_type):
         return parse_data_fjsp(file)

@@ -8,6 +8,7 @@ from PyJobShopIntegration.utils import add_resource_chains, get_resource_chains,
 from general.logger import get_logger
 from parser import parse_data
 from evaluator import evaluate_results
+from scheduling_methods.stnu_method import get_start_and_finish
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 from temporal_networks.rte_star import rte_star
 from temporal_networks.stnu import STNU
@@ -85,7 +86,12 @@ for noise_factor in NOISE_FACTORS:
                         rte_sample = sample_for_rte(duration_sample, estnu)
                         logger.debug(f"Sample dict that will be given to RTE star is {rte_sample}")
                         rte_data = rte_star(estnu, oracle="sample", sample=rte_sample)
-
+                        start_times, finish_times = get_start_and_finish(estnu, rte_data, instance.num_tasks)
+                        solution = {}
+                        solution['obj'] = instance.get_objective(rte_data, objective="makespan")
+                        solution['feasibility'] = instance.check_feasibility()
+                        solution['start_times'] = start_times
+                        solution['time_online'] = finish_online - start_online
                     else:
                         logger.info(f'The network is not DC')
     # Analyze the results perform statistical tests and create plots

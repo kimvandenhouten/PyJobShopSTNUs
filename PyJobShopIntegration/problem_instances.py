@@ -25,7 +25,7 @@ class MMRCPSP():
         self.capacities = capacities
         self.renewable = renewable
 
-    def create_model(self):
+    def create_model(self, durations):
         """
         Create the model for the MMRCPSP.
         This method should be implemented in subclasses.
@@ -48,7 +48,7 @@ class MMRCPSPD(MMRCPSP):
         super().__init__(num_jobs, num_resources, successors, predecessors, modes, capacities, renewable)
         self.deadlines = deadlines
 
-    def create_model(self):
+    def create_model(self, durations):
         model = Model()
 
         # It's not necessary to define jobs, but it will add coloring to the plot.
@@ -63,7 +63,8 @@ class MMRCPSPD(MMRCPSP):
             model.add_renewable(capacity) if self.renewable[idx] else model.add_non_renewable(capacity)
             for idx, capacity in enumerate(self.capacities)
         ]
-        for idx, duration, demands in self.modes:
+        # Make sure the order of durations is the same as that of modes
+        for (idx, _, demands), duration in zip(self.modes, durations):
             model.add_mode(tasks[idx], resources, duration, demands)
 
         for idx in range(self.num_jobs):
@@ -88,7 +89,7 @@ class MMRCPSPGTL(MMRCPSP):
         # TODO implement the gtl arguments
         self.args = args
 
-    def create_model(self):
+    def create_model(self, durations):
         pass
 
     def sample_durations(self, nb_scenarios):

@@ -19,7 +19,6 @@ def parse_data_rcpsp(file, problem_type):
     prec_idx = lines.index("PRECEDENCE RELATIONS:\n")
     req_idx = lines.index("REQUESTS/DURATIONS:\n")
     avail_idx = lines.index("RESOURCEAVAILABILITIES:\n")
-    deadlines_idx = lines.index("DEADLINES:\n")
 
     successors = []
 
@@ -64,6 +63,7 @@ def parse_data_rcpsp(file, problem_type):
         if x in ["R", "N"]  # R: renewable, N: non-renewable
     ]
     if problem_type.endswith("wd"):
+        deadlines_idx = lines.index("DEADLINES:\n")
         deadlines = {
             int(line.split()[0]) - 1: int(line.split()[1])
             for line in lines[deadlines_idx + 2: -1]

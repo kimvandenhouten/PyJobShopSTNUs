@@ -40,6 +40,7 @@ for noise_factor in NOISE_FACTORS:
             test_durations_samples = instance.sample_durations(nb_scenarios_test)
             # Run experiments on proactive, reactive and stnu
             # TODO implement the proactive, reactive and stnu approaches possibly reusing already existing code
+            # TODO also check for dynamic controllability
             for i, duration_sample in enumerate(test_durations_samples):
                 if proactive_reactive:
                     pass

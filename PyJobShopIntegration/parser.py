@@ -1,4 +1,4 @@
-from problem_instances import *
+from PyJobShopIntegration.problem_instances import *
 import re
 from typing import NamedTuple
 def parse_data(file, problem_type):
@@ -62,7 +62,7 @@ def parse_data_rcpsp(file, problem_type):
         for x in lines[avail_idx + 1].strip().split(" ")
         if x in ["R", "N"]  # R: renewable, N: non-renewable
     ]
-    if problem_type.endswith("wd"):
+    if problem_type.endswith("d"):
         deadlines_idx = lines.index("DEADLINES:\n")
         deadlines = {
             int(line.split()[0]) - 1: int(line.split()[1])

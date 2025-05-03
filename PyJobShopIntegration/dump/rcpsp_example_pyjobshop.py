@@ -23,7 +23,6 @@ from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 from temporal_networks.stnu import STNU
 from temporal_networks.rte_star import rte_star
-from PyJobShopIntegration.utils import plot_stnu
 import numpy as np
 from general.logger import get_logger
 import matplotlib.pyplot as plt
@@ -127,7 +126,7 @@ class Instance:
             renewable,
             deadlines,
         )
-directory = os.path.join("PyJobShopIntegration", "data", "mmrcpspwd", "j10")
+directory = os.path.join(os.getcwd(), "PyJobShopIntegration", "data", "mmrcpspd", "j10")
 filename = "j102_2.mm"
 instance = Instance.read_instance(os.path.join(directory, filename))
 model = Model()
@@ -195,13 +194,16 @@ if dc:
     # TODO: we could have some sort of Simulator/Evaluator class to do all of this
     # Read ESTNU xml file into Python object that was the output from the previous step
     estnu = STNU.from_graphml(output_location)
+    print("ESTNU: ", estnu.translation_dict_reversed)
     sample_duration = duration_distributions.sample()
+    print("Sample duration: ", sample_duration)
+    print("ESTNU: ", estnu)
     sample = sample_for_rte(sample_duration, estnu)  # TODO: this could then be integrated in a Simulator Class
     logger.debug(f'Sample dict that will be given to RTE star is {sample_duration}')
 
     # Run RTE algorithm with sample
     rte_data = rte_star(estnu, oracle="sample", sample=sample)
-    print("RTE data: ", rte_data)
+
     # Convert to PyJobShop solution for visualization
     ## TODO: currently objective is not overwritten in Solution object
     simulated_solution, objective = rte_data_to_pyjobshop_solution(solution, estnu, rte_data, len(model.tasks), "makespan")

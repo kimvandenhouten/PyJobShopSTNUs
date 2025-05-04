@@ -17,7 +17,7 @@ class Instance():
     def check_feasibility(self, start_times, finish_times, *args):
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def get_sample_lenbgth(self):
+    def get_sample_length(self):
         raise NotImplementedError("Subclasses should implement this method.")
 class MMRCPSP(Instance):
     """
@@ -61,7 +61,7 @@ class MMRCPSP(Instance):
     def check_feasibility(self, start_times, finish_times, *args):
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def get_sample_lenbgth(self):
+    def get_sample_length(self):
         """
         Get the length of the sample.
         This method should be implemented in subclasses.

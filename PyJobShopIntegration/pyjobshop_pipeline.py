@@ -9,7 +9,7 @@ from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 from PyJobShopIntegration.utils import add_resource_chains, get_resource_chains, sample_for_rte
 from general.logger import get_logger
 from PyJobShopIntegration.evaluator import evaluate_results
-from PyJobShopIntegration.parser import parse_data
+from PyJobShopIntegration.parser import create_instance
 from scheduling_methods.stnu_method import get_start_and_finish
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
@@ -17,8 +17,9 @@ from temporal_networks.rte_star import rte_star
 from temporal_networks.stnu import STNU
 
 logger = get_logger(__name__)
-
+# the problem type is passed as a command line argument e.g. python pyjobshop_pipeline.py mmrcpspd
 problem_type = sys.argv[-1]
+# make sure to have a folder with your data with the same name
 folder = problem_type
 # SETTINGS HEURISTIC PROACTIVE APPROACH
 mode_proactive = "quantile_0.9"
@@ -42,6 +43,10 @@ nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
 stnu = True
+lb_low = 1
+lb_high = 3
+ub_low = 5
+ub_high = 8
 writing = False
 now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
 path = os.path.join(os.getcwd(), "PyJobShopIntegration")
@@ -61,11 +66,11 @@ for noise_factor in NOISE_FACTORS:
             if n == 5:
                 break
             # Load data
-            instance = parse_data(os.path.join(folder_path, file), problem_type)
+            instance = create_instance(os.path.join(folder_path, file), problem_type)
             # TODO change this to reflect the noise factor
             duration_distributions = DiscreteUniformSampler(
-                lower_bounds=np.random.randint(1, 3, instance.get_sample_lenbgth()), # this method should return just the number of tasks or jobs in single mode instances
-                upper_bounds=np.random.randint(5, 8, instance.get_sample_lenbgth()))
+                lower_bounds=np.random.randint(lb_low, lb_high, instance.get_sample_length()), # get_sample_length should return just the number of tasks or jobs in single mode instances
+                upper_bounds=np.random.randint(ub_low, ub_high, instance.get_sample_length()))
             test_durations_samples = duration_distributions.sample(nb_scenarios_test)
             # Run experiments on proactive, reactive and stnu
             # TODO implement the proactive, reactive and stnu approaches possibly reusing already existing code
@@ -90,13 +95,13 @@ for noise_factor in NOISE_FACTORS:
                         infeasible_solutions["stnu"][noise_factor][file] += 1
                         logger.info("The solution is infeasible")
                         continue
-                    needs = []
+                    demands = []
                     # TODO this might not work if mode is None
                     for i, task in enumerate(result_tasks):
                         mode = task.mode
-                        needs.append(instance.modes[mode].demands)
+                        demands.append(instance.modes[mode].demands)
                     resource_chains, resource_assignments = get_resource_chains(
-                        schedule, instance.capacities, needs, complete=True)
+                        schedule, instance.capacities, demands, complete=True)
                     stnu = add_resource_chains(stnu, resource_chains)
                     file_name = f"{problem_type}_pyjobshop_stnu_{file}_{noise_factor}_{i}"
                     stnu_to_xml(stnu, file_name, "temporal_networks/cstnu_tool/xml_files")

@@ -1,7 +1,7 @@
 from PyJobShopIntegration.problem_instances import *
 import re
 from typing import NamedTuple
-def parse_data(file, problem_type):
+def create_instance(file, problem_type):
     if problem_type.startswith("mmrcpsp"):
         return parse_data_rcpsp(file, problem_type)
     elif problem_type.startswith("fjsp", problem_type):

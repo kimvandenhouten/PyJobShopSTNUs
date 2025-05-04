@@ -44,7 +44,9 @@ class Simulator:
             all_solutions.append(sim_solution)
             makespans.append(obj)
 
-            if any(task.end > task.latest_end for task in sim_solution.tasks if task.latest_end is not None):
+            if any(task.end > self.model.tasks[i].latest_end
+                   for i, task in enumerate(sim_solution.tasks)
+                   if self.model.tasks[i].latest_end is not None):
                 violations += 1
 
         summary = {

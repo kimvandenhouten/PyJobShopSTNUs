@@ -1,6 +1,8 @@
 import random
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+import os
+from PyJobShopIntegration.utils import get_project_root
 
 
 def prettify(element):
@@ -106,6 +108,7 @@ def stnu_to_xml(stnu, name_graph, directory):
     networktype = "STNU"
     nedges = len(edges)
     nvertices = len(stnu.nodes)
-    write_graphml(f"{directory}/{name_graph}.stnu", ncontingent, networktype, nedges, nvertices, name_graph, edges, nodes)
+    project_root = get_project_root()
+    write_graphml(os.path.join(project_root, f"{directory}", f"{name_graph}.stnu"), ncontingent, networktype, nedges, nvertices, name_graph, edges, nodes)
 
 

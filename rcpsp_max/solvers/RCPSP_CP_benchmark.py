@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 from docplex.cp.model import *
+
 import general.logger
 from PyJobShopIntegration.utils import get_project_root
-
 logger = general.logger.get_logger(__name__)
 
 
@@ -24,6 +24,7 @@ class RCPSP_CP_Benchmark:
 
     @classmethod
     def parsche_file(cls, directory, instance_folder, instance_id, noise_factor):
+
         directory = get_project_root() / directory
 
         if instance_folder[0] == "j":

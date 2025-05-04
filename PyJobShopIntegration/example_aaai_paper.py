@@ -8,6 +8,7 @@ If we would continue with this code, improvements can be in the direction of:
 - Directly using the constraints from the PyJobShop model to construct the constraints in the Temporal Network
   (now this is coded in rcpsp_max/temporal_networks/stnu_rcpsp_max.py)
 """
+import os.path
 
 from pyjobshop import Model
 # Import
@@ -84,10 +85,10 @@ stnu = add_resource_chains(stnu, resource_chains)
 
 # Write stnu to xml for DC-checking
 file_name = f"example_rcpsp_max_pyjobshop_stnu"
-stnu_to_xml(stnu, file_name, "temporal_networks/cstnu_tool/xml_files")
+stnu_to_xml(stnu, file_name, os.path.join("temporal_networks", "cstnu_tool", "xml_files"))
 
 # Run the DC algorithm using the Java CSTNU tool, the result is written to a xml file
-dc, output_location = run_dc_algorithm("temporal_networks/cstnu_tool/xml_files", file_name)
+dc, output_location = run_dc_algorithm(os.path.join("temporal_networks", "cstnu_tool", "xml_files"), file_name)
 
 if dc:
     logger.info(f'The network resulting from the PyJobShop solution is DC')

@@ -67,7 +67,6 @@ def get_resource_chains(schedule, capacity, resources, complete=False) -> (list[
     resource_use = {}
 
     resource_assignment = []
-    print(schedule)
     for d in sorted(schedule, key=lambda d: d['start']):
         for resource_index, required in enumerate(resources[d['task']]):
             reservations = reserved_until[resource_index]

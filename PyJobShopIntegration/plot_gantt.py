@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
+from pyjobshop import Machine
 from pyjobshop.plot import plot_task_gantt, plot_machine_gantt, plot_resource_usage
-
 def plot_simulation_gantt(simulated_solution, model, filename=None, plot_type="auto", output_folder="PyJobShopIntegration/images"):
     """
     Plot a Gantt chart based on the model type and simulation result.
@@ -15,10 +15,9 @@ def plot_simulation_gantt(simulated_solution, model, filename=None, plot_type="a
     data = model.data()
 
     if plot_type == "auto":
-        if data.num_machines > 0:
-            plot_type = "machine"
-        else:
-            plot_type = "task"
+        # Detect machine resources (i.e., FJSP setting)
+        has_machine = any(isinstance(res, Machine) for res in data.resources)
+        plot_type = "machine" if has_machine else "task"
 
     if plot_type == "machine":
         plt.figure(figsize=(12, 6))

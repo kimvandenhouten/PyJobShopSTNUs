@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 
 from pyjobshop.Model import Model
 from pyjobshop.plot import plot_machine_gantt
+
+from PyJobShopIntegration.plot_gantt import plot_simulation_gantt
 from PyJobShopIntegration.reactive_left_shift import group_shift_solution_resequenced
 from PyJobShopIntegration.utils import rte_data_to_pyjobshop_solution, sample_for_rte
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
@@ -200,11 +202,12 @@ if dc:
     # -------------------------
     # Gantt Chart for First Run
     # -------------------------
-    plot_machine_gantt(first_solution, model.data(), plot_labels=True)
-    os.makedirs("PyJobShopIntegration/images", exist_ok=True)
-    plt.savefig('PyJobShopIntegration/images/fjsp_with_deadlines.png')
-    plt.show()
-
+    plot_simulation_gantt(
+        simulated_solution=first_solution,
+        model=model,
+        filename="fjsp_or_rcpsp_gantt.png",
+        plot_type="task"
+    )
     # -------------------------
     # Statistics Plots
     # -------------------------

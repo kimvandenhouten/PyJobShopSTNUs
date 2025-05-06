@@ -122,7 +122,7 @@ class MMRCPSPD(MMRCPSP):
 
         for i, (t, d) in enumerate(self.deadlines.items()):
             model.add_end_before_end(tasks[t], tasks[i + self.num_tasks])
-            model.add_start_before_start(tasks[i + self.num_tasks], tasks[0])
+            # model.add_start_before_start(tasks[i + self.num_tasks], tasks[0])
         # Make sure the order of durations is the same as that of modes
         for (idx, _, demands), duration in zip(self.modes, durations):
             model.add_mode(tasks[idx], resources, duration, demands)

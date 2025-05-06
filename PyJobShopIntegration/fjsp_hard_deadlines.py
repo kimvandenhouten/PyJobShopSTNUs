@@ -23,30 +23,36 @@ logger = general.logger.get_logger(__name__)
 # -------------------------
 # PHASE 1: Problem Definition
 # -------------------------
-
-NUM_MACHINES = 3
-
-job_deadlines = {
-    0: 80,
-    1: 80,
-
-}
-
+NUM_MACHINES = 5
+job_deadlines = {0: 20, 1: 18, 2: 22, 3: 19}
 
 data = [
-    [  # Job 0 (total min duration = 3+2+3+2 = 10)
-        [(3, 0), (5, 1)],    # Task 0
-        [(2, 1), (4, 2)],    # Task 1
-        [(3, 0), (3, 2)],    # Task 2
-        [(2, 1), (4, 2)],    # Task 3
+    [  # Job 0
+        [(3,0),(5,4)],
+        [(4,1),(3,2),(6,3)],
+        [(2,2),(3,3)],
+        [(4,3),(5,1),(3,4)],
     ],
-    [  # Job 1 (total min duration = 4+3+2+2 = 11)
-        [(4, 0), (5, 1)],    # Task 0
-        [(3, 1), (6, 2)],    # Task 1
-        [(2, 0), (3, 2)],    # Task 2
-        [(2, 1), (3, 2)],    # Task 3
+    [  # Job 1
+        [(2,1),(4,0)],
+        [(3,2),(2,4),(5,3)],
+        [(3,3),(4,4)],
+        [(2,0),(3,1)],
+    ],
+    [  # Job 2
+        [(5,4),(3,1)],
+        [(4,0),(3,2)],
+        [(2,2),(4,3),(3,1)],
+        [(3,3),(2,4)],
+    ],
+    [  # Job 3
+        [(3,2),(2,0)],
+        [(4,3),(3,1)],
+        [(5,4),(3,2),(2,3)],
+        [(2,1),(4,0)],
     ],
 ]
+
 
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
@@ -114,7 +120,7 @@ for idx, task in enumerate(solution.tasks):
 
 duration_distributions = DiscreteUniformSampler(
     lower_bounds=np.full(len(model.tasks), 1),
-    upper_bounds=np.full(len(model.tasks), 9),
+    upper_bounds=np.full(len(model.tasks), 4),
 )
 
 # 3. Build the STNU

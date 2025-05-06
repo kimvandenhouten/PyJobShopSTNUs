@@ -162,27 +162,6 @@ def get_start_and_finish_from_rte(estnu: STNU, rte_data:RTEdata, num_tasks: int)
     return start_times, finish_times
 
 
-def get_start_and_finish_from_rte(estnu: STNU, rte_data, num_tasks: int):
-    start_times = []
-    finish_times = []
-
-    for task in range(num_tasks):
-        start_key = f"{task}_{STNU.EVENT_START}"
-        finish_key = f"{task}_{STNU.EVENT_FINISH}"
-
-        if start_key not in estnu.translation_dict_reversed or finish_key not in estnu.translation_dict_reversed:
-            print(f"[DEBUG] Skipping task {task}: missing {start_key} or {finish_key} in STNU")
-            continue
-
-        node_idx_start = estnu.translation_dict_reversed[start_key]
-        node_idx_finish = estnu.translation_dict_reversed[finish_key]
-
-        start_times.append(rte_data.f[node_idx_start])
-        finish_times.append(rte_data.f[node_idx_finish])
-
-    return start_times, finish_times
-
-
 def overwrite_pyjobshop_solution(solution, start_times, finish_times):
     """
     Updates a PyJobShop solution with new start/finish times.
@@ -195,7 +174,6 @@ def overwrite_pyjobshop_solution(solution, start_times, finish_times):
 
     for i, task in enumerate(simulated_solution.tasks):
         if st_idx >= len(start_times):
-            print(f"[DEBUG] Skipping task {i} — not present in STNU sample")
             continue
         simulated_solution.tasks[i].start = start_times[st_idx]
         simulated_solution.tasks[i].end = finish_times[st_idx]

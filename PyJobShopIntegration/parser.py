@@ -9,6 +9,7 @@ def create_instance(file, problem_type):
 
 # TODO implement parser for rcpsp instances
 def parse_data_rcpsp(file, problem_type):
+    # TODO define this outside the function to use for other parts of the code
     class Mode(NamedTuple):
         job: int
         duration: int
@@ -68,6 +69,21 @@ def parse_data_rcpsp(file, problem_type):
             int(line.split()[0]) - 1: int(line.split()[1])
             for line in lines[deadlines_idx + 2: -1]
         }
+
+        sink_predecessors = predecessors.pop()
+        sink_successors = successors.pop()
+        sink_mode = modes.pop()
+        # Add predecessors for deadline tasks
+        for i, (idx, deadline) in enumerate(deadlines.items()):
+            mode = Mode(i + int(job_idx) - 1, deadline, [0] * len(capacities))
+            modes.append(mode)
+            successors.append([])
+            predecessors.append([])
+        predecessors.append(sink_predecessors)
+        successors.append(sink_successors)
+
+        modes.append(Mode(int(job_idx)+len(deadlines) - 1, 0, [0] * len(capacities)))
+
         return MMRCPSPD(
             int(job_idx),
             len(capacities),

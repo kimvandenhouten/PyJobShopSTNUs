@@ -54,6 +54,8 @@ data = [
 ]
 
 
+
+
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
@@ -120,7 +122,7 @@ for idx, task in enumerate(solution.tasks):
 
 duration_distributions = DiscreteUniformSampler(
     lower_bounds=np.full(len(model.tasks), 1),
-    upper_bounds=np.full(len(model.tasks), 4),
+    upper_bounds=np.full(len(model.tasks), 8),
 )
 
 # 3. Build the STNU
@@ -137,21 +139,24 @@ for job_idx, deadline in job_deadlines.items():
 # -------------------------
 # PHASE 4: Check Dynamic Controllability
 # -------------------------
-
+# -------------------------
+# PHASE 4: Check Dynamic Controllability
+# -------------------------
 os.makedirs("temporal_networks/cstnu_tool/xml_files", exist_ok=True)
 stnu_to_xml(stnu, "fjsp_deadlines_stnu", "temporal_networks/cstnu_tool/xml_files")
-dc, output_location = run_dc_algorithm("temporal_networks/cstnu_tool/xml_files", "fjsp_deadlines_stnu")
+dc, _ = run_dc_algorithm("temporal_networks/cstnu_tool/xml_files", "fjsp_deadlines_stnu")
 
-if dc:
-    logger.info("The network is dynamically controllable.")
-else:
+if not dc:
     logger.warning("The network is NOT dynamically controllable.")
+else:
+    logger.info("Dynamically controllable — running RTE* on the ORIGINAL STNU")
 
 # -------------------------
 # PHASE 5: Real-Time Execution Simulation & Plots
 # -------------------------
 if dc:
-    estnu = STNU.from_graphml(output_location)
+    # **Use the original STNU** here, not STNU.from_graphml
+    estnu_for_sim = stnu
 
     total_runs = 1000
     makespans = []
@@ -160,10 +165,16 @@ if dc:
 
     for run in range(total_runs):
         sample_duration = duration_distributions.sample()
-        sample = sample_for_rte(sample_duration, estnu)
-        rte_data = rte_star(estnu, oracle="sample", sample=sample)
+        sample = sample_for_rte(sample_duration, estnu_for_sim)
+        rte_data = rte_star(estnu_for_sim, oracle="sample", sample=sample)
+
+        # skip infeasible
+        if not hasattr(rte_data, "f"):
+            logger.warning(f"[RTE*] Infeasible sample in run {run}. Skipping.")
+            continue
+
         simulated_solution, objective = rte_data_to_pyjobshop_solution(
-            solution, estnu, rte_data, len(model.tasks), "makespan"
+            solution, estnu_for_sim, rte_data, len(model.tasks), "makespan"
         )
         makespans.append(objective)
 

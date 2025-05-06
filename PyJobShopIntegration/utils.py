@@ -199,22 +199,27 @@ def rte_data_to_pyjobshop_solution(solution: Solution, estnu: STNU, rte_data: RT
 
     return simulated_solution, objective_value
 
-
 def sample_for_rte(sample_duration: np.ndarray, estnu: STNU) -> dict[int, int]:
     """
-    Converts a duration sample into a dictionary mapping contingent STNU node indices
-    to their sampled durations. Skips tasks that are not part of the STNU (e.g., dummy tasks).
+    Converts a duration sample into a mapping from each contingent‐link node
+    index in estnu._contingent_nodes to its drawn duration.
     """
     sample = {}
-    for task, duration in enumerate(sample_duration):
-        key = f"{task}_{STNU.EVENT_FINISH}"
-        if key not in estnu.translation_dict_reversed:
-            # You may log this if helpful:
-            # print(f"[WARNING] Task {task} not found in STNU. Skipping.")
+    for task_idx, dur in enumerate(sample_duration):
+        start_key = f"{task_idx}_{STNU.EVENT_START}"
+        finish_key = f"{task_idx}_{STNU.EVENT_FINISH}"
+        # skip any task whose nodes weren’t even in this STNU
+        if start_key not in estnu.translation_dict_reversed or finish_key not in estnu.translation_dict_reversed:
             continue
-        find_contingent_node = estnu.translation_dict_reversed[key]
-        sample[find_contingent_node] = duration
+
+        s = estnu.translation_dict_reversed[start_key]
+        f = estnu.translation_dict_reversed[finish_key]
+        # only sample for truly contingent links
+        if (s, f) in estnu.contingent_links:
+            sample[f] = int(dur)
+
     return sample
+
 
 def get_project_root() -> Path:
     return Path(__file__).resolve().parents[1]

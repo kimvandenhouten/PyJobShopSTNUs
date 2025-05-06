@@ -9,7 +9,6 @@ from PyJobShopIntegration.plot_gantt import plot_simulation_gantt
 from PyJobShopIntegration.plot_simulation_stats import plot_simulation_statistics
 from PyJobShopIntegration.reactive_left_shift import group_shift_solution_resequenced
 from PyJobShopIntegration.simulator import Simulator
-from PyJobShopIntegration.utils import rte_data_to_pyjobshop_solution, sample_for_rte
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 from general.deadline_utils import check_deadline_feasibility, compute_slack_weights
@@ -17,8 +16,6 @@ from general.deadline_utils import check_deadline_feasibility, compute_slack_wei
 from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 from temporal_networks.stnu import STNU
-from temporal_networks.rte_star import rte_star
-
 import general.logger
 
 # Initialize logger
@@ -33,10 +30,6 @@ NUM_MACHINES = 3
 job_deadlines = {
     0: 95,
     1: 95,
-    2: 95,
-    3: 95,
-    4: 95,
-    5 : 18,
 }
 
 
@@ -49,29 +42,10 @@ data = [
     ],
     [  # Job 1 (total min duration = 4+3+2+2 = 11)
         [(4, 0), (5, 1)],    # Task 0
-        [(3, 1), (6, 2)],    # Task 1
+        [(3, 1), (5, 2)],    # Task 1
         [(2, 0), (3, 2)],    # Task 2
         [(2, 1), (3, 2)],    # Task 3
     ],
-    [  # Job 2 (min total duration = 4+3+3+2 = 12)
-        [(4, 2), (6, 0)],    # Task 0
-        [(3, 0), (4, 1)],    # Task 1
-        [(3, 1), (5, 2)],    # Task 2
-        [(2, 0), (3, 2)],    # Task 3
-    ],
-    [  # Job 3 (min total duration = 5+4+2+3 = 14)
-        [(5, 0), (6, 2)],    # Task 0
-        [(4, 1), (5, 2)],    # Task 1
-        [(2, 0), (4, 1)],    # Task 2
-        [(3, 1), (3, 2)],    # Task 3
-    ],
-    [  # Job 4 (min total duration = 3+4+3+2 = 12)
-        [(3, 0), (4, 2)],    # Task 0
-        [(4, 1), (5, 2)],    # Task 1
-        [(3, 0), (3, 1)],    # Task 2
-        [(2, 2), (4, 1)],    # Task 3
-    ],
-    [[(1,2)]],
 ]
 
 # -------------------------
@@ -164,13 +138,6 @@ dc, output_location = run_dc_algorithm("temporal_networks/cstnu_tool/xml_files",
 
 if dc:
     logger.info("The network is dynamically controllable.")
-else:
-    logger.warning("The network is NOT dynamically controllable.")
-
-# -------------------------
-# PHASE 5: Real-Time Execution Simulation & Plots
-# -------------------------
-if dc:
     estnu = STNU.from_graphml(output_location)
 
     # Initialize simulator

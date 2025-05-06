@@ -142,36 +142,64 @@ def get_start_and_finish_from_rte(estnu: STNU, rte_data:RTEdata, num_tasks: int)
     to the task indices
     """
     # TODO: can we make this faster / vectorize, or should it even be integrated in the RTE*?
-    start_times, finish_times = [], []
+    start_times = []
+    finish_times = []
+
     for task in range(num_tasks):
-        node_idx_start = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_START}']
-        node_idx_finish = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_FINISH}']
+        start_key = f"{task}_{STNU.EVENT_START}"
+        finish_key = f"{task}_{STNU.EVENT_FINISH}"
+
+        if start_key not in estnu.translation_dict_reversed or finish_key not in estnu.translation_dict_reversed:
+            # Skip tasks not included in the STNU
+            continue
+
+        node_idx_start = estnu.translation_dict_reversed[start_key]
+        node_idx_finish = estnu.translation_dict_reversed[finish_key]
+
         start_times.append(rte_data.f[node_idx_start])
         finish_times.append(rte_data.f[node_idx_finish])
+
     return start_times, finish_times
 
 
-def get_start_and_finish_from_rte(estnu: STNU, rte_data:RTEdata, num_tasks: int) -> (list[int], list[int]):
-    """
-    This function can be used to link the start times and finish times from the rte_dta
-    to the task indices
-    """
-    # TODO: can we make this faster / vectorize, or should it even be integrated in the RTE*?
-    start_times, finish_times = [], []
+def get_start_and_finish_from_rte(estnu: STNU, rte_data, num_tasks: int):
+    start_times = []
+    finish_times = []
+
     for task in range(num_tasks):
-        node_idx_start = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_START}']
-        node_idx_finish = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_FINISH}']
+        start_key = f"{task}_{STNU.EVENT_START}"
+        finish_key = f"{task}_{STNU.EVENT_FINISH}"
+
+        if start_key not in estnu.translation_dict_reversed or finish_key not in estnu.translation_dict_reversed:
+            print(f"[DEBUG] Skipping task {task}: missing {start_key} or {finish_key} in STNU")
+            continue
+
+        node_idx_start = estnu.translation_dict_reversed[start_key]
+        node_idx_finish = estnu.translation_dict_reversed[finish_key]
+
         start_times.append(rte_data.f[node_idx_start])
         finish_times.append(rte_data.f[node_idx_finish])
+
     return start_times, finish_times
 
-def overwrite_pyjobshop_solution(solution: Solution, start_times: list[int], finish_times: list[int])\
-        -> (Solution, int):
-    simulated_solution = copy.deepcopy(solution)
 
-    for i in range(len(solution.tasks)):
-        simulated_solution.tasks[i].start = start_times[i]
-        simulated_solution.tasks[i].end = finish_times[i]
+def overwrite_pyjobshop_solution(solution, start_times, finish_times):
+    """
+    Updates a PyJobShop solution with new start/finish times.
+    Assumes start_times and finish_times only apply to tasks present in the STNU.
+    """
+    from copy import deepcopy
+    simulated_solution = deepcopy(solution)
+
+    st_idx = 0  # index in start_times and finish_times
+
+    for i, task in enumerate(simulated_solution.tasks):
+        if st_idx >= len(start_times):
+            print(f"[DEBUG] Skipping task {i} — not present in STNU sample")
+            continue
+        simulated_solution.tasks[i].start = start_times[st_idx]
+        simulated_solution.tasks[i].end = finish_times[st_idx]
+        st_idx += 1
 
     return simulated_solution
 
@@ -196,13 +224,19 @@ def rte_data_to_pyjobshop_solution(solution: Solution, estnu: STNU, rte_data: RT
 
 def sample_for_rte(sample_duration: np.ndarray, estnu: STNU) -> dict[int, int]:
     """
-    This function converts a sample into a dictionary that connects the samples to the keys of the contingent
-    nodes in the STNU
+    Converts a duration sample into a dictionary mapping contingent STNU node indices
+    to their sampled durations. Skips tasks that are not part of the STNU (e.g., dummy tasks).
     """
     sample = {}
     for task, duration in enumerate(sample_duration):
-        find_contingent_node = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_FINISH}']
+        key = f"{task}_{STNU.EVENT_FINISH}"
+        if key not in estnu.translation_dict_reversed:
+            # You may log this if helpful:
+            # print(f"[WARNING] Task {task} not found in STNU. Skipping.")
+            continue
+        find_contingent_node = estnu.translation_dict_reversed[key]
         sample[find_contingent_node] = duration
     return sample
+
 def get_project_root() -> Path:
     return Path(__file__).resolve().parents[1]

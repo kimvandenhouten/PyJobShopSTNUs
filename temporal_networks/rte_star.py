@@ -559,5 +559,4 @@ def hce_update(S: STNU, D: RTEdata, rho: float, tau: list):
 
         # Line 6: Update D.Enabled_x due to incoming negative edges to C or any deleted C-waits
         D.enabled_tp = get_enabled_tp(D, S)
-
     return D

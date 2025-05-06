@@ -23,7 +23,6 @@ class PyJobShopSTNU(STNU):
         for task_idx, task in enumerate(model.tasks):
             task_start = stnu.add_node(f'{task_idx}_{STNU.EVENT_START}')
             task_finish = stnu.add_node(f'{task_idx}_{STNU.EVENT_FINISH}')
-
             if lower_bounds[task_idx] == upper_bounds[task_idx]:
                 stnu.add_tight_constraint(task_start, task_finish, lower_bounds[task_idx])
             else:

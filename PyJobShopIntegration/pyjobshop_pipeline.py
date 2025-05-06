@@ -91,7 +91,6 @@ for noise_factor in NOISE_FACTORS:
                 if stnu:
                     start_online = time.time()
                     model = instance.create_model(duration_sample)
-                    print("Modes: ", [mode.duration for mode in model.modes])
                     result = model.solve(time_limit=5, display=False)
                     stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions=duration_distributions)
                     result_tasks = result.best.tasks

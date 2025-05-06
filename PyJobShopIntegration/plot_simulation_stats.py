@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import os
 
-
-
 def plot_simulation_statistics(makespans, violations, total_runs, output_folder="PyJobShopIntegration/images"):
     os.makedirs(output_folder, exist_ok=True)
 

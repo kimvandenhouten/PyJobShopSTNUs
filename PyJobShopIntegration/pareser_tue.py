@@ -38,3 +38,5 @@ def parse_fjs_to_pyjobshop_format(path, delta=50, max_modes_per_task=1):
             job_deadlines[job_idx] = total_max_duration + delta
 
     return num_machines, data, job_deadlines
+
+print(parse_fjs_to_pyjobshop_format("ex_tue.fjs"))

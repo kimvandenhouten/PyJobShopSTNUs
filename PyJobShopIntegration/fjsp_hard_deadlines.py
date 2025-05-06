@@ -100,21 +100,18 @@ deadline_resource = model.add_renewable(capacity=999, name="DeadlineResource")
 
 for job_idx, job_data in enumerate(data):
     job = model.add_job(name=f"Job {job_idx}", due_date=job_deadlines[job_idx])
-
-    for idx, task_options in enumerate(job_data):
-        task_idx = (job_idx, idx)
+    for task_local_idx, task_options in enumerate(job_data):
+        task_idx = (job_idx, task_local_idx)
         task = model.add_task(job=job, name=f"Task {task_idx}")
         tasks[task_idx] = task
 
         for duration, machine_idx in task_options:
             model.add_mode(task, machines[machine_idx], duration)
-
-    # Add precedence constraints
-    for idx in range(len(job_data) - 1):
-        model.add_end_before_start(tasks[(job_idx, idx)], tasks[(job_idx, idx + 1)])
-
-    # Deadline constraint via dummy task
-    last_task = tasks[(job_idx, len(job_data) - 1)]
+    num_tasks = len(job_data)
+    for i in range(num_tasks - 1):
+        model.add_end_before_start(tasks[(job_idx, i)], tasks[(job_idx, i + 1)])
+    last_task_idx = num_tasks - 1
+    last_task = tasks[(job_idx, last_task_idx)]
     deadline_task = model.add_task(
         name=f"Deadline for Job {job_idx}",
         earliest_start=0,
@@ -122,6 +119,7 @@ for job_idx, job_data in enumerate(data):
     )
     model.add_mode(deadline_task, deadline_resource, duration=1)
     model.add_end_before_start(last_task, deadline_task)
+
 
 # Solve
 result = model.solve(display=True)

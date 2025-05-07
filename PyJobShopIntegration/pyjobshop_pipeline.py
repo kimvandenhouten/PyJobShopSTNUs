@@ -10,7 +10,7 @@ from pyjobshop.plot import plot_task_gantt, plot_resource_usage
 
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
-from PyJobShopIntegration.utils import add_resource_chains, get_resource_chains, sample_for_rte
+from PyJobShopIntegration.utils import add_resource_chains, get_resource_chains, sample_for_rte, plot_stnu
 from general.logger import get_logger
 from PyJobShopIntegration.evaluator import evaluate_results
 from PyJobShopIntegration.parser import create_instance
@@ -41,16 +41,11 @@ mode_stnu = "robust"
 # SETTINGS EXPERIMENTS
 DIRECTORY_PI = os.path.join("aaai25", "results_perfect_information")
 INSTANCE_FOLDERS = ["j10"]
-INSTANCE_IDS = range(1, 51)
-NOISE_FACTORS = [1]
+NOISE_FACTORS = [1, 2]
 nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
 stnu = True
-lb_low = 1
-lb_high = 3
-ub_low = 5
-ub_high = 8
 writing = False
 now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
 path = os.path.join(os.getcwd(), "PyJobShopIntegration")
@@ -69,9 +64,10 @@ for noise_factor in NOISE_FACTORS:
         if not os.path.exists(images_folder):
             os.makedirs(images_folder)
         for n, file in enumerate(os.listdir(folder_path)):
-            print(f"--------------------------------------{file}--------------------------------------")
+            if not os.path.exists(os.path.join(images_folder, file)):
+                os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
-            if n == 1:
+            if n == 100:
                 break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
@@ -92,12 +88,16 @@ for noise_factor in NOISE_FACTORS:
                     start_online = time.time()
                     model = instance.create_model(duration_sample)
                     result = model.solve(time_limit=5, display=False)
-                    stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions=duration_distributions)
                     result_tasks = result.best.tasks
+                    if result_tasks == []:
+                        print(f"Infeasible solution for duration sample: {duration_sample}, file: {file}, noise factor: {noise_factor}")
+                        logger.info("The solution is infeasible")
+                        continue
+                    stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions=duration_distributions, result_tasks=result_tasks)
                     # TODO potentially add other fields depending on the problem
-                    schedule = [{"task": i, "start": task.start, "end": task.end, "mode": task.mode}
-                                for i, task in enumerate(result_tasks)]
+                    schedule = instance.get_schedule(result_tasks)
                     duration_sample = [instance.modes[task.mode].duration for task in result_tasks]
+                    # TODO the update of the infeasible sample needs to happen elsewhere
                     if duration_sample == []:
                         if file not in infeasible_sample["stnu"][noise_factor]:
                             infeasible_sample["stnu"][noise_factor][file] = 0
@@ -117,10 +117,13 @@ for noise_factor in NOISE_FACTORS:
                     dc, output_location = run_dc_algorithm(
                         "temporal_networks/cstnu_tool/xml_files", file_name)
                     if dc:
-                        logger.info(f'The network resulting from the PyJobShop solution is DC')
+                        logger.info(f'The network resulting from the PyJobShop solution is DC for sample {duration_sample}')
                         estnu = STNU.from_graphml(output_location)
                         rte_sample = sample_for_rte(duration_sample, estnu)
                         rte_data = rte_star(estnu, oracle="sample", sample=rte_sample)
+                        if type(rte_data) == bool:
+                            logger.info("The solution is infeasible")
+                            continue
                         start_times, finish_times = get_start_and_finish(estnu, rte_data, len(model.tasks))
                         finish_online = time.time()
                         solution = {'obj': instance.get_objective(rte_data, objective="makespan"),
@@ -143,10 +146,13 @@ for noise_factor in NOISE_FACTORS:
 
                         plot_task_gantt(solution_plot, d, ax=axes[0])
                         plot_resource_usage(solution_plot, d, axes=axes[1:])
-                        plt.savefig(os.path.join(images_folder, f'{file}_{i}_{noise_factor}_{time.time()}.png'))
+                        plt.savefig(os.path.join(os.path.join(images_folder, file), f'{file}_{i}_{noise_factor}_{time.time()}.png'))
                         data.append(solution)
+                        if not solution['feasibility']:
+                            print("Finish times: ", finish_times)
+                            raise ValueError("The solution is infeasible")
                     else:
-                        logger.info(f'The network is not DC')
+                        logger.info(f'The network is not DC for sample{duration_sample}')
     print("Data: ", data)
     # Analyze the results perform statistical tests and create plots
     evaluate_results(data)

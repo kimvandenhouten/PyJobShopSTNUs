@@ -16,14 +16,16 @@ class PyJobShopSTNU(STNU):
         super().__init__(origin_horizon)
 
     @classmethod
-    def from_concrete_model(cls, model: Model, duration_distributions: DiscreteRVSampler):
+    def from_concrete_model(cls, model: Model, duration_distributions: DiscreteRVSampler, result_tasks):
         stnu = cls(origin_horizon=False)
 
         lower_bounds, upper_bounds = duration_distributions.get_bounds()
+        # Only add the bounds for the selected modes
+        lower_bounds = np.array([lower_bounds[task.mode] for task in result_tasks])
+        upper_bounds = np.array([upper_bounds[task.mode] for task in result_tasks])
         for task_idx, task in enumerate(model.tasks):
             task_start = stnu.add_node(f'{task_idx}_{STNU.EVENT_START}')
             task_finish = stnu.add_node(f'{task_idx}_{STNU.EVENT_FINISH}')
-
             if lower_bounds[task_idx] == upper_bounds[task_idx]:
                 stnu.add_tight_constraint(task_start, task_finish, lower_bounds[task_idx])
             else:

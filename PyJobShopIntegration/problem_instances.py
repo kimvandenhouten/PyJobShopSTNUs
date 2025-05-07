@@ -33,6 +33,13 @@ class Instance():
         This method should be implemented in subclasses.
         """
         raise NotImplementedError("Subclasses should implement this method.")
+
+    def get_schedule(self, result_tasks):
+        """
+        Get the schedule for the tasks.
+        This method should be implemented in subclasses.
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
 class MMRCPSP(Instance):
     """
     Class to represent a Multi-mode Resource-Constrained Project Scheduling Problem (MMRCPSP).
@@ -113,16 +120,18 @@ class MMRCPSPD(MMRCPSP):
             model.add_renewable(capacity) if self.renewable[idx] else model.add_non_renewable(capacity)
             for idx, capacity in enumerate(self.capacities)
         ]
-        # It's not necessary to define jobs, but it will add coloring to the plot.
-        jobs = [model.add_job() for _ in range(self.num_tasks + len(self.deadlines))]
-        tasks = [
-            model.add_task(job=jobs[idx])
-            for idx in range(self.num_tasks + len(self.deadlines))
+        # We add jobs for each task and each deadline dummy task
+        jobs = [model.add_job(due_date=self.deadlines.get(idx, MAX_VALUE)) for idx in range(self.num_tasks)]
+        jobs += [
+            model.add_job(due_date=d) for (t, d) in self.deadlines.items() # Deadline tasks should finish by deadline
         ]
-
+        # Add tasks for the actual tasks and the deadlines
+        tasks = [
+            model.add_task(job=jobs[idx]) for idx in range(self.num_tasks + len(self.deadlines))
+        ]
         for i, (t, d) in enumerate(self.deadlines.items()):
-            model.add_end_before_end(tasks[t], tasks[i + self.num_tasks])
-            # model.add_start_before_start(tasks[i + self.num_tasks], tasks[0])
+            model.add_end_before_end(tasks[t], tasks[i + self.num_tasks - 1])
+            model.add_start_before_end(tasks[i + self.num_tasks - 1], tasks[0]) # Deadline tasks start at 0 to model the deadlines correctly
         # Make sure the order of durations is the same as that of modes
         for (idx, _, demands), duration in zip(self.modes, durations):
             model.add_mode(tasks[idx], resources, duration, demands)
@@ -135,6 +144,9 @@ class MMRCPSPD(MMRCPSP):
 
             for succ in self.successors[idx]:
                 model.add_end_before_start(task, tasks[succ])
+        model.set_objective(
+            weight_makespan=1,
+        )
         return model
 
     def get_bounds(self, noise_factor=0.0):
@@ -166,8 +178,6 @@ class MMRCPSPD(MMRCPSP):
         """
         # TODO implement sampling logic
         lower_bound, upper_bound = self.get_bounds(noise_factor)
-        print(f"Lower bounds: {lower_bound}")
-        print(f"Upper bounds: {upper_bound}")
         duration_distributions = DiscreteUniformSampler(
             lower_bounds=lower_bound,
             upper_bounds=upper_bound
@@ -212,6 +222,27 @@ class MMRCPSPD(MMRCPSP):
             return sum(finish_time for idx, finish_time in enumerate(rte_data.f.values()) if idx in self.deadlines)
         else:
             raise ValueError("Unknown objective type.")
+
+    def get_schedule(self, result_tasks):
+        """
+        Get the schedule for the tasks.
+        """
+        schedule = []
+        for i, task in enumerate(result_tasks):
+            if i < self.num_tasks:
+                schedule.append({
+                    "task": i,
+                    "start": task.start,
+                    "end": task.end
+                })
+            else:
+                schedule.append({
+                    "task": i,
+                    "start": 0,
+                    "end": task.end - task.start
+                })
+
+            return schedule
 
     def __str__(self):
         """

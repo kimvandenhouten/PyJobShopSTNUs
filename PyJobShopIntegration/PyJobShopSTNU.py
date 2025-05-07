@@ -21,7 +21,6 @@ class PyJobShopSTNU(STNU):
 
         # prepare storage for exactly the nodes we will sample
         stnu._contingent_nodes = []
-
         lower_bounds, upper_bounds = duration_distributions.get_bounds()
         for task_idx, task in enumerate(model.tasks):
             s = stnu.add_node(f'{task_idx}_{STNU.EVENT_START}')

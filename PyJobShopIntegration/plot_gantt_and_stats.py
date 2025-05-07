@@ -36,3 +36,20 @@ def plot_simulation_gantt(simulated_solution, model, filename=None, plot_type="a
         plt.savefig(full_path)
         print(f"[INFO] Saved Gantt plot to {full_path}")
     plt.show()
+
+
+def plot_simulation_statistics(makespans, violations, total_runs):
+    plt.figure()
+    plt.bar(["Met", "Violated"], [total_runs - violations, violations])
+    plt.title("Deadline Compliance")
+    plt.ylabel("Number of Runs")
+    plt.savefig("PyJobShopIntegration/images/deadline_violations.png")
+    plt.show()
+
+    plt.figure()
+    plt.hist(makespans, bins=15)
+    plt.title("Makespan Distribution")
+    plt.xlabel("Makespan")
+    plt.ylabel("Frequency")
+    plt.savefig("PyJobShopIntegration/images/makespan_distribution.png")
+    plt.show()

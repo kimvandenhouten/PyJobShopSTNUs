@@ -4,7 +4,10 @@ import matplotlib.pyplot as plt
 
 from pyjobshop.Model import Model
 from pyjobshop.plot import plot_machine_gantt
+
+from PyJobShopIntegration.plot_gantt_and_stats import plot_simulation_statistics
 from PyJobShopIntegration.reactive_left_shift import group_shift_solution_resequenced
+from PyJobShopIntegration.simulator import Simulator
 from PyJobShopIntegration.utils import rte_data_to_pyjobshop_solution, sample_for_rte
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
@@ -28,17 +31,13 @@ job_deadlines = {0: 20, 1: 18, 2 : 20}
 
 data = [
     [  # Job 0
-        [(1,0),(2,1)],
-        [(1,1),(1,2),(3,3)],
+        [(1,0),(1,1)],
     ],
     [  # Job 1
         [(2,1),(2,0)],
-        [(3, 0),(2,1),(5,2)],
     ],
     [  # Job 2
-        [(2,1),(4,0)],
-        [(3,2),(2,4),(5,1)],
-        [(1, 2), (1, 3), (2, 3)],
+        [(2,1),(4,2)],
     ],
 ]
 
@@ -111,7 +110,7 @@ for idx, task in enumerate(solution.tasks):
 
 duration_distributions = DiscreteUniformSampler(
     lower_bounds=np.full(len(model.tasks), 1),
-    upper_bounds=np.full(len(model.tasks), 8),
+    upper_bounds=np.full(len(model.tasks), 10),
 )
 
 # 3. Build the STNU
@@ -130,8 +129,8 @@ for job_idx, deadline in job_deadlines.items():
 # -------------------------
 
 os.makedirs("temporal_networks/cstnu_tool/xml_files", exist_ok=True)
-stnu_to_xml(stnu, "fjsp_deadlines_stnu", "temporal_networks/cstnu_tool/xml_files")
-dc, _ = run_dc_algorithm("temporal_networks/cstnu_tool/xml_files", "fjsp_deadlines_stnu")
+stnu_to_xml(stnu, "deadline_stnu", "temporal_networks/cstnu_tool/xml_files")
+dc, _ = run_dc_algorithm("temporal_networks/cstnu_tool/xml_files", "deadline_stnu")
 
 if not dc:
     logger.warning("The network is NOT dynamically controllable.")
@@ -143,66 +142,14 @@ else:
 # -------------------------
 if dc:
     estnu_for_sim = stnu
-
-    total_runs = 1000
-    makespans = []
-    violations = 0
-    first_solution = None
-
-    for run in range(total_runs):
-        sample_duration = duration_distributions.sample()
-        sample = sample_for_rte(sample_duration, estnu_for_sim)
-        rte_data = rte_star(estnu_for_sim, oracle="sample", sample=sample)
-
-        # skip infeasible
-        if not hasattr(rte_data, "f"):
-            logger.warning(f"[RTE*] Infeasible sample in run {run}. Skipping.")
-            continue
-
-        simulated_solution, objective = rte_data_to_pyjobshop_solution(
-            solution, estnu_for_sim, rte_data, len(model.tasks), "makespan"
-        )
-        makespans.append(objective)
-
-        missed = False
-        for job_idx, deadline in job_deadlines.items():
-            last_task = simulated_solution.tasks[len(data[job_idx]) * job_idx + len(data[job_idx]) - 1]
-            if last_task.end > deadline:
-                missed = True
-                break
-
-        if missed:
-            violations += 1
-        if run == 0:
-            first_solution = simulated_solution
-
-    logger.info(f"Deadline violations in {total_runs} runs: {violations}")
-
+    sim = Simulator(model, stnu, solution, duration_distributions, objective="makespan")
+    summary = sim.run_many(runs=1000)
+    logger.info(f"Deadline violations in {summary["total_runs"]} runs: {summary["violations"]}")
     # -------------------------
     # Gantt Chart for First Run
     # -------------------------
-    plot_machine_gantt(first_solution, model.data(), plot_labels=True)
-    os.makedirs("PyJobShopIntegration/images", exist_ok=True)
-    plt.savefig('PyJobShopIntegration/images/fjsp_with_deadlines.png')
-    plt.show()
-
+    plot_machine_gantt(summary["first_solution"], model.data(), plot_labels=True)
     # -------------------------
     # Statistics Plots
     # -------------------------
-    def plot_simulation_statistics(makespans, violations, total_runs):
-        plt.figure()
-        plt.bar(["Met", "Violated"], [total_runs - violations, violations])
-        plt.title("Deadline Compliance")
-        plt.ylabel("Number of Runs")
-        plt.savefig("PyJobShopIntegration/images/deadline_violations.png")
-        plt.show()
-
-        plt.figure()
-        plt.hist(makespans, bins=15)
-        plt.title("Makespan Distribution")
-        plt.xlabel("Makespan")
-        plt.ylabel("Frequency")
-        plt.savefig("PyJobShopIntegration/images/makespan_distribution.png")
-        plt.show()
-
-    plot_simulation_statistics(makespans, violations, total_runs)
+    plot_simulation_statistics(summary["makespans"], summary["violations"], summary["total_runs"])

@@ -5,6 +5,8 @@ import numpy as np
 
 import general.logger
 from pyjobshop.Model import Model, Solution
+
+from PyJobShopIntegration.simulator import Simulator
 from PyJobShopIntegration.utils import find_schedule_per_resource
 from PyJobShopIntegration.Sampler import DiscreteRVSampler
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
@@ -93,33 +95,16 @@ def run_proactive_online_pjstnu(
     Returns a list of per‐run dicts:
       { 'feasible': bool, 'makespan': float, 'duration_sample': np.array }
     """
-    stnu: PyJobShopSTNU = offline_data["stnu"]
-    sol: Solution = offline_data["solution"]
+    if not offline_data["dc"]:
+        logger.warning("STNU is not dynamically controllable → no online sim.")
+        return None
 
-    results = []
-    for _ in range(n_runs):
-        # 1) sample a concrete duration vector
-        sample = duration_distributions.sample()  # length = #tasks
-
-        # 2) run the STNU‐based dispatcher (RTE*)
-        dispatch = rte_star(stnu, sample)  # returns list of (node_idx, time) in execution order
-
-        # 3) extract finish times for each task
-        #    we know finish‐node indices: task_idx_FINISH = str(task_idx)_1
-        finish_times = []
-        for task_idx in range(len(sol.tasks)):
-            finish_node = f"{task_idx}_{PyJobShopSTNU.EVENT_FINISH}"
-            t_finish = dispatch.get_time(finish_node)
-            finish_times.append(t_finish)
-
-        makespan = max(finish_times)
-        # if DC failed offline, rte_star may still produce something; treat
-        # any negative or missing times as infeasible
-        feasible = offline_data["dc"] and all(t is not None for t in finish_times)
-
-        results.append({
-            "duration_sample": sample,
-            "feasible": feasible,
-            "makespan": makespan,
-        })
-    return results
+        # now just use your Simulator you already have
+    sim = Simulator(
+        offline_data["model"],
+        offline_data["stnu"],
+        offline_data["solution"],
+        duration_distributions,
+        objective="makespan"
+    )
+    return sim.run_many(runs=n_runs)

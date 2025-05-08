@@ -121,10 +121,11 @@ class MMRCPSPD(MMRCPSP):
             for idx, capacity in enumerate(self.capacities)
         ]
         # We add jobs for each task and each deadline dummy task
-        jobs = [model.add_job(due_date=self.deadlines.get(idx, MAX_VALUE)) for idx in range(self.num_tasks)]
-        jobs += [
-            model.add_job(due_date=d) for (t, d) in self.deadlines.items() # Deadline tasks should finish by deadline
-        ]
+        # jobs = [model.add_job(due_date=self.deadlines.get(idx, MAX_VALUE)) for idx in range(self.num_tasks)]
+        # jobs += [
+        #     model.add_job(due_date=d) for (t, d) in self.deadlines.items() # Deadline tasks should finish by deadline
+        # ]
+        jobs = [model.add_job() for _ in range(self.num_tasks + len(self.deadlines))]
         # Add tasks for the actual tasks and the deadlines
         tasks = [
             model.add_task(job=jobs[idx]) for idx in range(self.num_tasks + len(self.deadlines))

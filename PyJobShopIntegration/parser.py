@@ -1,3 +1,4 @@
+from PyJobShopIntegration.parser_tue import parse_fjs_to_pyjobshop_format
 from PyJobShopIntegration.problem_instances import *
 import re
 from typing import NamedTuple
@@ -95,4 +96,4 @@ def parse_data_rcpsp(file, problem_type):
         raise ValueError(f"Unknown problem type: {problem_type}")
 # TODO implement parser for fjsp instances
 def parse_data_fjsp(file):
-    pass
+    return parse_fjs_to_pyjobshop_format(file)

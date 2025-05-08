@@ -221,5 +221,29 @@ def sample_for_rte(sample_duration: np.ndarray, estnu: STNU) -> dict[int, int]:
     return sample
 
 
-def get_project_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+def check_feasibility_fjsp(
+    start_times: list[int],
+    durations: list[int],
+    precedence_relations: list[tuple[int,int]],
+    machine_chains: dict[int, list[int]]
+) -> bool:
+    """
+    Returns True iff
+      • for every (pred, succ) in precedence_relations, finish[pred] ≤ start[succ], and
+      • on each machine chain, finish of each task ≤ start of the next.
+    """
+    finish = [start_times[i] + durations[i] for i in range(len(start_times))]
+
+    # 1) precedence constraints
+    for pred, succ in precedence_relations:
+        if finish[pred] > start_times[succ]:
+            return False
+
+    # 2) resource chains (per‐machine sequences)
+    for chain in machine_chains.values():
+        for i in range(len(chain) - 1):
+            t1, t2 = chain[i], chain[i+1]
+            if finish[t1] > start_times[t2]:
+                return False
+
+    return True

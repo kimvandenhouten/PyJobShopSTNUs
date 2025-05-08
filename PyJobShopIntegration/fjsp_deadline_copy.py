@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from pyjobshop.Model import Model
 from pyjobshop.plot import plot_machine_gantt
 
+from PyJobShopIntegration.parser import parse_data_fjsp
 from PyJobShopIntegration.plot_gantt_and_stats import plot_simulation_statistics
 from PyJobShopIntegration.reactive_left_shift import group_shift_solution_resequenced
 from PyJobShopIntegration.simulator import Simulator
@@ -21,35 +22,18 @@ import general.logger
 
 # Initialize logger
 logger = general.logger.get_logger(__name__)
+parsed_data = parse_data_fjsp("ex_tue.fjs")
 
 # -------------------------
 # PHASE 1: Problem Definition
 # -------------------------
-NUM_MACHINES = 15
+NUM_MACHINES = parsed_data[0]
 
 # For each job j, deadline = sum of its tasks’ minimal durations + 10
-job_deadlines = {j: 17 for j in range(12)}
-# data[j] is a list of tasks for the job j; each task is a list of
-# (duration, machine) choices.
-data = [
-    [[(3, 0), (2, 11)], [(1, 3), (5, 2)], [(4, 1), (1, 9)]],
-    [[(2, 1), (5, 3)], [(5, 9), (2, 0)], [(5, 11), (4, 10)]],
-    [[(3, 7), (1, 9)], [(2, 12), (4, 14)], [(2, 5), (2, 4)], [(1, 12), (1, 5)]],
-    [[(3, 1), (5, 5)], [(1, 4), (4, 12)], [(4, 8), (1, 1)],
-     [(5, 8), (3, 4)], [(1, 9), (1, 3)], [(3, 10), (1, 3)]],
-    [[(4, 13), (3, 1)], [(3, 7), (2, 10)], [(2, 5), (3, 14)], [(1, 11), (5, 10)]],
-    [[(2, 8), (2, 11)], [(3, 7), (5, 6)], [(3, 3), (1, 10)], [(1, 3), (3, 13)]],
-    [[(2, 4), (5, 1)], [(3, 14), (2, 11)], [(4, 10), (4, 7)],
-     [(2, 2), (2, 4)], [(5, 11), (3, 8)], [(4, 11), (5, 9)]],
-    [[(2, 5), (5, 3)], [(1, 7), (1, 1)], [(2, 2), (4, 10)],
-     [(4, 9), (4, 1)], [(5, 9), (3, 7)], [(1, 8), (1, 13)]],
-    [[(3, 12), (1, 10)], [(2, 4), (4, 6)], [(3, 0), (5, 11)],
-     [(5, 12), (1, 2)], [(3, 13), (5, 10)]],
-    [[(2, 2), (5, 5)], [(1, 12), (5, 8)], [(1, 5), (1, 7)], [(3, 14), (2, 5)]],
-    [[(1, 3), (1, 9)], [(1, 11), (5, 7)], [(2, 12), (4, 2)]],
-    [[(5, 4), (4, 8)], [(2, 3), (3, 8)], [(3, 6), (4, 10)], [(4, 14), (1, 8)]],
-]
+data = parsed_data[1]
+num_jobs = len(data)
 
+job_deadlines = {j: 1850 for j in range(num_jobs)}
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
@@ -83,7 +67,7 @@ for job_idx, job_data in enumerate(data):
         task = model.add_task(job=job, name=f"Task {task_idx}")
         tasks[task_idx] = task
 
-        for duration, machine_idx in task_options:
+        for machine_idx, duration in task_options:
             model.add_mode(task, machines[machine_idx], duration)
 
     # Add precedence constraints
@@ -114,10 +98,24 @@ for idx, task in enumerate(solution.tasks):
 # -------------------------
 # PHASE 3: STNU Construction
 # -------------------------
+mins = []
+maxs = []
+for job in data:
+    for opts in job:
+        durs = [d for (_, d) in opts]
+        mins.append(min(durs))
+        maxs.append(max(durs))
+
+# now expand your uncertainty window a bit
+global_min = min(mins)
+global_max = max(maxs)
+span = global_max - global_min
+lo = max(1, global_min - int(0.5*span))   # e.g. 50% below your observed min
+hi = global_max + int(0.5*span)           # 50% above your observed max
 
 duration_distributions = DiscreteUniformSampler(
-    lower_bounds=np.full(len(model.tasks), 1),
-    upper_bounds=np.full(len(model.tasks), 6),
+  lower_bounds=np.full(len(model.tasks), lo, dtype=int),
+  upper_bounds=np.full(len(model.tasks), hi, dtype=int)
 )
 
 # 3. Build the STNU
@@ -171,7 +169,7 @@ def run_soft_deadline_sweep(
     data, job_deadlines,
     num_machines: int,
     sampler: DiscreteUniformSampler,
-    sim_runs: int = 200
+    sim_runs: int = 5
 ):
     results = []
 
@@ -193,7 +191,7 @@ def run_soft_deadline_sweep(
                 for t_idx, opts in enumerate(job_data):
                     t = model.add_task(job, name=f"J{j}_T{t_idx}")
                     tasks[(j, t_idx)] = t
-                    for d, m in opts:
+                    for m,d in opts:
                         model.add_mode(t, machines[m], d)
                 for t_idx in range(len(job_data)-1):
                     model.add_end_before_start(tasks[(j, t_idx)], tasks[(j, t_idx+1)])
@@ -259,8 +257,8 @@ def run_soft_deadline_sweep(
 if __name__ == "__main__":
     total_tasks = sum(len(job) for job in data)
     sampler = DiscreteUniformSampler(
-        lower_bounds=np.ones(total_tasks, int),
-        upper_bounds=np.full(total_tasks, 6, int),
+        lower_bounds=np.full(len(model.tasks), lo, dtype=int),
+        upper_bounds=np.full(len(model.tasks), hi, dtype=int),
     )
 
 
@@ -274,7 +272,7 @@ if __name__ == "__main__":
         we_values, wt_values, make_model,
         data, job_deadlines,
         NUM_MACHINES, sampler,
-        sim_runs=200
+        sim_runs=5
     )
 
     import pandas as pd
@@ -306,9 +304,10 @@ if __name__ == "__main__":
     ax2.set_ylabel("P(tardy)")
     plt.show()
 
-    x_col = "avg_makespan"
-    y_col = "p_tardy"
+    x_col = "p_early"  # or "avg_earliness"
+    y_col = "p_tardy"  # or "avg_tardiness"
     pts = df[[x_col, y_col]].to_numpy()
+
     is_pareto = np.ones(len(pts), dtype=bool)
     for i, p in enumerate(pts):
         # check if any other q dominates p
@@ -320,14 +319,22 @@ if __name__ == "__main__":
 
     pareto_df = df[is_pareto].sort_values(x_col)
 
-    plt.figure()
-    plt.scatter(df[x_col], df[y_col], label="all points")
-    plt.scatter(pareto_df[x_col], pareto_df[y_col],
-                edgecolor="k", s=100, label="Pareto front")
-    plt.plot(pareto_df[x_col], pareto_df[y_col], linestyle="--", color="k")
-    plt.xlabel("Average Makespan")
-    plt.ylabel("Probability of Tardiness")
-    plt.title("Pareto Front: Makespan vs. P(tardy)")
+    plt.figure(figsize=(6, 6))
+    sc = plt.scatter(df.p_early, df.p_tardy,
+                     c=df.w_t, cmap="viridis", alpha=0.4, label="all points")
+    plt.colorbar(sc, label="w_t (tardiness weight)")
+    plt.scatter(pareto_df.p_early, pareto_df.p_tardy,
+                edgecolor="k", color="C1", s=100, label="Pareto front")
+    for _, row in pareto_df.iterrows():
+        plt.annotate(f"{int(row.w_e)}/{int(row.w_t)}",
+                     (row.p_early, row.p_tardy),
+                     textcoords="offset points", xytext=(5, -3), fontsize=8)
+
+    plt.xlabel("P(earliness)")
+    plt.ylabel("P(tardiness)")
+    plt.title("Slack vs. Missed‐Deadline Trade-Off")
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
     plt.legend()
     plt.grid(True)
     plt.show()

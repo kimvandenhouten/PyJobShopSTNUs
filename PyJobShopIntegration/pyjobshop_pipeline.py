@@ -60,7 +60,7 @@ for noise_factor in NOISE_FACTORS:
     for j, instance_folder in enumerate(INSTANCE_FOLDERS):
         folder_path = os.path.join(path, "data", folder, instance_folder)
         # create a folder in images for results of this experiment
-        images_folder = os.path.join(path, "images", problem_type, instance_folder, str(time.time()))
+        images_folder = os.path.join(path, "images", problem_type, str(time.time()), f"noise_factor{noise_factor}", instance_folder)
         if not os.path.exists(images_folder):
             os.makedirs(images_folder)
         for n, file in enumerate(os.listdir(folder_path)):
@@ -71,11 +71,6 @@ for noise_factor in NOISE_FACTORS:
                 break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
-            # TODO change this to reflect the noise factor
-            # duration_distributions = DiscreteUniformSampler(
-            #     lower_bounds=np.random.randint(lb_low, lb_high, instance.get_sample_length()), # get_sample_length should return just the number of tasks or jobs in single mode instances
-            #     upper_bounds=np.random.randint(ub_low, ub_high, instance.get_sample_length()))
-            # test_durations_samples = duration_distributions.sample(nb_scenarios_test)
             test_durations_samples, duration_distributions = instance.sample_durations(nb_scenarios_test, noise_factor)
             # Run experiments on proactive, reactive and stnu
             # TODO implement the proactive, reactive and stnu approaches possibly reusing already existing code

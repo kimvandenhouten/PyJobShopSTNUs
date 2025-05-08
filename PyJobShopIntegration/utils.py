@@ -177,7 +177,7 @@ def overwrite_pyjobshop_solution(solution: Solution, start_times: list[int], fin
 
 
 def rte_data_to_pyjobshop_solution(solution: Solution, estnu: STNU, rte_data: RTEdata, num_tasks: int,
-                                   objective: str="makespan") -> (Solution, int):
+                                   objective: str="makespan", result=None) -> (Solution, int):
     """
     This function transforms the output of an RTE simulation into a PyJobShop solution
     """
@@ -190,6 +190,9 @@ def rte_data_to_pyjobshop_solution(solution: Solution, estnu: STNU, rte_data: RT
         objective_value = max(rte_data.f.values())
     else:
         raise NotImplementedError(f"Objective {objective} not")
+
+    if result is not None:
+        result.objective = objective_value
 
     return simulated_solution, objective_value
 

@@ -105,7 +105,6 @@ for job in data:
         durs = [d for (_, d) in opts]
         mins.append(min(durs))
         maxs.append(max(durs))
-
 # now expand your uncertainty window a bit
 global_min = min(mins)
 global_max = max(maxs)
@@ -158,7 +157,6 @@ if dc:
     # Statistics Plots
     # -------------------------
     plot_simulation_statistics(summary["makespans"], summary["violations"], summary["total_runs"])
-
 
 
 

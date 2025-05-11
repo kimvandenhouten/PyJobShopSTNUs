@@ -10,7 +10,7 @@ from pyjobshop.plot import plot_task_gantt, plot_resource_usage
 
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
-from PyJobShopIntegration.utils import add_resource_chains, get_resource_chains, sample_for_rte, plot_stnu
+from PyJobShopIntegration.utils import add_resource_chains, get_resource_chains, sample_for_rte, plot_stnu, data_to_csv
 from general.logger import get_logger
 from PyJobShopIntegration.evaluator import evaluate_results
 from PyJobShopIntegration.parser import create_instance
@@ -53,21 +53,22 @@ infeasible_sample = {}
 infeasible_sample["stnu"] = {}
 infeasible_sample["proactive"] = {}
 infeasible_sample["reactive"] = {}
+t = str(time.time())
 for noise_factor in NOISE_FACTORS:
     infeasible_sample["stnu"][noise_factor] = {}
-    output_file = f'final_results_{noise_factor}_{now}.csv'
-    data = []
+    output_file = f'final_results_{now}.csv'
     for j, instance_folder in enumerate(INSTANCE_FOLDERS):
         folder_path = os.path.join(path, "data", folder, instance_folder)
         # create a folder in images for results of this experiment
-        images_folder = os.path.join(path, "images", problem_type, str(time.time()), f"noise_factor{noise_factor}", instance_folder)
+        images_folder = os.path.join(path, "images", problem_type, t, f"noise_factor{noise_factor}", instance_folder)
         if not os.path.exists(images_folder):
             os.makedirs(images_folder)
         for n, file in enumerate(os.listdir(folder_path)):
+            logger.info(f"---------------------------------{file}---------------------------------")
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
-            if n == 100:
+            if n == 5:
                 break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
@@ -80,7 +81,7 @@ for noise_factor in NOISE_FACTORS:
                 if proactive_saa:
                     pass
                 if stnu:
-                    start_online = time.time()
+                    start_offline = time.time()
                     model = instance.create_model(duration_sample)
                     result = model.solve(time_limit=5, display=False)
                     result_tasks = result.best.tasks
@@ -115,6 +116,8 @@ for noise_factor in NOISE_FACTORS:
                         logger.info(f'The network resulting from the PyJobShop solution is DC for sample {duration_sample}')
                         estnu = STNU.from_graphml(output_location)
                         rte_sample = sample_for_rte(duration_sample, estnu)
+                        finish_offline = time.time()
+                        start_online = time.time()
                         rte_data = rte_star(estnu, oracle="sample", sample=rte_sample)
                         if type(rte_data) == bool:
                             logger.info("The solution is infeasible")
@@ -125,7 +128,11 @@ for noise_factor in NOISE_FACTORS:
                                     'feasibility': instance.check_feasibility(start_times, finish_times),
                                     'start_times': start_times,
                                     'time_online': finish_online - start_online,
-                                    'real_durations': duration_sample}
+                                    'time_offline': finish_offline - start_offline,
+                                    'noise_factor': noise_factor,
+                                    'method': 'stnu',
+                                    'time_limit': time_limit_cp_stnu,
+                                    'real_durations': str(duration_sample)}
                         task_data = []
                         for task, start, finish in zip(result_tasks, start_times, finish_times):
                             mode = task.mode
@@ -141,16 +148,28 @@ for noise_factor in NOISE_FACTORS:
 
                         plot_task_gantt(solution_plot, d, ax=axes[0])
                         plot_resource_usage(solution_plot, d, axes=axes[1:])
-                        plt.savefig(os.path.join(os.path.join(images_folder, file), f'{file}_{i}_{noise_factor}_{time.time()}.png'))
-                        data.append(solution)
+                        time_now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
+                        plt.savefig(os.path.join(os.path.join(images_folder, file), f'{file}_{i}_{noise_factor}_{time_now}.png'))
+                        data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
                         if not solution['feasibility']:
                             print("Finish times: ", finish_times)
                             raise ValueError("The solution is infeasible")
+                    # TODO update infeasible solutions count
                     else:
+                        finish_offline = time.time()
+                        solution = {'obj': np.inf,
+                                    'feasibility': False,
+                                    'start_times': [],
+                                    'time_online': np.inf,
+                                    'time_offline': finish_offline - start_offline,
+                                    'noise_factor': noise_factor,
+                                    'method': 'stnu',
+                                    'time_limit': time_limit_cp_stnu,
+                                    'real_durations': str(duration_sample)}
+                        data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
                         logger.info(f'The network is not DC for sample{duration_sample}')
-    print("Data: ", data)
     # Analyze the results perform statistical tests and create plots
-    evaluate_results(data)
+evaluate_results(now=now)
 # TODO potentially add this to evaluate_results for analysis
 print(f"Number of infeasible samples: {infeasible_sample}")
 

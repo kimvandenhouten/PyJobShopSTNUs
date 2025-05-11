@@ -1,4 +1,6 @@
 import copy
+import csv
+import json
 from typing import Dict
 
 import numpy as np
@@ -6,6 +8,7 @@ from pyjobshop import Solution
 from temporal_networks.stnu import STNU
 from temporal_networks.rte_star import RTEdata
 from pathlib import Path
+import os
 
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -254,3 +257,41 @@ def plot_stnu(stnu: STNU):
     plt.axis('off')
     plt.tight_layout()
     plt.show()
+
+def data_to_csv(instance_folder, solution, output_file):
+    """
+    Saves the solution to a CSV file safely and properly formatted.
+    """
+    output_dir = Path(get_project_root()) / "PyJobShopIntegration" / "results"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / output_file
+
+    header = [
+        "instance_folder", "noise_factor", "method", "time_limit",
+        "feasibility", "obj", "time_offline", "time_online",
+        "start_times", "real_durations"
+    ]
+
+    file_exists = output_path.exists()
+
+    with open(output_path, 'a', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=header)
+
+        if not file_exists:
+            writer.writeheader()
+
+        # Prepare row with list fields serialized as JSON
+        row = {
+            "instance_folder": instance_folder,
+            "noise_factor": solution["noise_factor"],
+            "method": solution["method"],
+            "time_limit": solution["time_limit"],
+            "feasibility": solution["feasibility"],
+            "obj": solution["obj"],
+            "time_offline": solution["time_offline"],
+            "time_online": solution["time_online"],
+            "start_times": json.dumps(solution["start_times"]),
+            "real_durations": json.dumps(solution["real_durations"])
+        }
+
+        writer.writerow(row)

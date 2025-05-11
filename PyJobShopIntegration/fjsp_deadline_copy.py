@@ -286,7 +286,7 @@ if __name__ == "__main__":
     )
     ax.set_xlabel("Early‐finish weight (w_e)")
     ax.set_ylabel("Makespan")
-    plt.savefig("images/cp_vs_makespan.png")
+    plt.savefig("images/fjsp_deadlines/cp_vs_makespan.png")
     plt.show()
 
     # Plot probability of tardiness
@@ -299,7 +299,7 @@ if __name__ == "__main__":
     )
     ax2.set_xlabel("Early‐finish weight (w_e)")
     ax2.set_ylabel("P(tardy)")
-    plt.savefig("images/w_e_vs_p_t.png")
+    plt.savefig("images/fjsp_deadlines/w_e_vs_p_t.png")
     plt.show()
 
     x_col = "p_early"  # or "avg_earliness"
@@ -334,7 +334,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("images/avg_makespan_w_e_w_t.png")
+    plt.savefig("images/fjsp_deadlines/avg_makespan_w_e_w_t.png")
     plt.show()
 
     # -----------------------------------------------------------------------------
@@ -355,7 +355,7 @@ if __name__ == "__main__":
         ax.set_xlabel("$w_e$")
         ax.set_ylabel("$w_t$")
     plt.tight_layout()
-    plt.savefig("images/heatmap_we_wt.png")
+    plt.savefig("images/fjsp_deadlines/heatmap_we_wt.png")
     plt.show()
 
 
@@ -403,7 +403,7 @@ if __name__ == "__main__":
     plt.title("Distribution of Makespans at Key Settings")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("images/makespan_boxplot.png")
+    plt.savefig("images/fjsp_deadlines/makespan_boxplot.png")
     plt.show()
 
     # -----------------------------------------------------------------------------
@@ -419,7 +419,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("images/avg_earliness_vs_tardiness_pareto.png")
+    plt.savefig("images/fjsp_deadlines/avg_earliness_vs_tardiness_pareto.png")
     plt.show()
 
 
@@ -475,5 +475,5 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("images/per_job_p_tardy.png")
+    plt.savefig("images/fjsp_deadlines/per_job_p_tardy.png")
     plt.show()

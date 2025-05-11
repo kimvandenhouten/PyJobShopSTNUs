@@ -43,7 +43,7 @@ def plot_simulation_statistics(makespans, violations, total_runs):
     plt.bar(["Met", "Violated"], [total_runs - violations, violations])
     plt.title("Deadline Compliance")
     plt.ylabel("Number of Runs")
-    plt.savefig("PyJobShopIntegration/images/deadline_violations.png")
+    plt.savefig("images/fjsp_deadlines/deadline_violations.png")
     plt.show()
 
     plt.figure()
@@ -51,5 +51,5 @@ def plot_simulation_statistics(makespans, violations, total_runs):
     plt.title("Makespan Distribution")
     plt.xlabel("Makespan")
     plt.ylabel("Frequency")
-    plt.savefig("PyJobShopIntegration/images/makespan_distribution.png")
+    plt.savefig("images/fjsp_deadlines/makespan_distribution.png")
     plt.show()

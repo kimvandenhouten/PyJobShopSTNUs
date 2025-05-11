@@ -1,6 +1,4 @@
 import os
-import time
-
 import numpy as np
 from matplotlib import pyplot as plt
 from pyjobshop.Model import Model
@@ -22,7 +20,7 @@ import general.logger
 
 # Initialize logger
 logger = general.logger.get_logger(__name__)
-parsed_data = parse_data_fjsp("ex_tue.fjs")
+parsed_data = parse_data_fjsp("data/fjsp/kacem/Kacem1.fjs")
 
 # -------------------------
 # PHASE 1: Problem Definition
@@ -33,7 +31,7 @@ NUM_MACHINES = parsed_data[0]
 data = parsed_data[1]
 num_jobs = len(data)
 
-job_deadlines = {j: 1850 for j in range(num_jobs)}
+job_deadlines = {j: 190 for j in range(num_jobs)}
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
@@ -317,22 +315,158 @@ if __name__ == "__main__":
 
     pareto_df = df[is_pareto].sort_values(x_col)
 
-    plt.figure(figsize=(6, 6))
-    sc = plt.scatter(df.p_early, df.p_tardy,
-                     c=df.w_t, cmap="viridis", alpha=0.4, label="all points")
-    plt.colorbar(sc, label="w_t (tardiness weight)")
-    plt.scatter(pareto_df.p_early, pareto_df.p_tardy,
-                edgecolor="k", color="C1", s=100, label="Pareto front")
-    for _, row in pareto_df.iterrows():
-        plt.annotate(f"{int(row.w_e)}/{int(row.w_t)}",
-                     (row.p_early, row.p_tardy),
-                     textcoords="offset points", xytext=(5, -3), fontsize=8)
+    import seaborn as sns
+    import pandas as pd
 
-    plt.xlabel("P(earliness)")
-    plt.ylabel("P(tardiness)")
-    plt.title("Slack vs. Missed‐Deadline Trade-Off")
-    plt.xlim(0, 1)
-    plt.ylim(0, 1)
+    # -----------------------------------------------------------------------------
+    # 1) Avg makespan vs w_e for several w_t curves
+    # -----------------------------------------------------------------------------
+    plt.figure(figsize=(6, 4))
+    for w_t in [0, 10, 50]:
+        df_sub = df[df.w_t == w_t]
+        plt.plot(df_sub.w_e, df_sub.avg_makespan,
+                 marker='o', label=f"w_t={w_t}")
+    plt.xlabel("$w_e$")
+    plt.ylabel("Average Makespan")
+    plt.title("Avg Makespan vs. $w_e$ for different $w_t$")
     plt.legend()
     plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # -----------------------------------------------------------------------------
+    # 2) Heatmaps over the (w_e, w_t) grid
+    # -----------------------------------------------------------------------------
+    pivot_msp = df.pivot(index='w_t', columns='w_e', values='avg_makespan')
+    pivot_pT = df.pivot(index='w_t', columns='w_e', values='p_tardy')
+    pivot_pE = df.pivot(index='w_t', columns='w_e', values='p_early')
+
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4))
+    sns.heatmap(pivot_msp, ax=axs[0], annot=True, fmt=".0f", cbar_kws={'shrink': .7})
+    axs[0].set_title("E[$C_{\\max}$]")
+    sns.heatmap(pivot_pT, ax=axs[1], annot=True, fmt=".2f", cbar_kws={'shrink': .7})
+    axs[1].set_title("$P(\\mathrm{tardy})$")
+    sns.heatmap(pivot_pE, ax=axs[2], annot=True, fmt=".2f", cbar_kws={'shrink': .7})
+    axs[2].set_title("$P(\\mathrm{early})$")
+    for ax in axs:
+        ax.set_xlabel("$w_e$")
+        ax.set_ylabel("$w_t$")
+    plt.tight_layout()
+    plt.show()
+
+
+    # -----------------------------------------------------------------------------
+    # 3) Box‐plots of makespan distribution at key (w_e,w_t)
+    # -----------------------------------------------------------------------------
+    def simulate_setting(we, wt, sim_runs=200):
+        """ Re-run sim_runs and return list of makespans. """
+        # rebuild & solve CP as in your sweep but only for one (we,wt)
+        model = make_model()
+        model.set_objective(1, we, wt, 0)
+        machines = [model.add_machine(f"M{i}") for i in range(NUM_MACHINES)]
+        tasks = {}
+        for j, job_data in enumerate(data):
+            job = model.add_job(name=f"J{j}", due_date=job_deadlines[j])
+            for t_idx, opts in enumerate(job_data):
+                t = model.add_task(job, name=f"J{j}_T{t_idx}")
+                tasks[(j, t_idx)] = t
+                for m, d in opts:
+                    model.add_mode(t, machines[m], d)
+            for t_idx in range(len(job_data) - 1):
+                model.add_end_before_start(tasks[(j, t_idx)], tasks[(j, t_idx + 1)])
+        sol = model.solve(display=False).best
+
+        stnu = PyJobShopSTNU.from_concrete_model(model, sampler)
+        stnu.add_resource_chains(sol, model)
+        sim = Simulator(model, stnu, sol, sampler, objective="makespan")
+
+        makespans = []
+        for _ in range(sim_runs):
+            sim_sol, _ = sim.run_once()
+            makespans.append(max(t.end for t in sim_sol.tasks))
+        return makespans
+
+
+    # pick three settings
+    settings = [(0, 0), (5, 0), (20, 0)]
+    box_data = {f"{we}/{wt}": simulate_setting(we, wt, sim_runs=50)
+                for we, wt in settings}
+
+    df_box = pd.DataFrame(box_data)
+    plt.figure(figsize=(6, 4))
+    df_box.plot.box()
+    plt.ylabel("Makespan")
+    plt.title("Distribution of Makespans at Key Settings")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # -----------------------------------------------------------------------------
+    # 4) Avg‐earliness vs avg‐tardiness Pareto front
+    # -----------------------------------------------------------------------------
+    plt.figure(figsize=(6, 6))
+    plt.scatter(df.avg_earliness, df.avg_tardiness, alpha=0.3, label="all points")
+    plt.scatter(pareto_df.avg_earliness, pareto_df.avg_tardiness,
+                color='C1', edgecolor='k', s=100, label="Pareto front")
+    plt.xlabel("Average Earliness")
+    plt.ylabel("Average Tardiness")
+    plt.title("Avg Earliness vs. Avg Tardiness Pareto Front")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
+    # -----------------------------------------------------------------------------
+    # 5) Per‐job tardiness bar‐chart at two settings
+    # -----------------------------------------------------------------------------
+    def per_job_p_tardy(we, wt, sim_runs=200):
+        """ Return list of p_tardy per job for this (we,wt). """
+        # re‐use simulate_setting code but track per‐job counts
+        model = make_model()
+        model.set_objective(1, we, wt, 0)
+        machines = [model.add_machine(f"M{i}") for i in range(NUM_MACHINES)]
+        tasks = {}
+        for j, job_data in enumerate(data):
+            job = model.add_job(name=f"J{j}", due_date=job_deadlines[j])
+            for t_idx, opts in enumerate(job_data):
+                t = model.add_task(job, name=f"J{j}_T{t_idx}")
+                tasks[(j, t_idx)] = t
+                for m, d in opts:
+                    model.add_mode(t, machines[m], d)
+            for t_idx in range(len(job_data) - 1):
+                model.add_end_before_start(tasks[(j, t_idx)], tasks[(j, t_idx + 1)])
+        sol = model.solve(display=False).best
+
+        stnu = PyJobShopSTNU.from_concrete_model(model, sampler)
+        stnu.add_resource_chains(sol, model)
+        sim = Simulator(model, stnu, sol, sampler, objective="makespan")
+
+        tardy_counts = np.zeros(num_jobs, dtype=int)
+        for _ in range(sim_runs):
+            sim_sol, _ = sim.run_once()
+            for j in range(num_jobs):
+                last_idx = len(data[j]) * j + (len(data[j]) - 1)
+                F = sim_sol.tasks[last_idx].end
+                if F > job_deadlines[j]:
+                    tardy_counts[j] += 1
+        return tardy_counts / sim_runs
+
+
+    # compare (0,0) vs (5,0)
+    p0 = per_job_p_tardy(0, 0, sim_runs=100)
+    p5 = per_job_p_tardy(5, 0, sim_runs=100)
+
+    x = np.arange(num_jobs)
+    width = 0.35
+    plt.figure(figsize=(6, 4))
+    plt.bar(x - width / 2, p0, width, label="w_e=0")
+    plt.bar(x + width / 2, p5, width, label="w_e=5")
+    plt.xlabel("Job index")
+    plt.ylabel("P(job tardy)")
+    plt.title("Per‐Job Tardiness Probability")
+    plt.xticks(x)
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
     plt.show()

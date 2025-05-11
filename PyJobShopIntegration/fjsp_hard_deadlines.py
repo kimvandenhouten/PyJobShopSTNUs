@@ -24,7 +24,7 @@ logger = general.logger.get_logger(__name__)
 # PHASE 1: Problem Definition
 # -------------------------
 NUM_MACHINES = 5
-job_deadlines = {0: 20, 1: 18, 2 : 20}
+job_deadlines = {0: 30, 1: 30, 2 : 30}
 
 data = [
     [  # Job 0

@@ -57,7 +57,7 @@ def make_model_with_deadlines(data, job_deadlines, num_machines):
 if __name__ == "__main__":
     # 1) load instance
     from PyJobShopIntegration.parser import parse_data_fjsp
-    num_machines, data = parse_data_fjsp("ex_tue.fjs")
+    num_machines, data = parse_data_fjsp("data/fjsp/kacem/Kacem1.fjs")
     num_jobs = len(data)
 
     # 2) each job’s minimal sum of mins
@@ -65,6 +65,8 @@ if __name__ == "__main__":
         j: sum(min(d for _, d in data[j][t]) for t in range(len(data[j])))
         for j in range(num_jobs)
     }
+
+    print(lb_sum_per_job)
 
     # 3) build a sampler for all real tasks + dummy tasks
     all_lb, all_ub = [], []
@@ -91,7 +93,7 @@ if __name__ == "__main__":
     total_lb = int(lb_nom.sum())
     total_ub = int(ub_nom.sum())
     gap = total_ub - total_lb
-    deltas = sorted(set(range(-10, gap + 1000, max(1, (gap + 20) // 20))))
+    deltas = sorted(set(range(0, gap + 100, max(1, (gap + 20) // 20))))
 
     cp_ok = []
     dc_ok = []
@@ -131,19 +133,54 @@ if __name__ == "__main__":
         dc, _ = run_dc_algorithm(xml_folder, xml_name)
         dc_ok.append(int(dc))
 
-    # plot
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3))
-    ax1.plot(deltas, cp_ok, "o-")
+    theo_gap = sum(ub_nom) - sum(lb_nom)
+    print(f"Theoretical full‐horizon gap  ∑(max–min) = {theo_gap}")
+
+    # find Δ* = first delta where cp_ok=1 and dc_ok=1
+    delta_star = None
+    for d, cpf, dcc in zip(deltas, cp_ok, dc_ok):
+        if cpf == 1 and dcc == 1:
+            delta_star = d
+            break
+
+    if delta_star is None:
+        print("No Δ in your sweep makes both CP‐feasible and STNU‐controllable.")
+    else:
+        print(f"Critical slack Δ* = {delta_star}")
+        print(f"  → Δ* / theoretical gap = {delta_star:.1f} / {theo_gap:.1f} = {delta_star / theo_gap:.2f}")
+
+    theo_gap = sum(ub_nom) - sum(lb_nom)
+    delta_star = next((d for d, cpf, dcc in zip(deltas, cp_ok, dc_ok) if cpf and dcc), None)
+
+    # --- now the enriched plotting ---
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), sharex=True)
+
+    # panel 1: CP feasibility
+    ax1.plot(deltas, cp_ok, "o-", label="CP Feasible")
+    ax1.axvline(theo_gap, color="C2", linestyle="--", label="Theoretical gap")
+    if delta_star is not None:
+        ax1.axvline(delta_star, color="C3", linestyle=":", label="Critical Δ*")
     ax1.set_title("CP Feasibility vs Δ")
     ax1.set_xlabel("Δ (slack)")
     ax1.set_ylim(-0.1, 1.1)
     ax1.grid(True)
+    ax1.legend(loc="upper left")
 
-    ax2.plot(deltas, dc_ok, "o-", color="C1")
+    # panel 2: STNU controllability
+    ax2.plot(deltas, dc_ok, "o-", color="C1", label="STNU Controllable")
+    ax2.axvline(theo_gap, color="C2", linestyle="--")
+    if delta_star is not None:
+        ax2.axvline(delta_star, color="C3", linestyle=":")
     ax2.set_title("STNU Controllability vs Δ")
     ax2.set_xlabel("Δ (slack)")
     ax2.set_ylim(-0.1, 1.1)
     ax2.grid(True)
+    ax2.legend(loc="upper left")
+
+    # annotate exact values
+    ax2.text(theo_gap, 0.5, f" gap={theo_gap}", color="C2", va="center", ha="right", rotation=90)
+    if delta_star is not None:
+        ax2.text(delta_star, 0.5, f" Δ*={delta_star}", color="C3", va="center", ha="left", rotation=90)
 
     plt.tight_layout()
     plt.show()

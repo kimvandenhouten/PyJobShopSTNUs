@@ -31,7 +31,7 @@ NUM_MACHINES = parsed_data[0]
 data = parsed_data[1]
 num_jobs = len(data)
 
-job_deadlines = {j: 190 for j in range(num_jobs)}
+job_deadlines = {j: 175 for j in range(num_jobs)}
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
@@ -286,6 +286,7 @@ if __name__ == "__main__":
     )
     ax.set_xlabel("Early‐finish weight (w_e)")
     ax.set_ylabel("Makespan")
+    plt.savefig("images/cp_vs_makespan.png")
     plt.show()
 
     # Plot probability of tardiness
@@ -298,6 +299,7 @@ if __name__ == "__main__":
     )
     ax2.set_xlabel("Early‐finish weight (w_e)")
     ax2.set_ylabel("P(tardy)")
+    plt.savefig("images/w_e_vs_p_t.png")
     plt.show()
 
     x_col = "p_early"  # or "avg_earliness"
@@ -332,6 +334,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
+    plt.savefig("images/avg_makespan_w_e_w_t.png")
     plt.show()
 
     # -----------------------------------------------------------------------------
@@ -352,6 +355,7 @@ if __name__ == "__main__":
         ax.set_xlabel("$w_e$")
         ax.set_ylabel("$w_t$")
     plt.tight_layout()
+    plt.savefig("images/heatmap_we_wt.png")
     plt.show()
 
 
@@ -399,6 +403,7 @@ if __name__ == "__main__":
     plt.title("Distribution of Makespans at Key Settings")
     plt.grid(True)
     plt.tight_layout()
+    plt.savefig("images/makespan_boxplot.png")
     plt.show()
 
     # -----------------------------------------------------------------------------
@@ -414,6 +419,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
+    plt.savefig("images/avg_earliness_vs_tardiness_pareto.png")
     plt.show()
 
 
@@ -469,4 +475,5 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
+    plt.savefig("images/per_job_p_tardy.png")
     plt.show()

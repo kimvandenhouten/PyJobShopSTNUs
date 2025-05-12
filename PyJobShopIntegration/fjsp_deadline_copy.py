@@ -31,7 +31,7 @@ NUM_MACHINES = parsed_data[0]
 data = parsed_data[1]
 num_jobs = len(data)
 
-job_deadlines = {j: 2650 for j in range(num_jobs)}
+job_deadlines = {j: 2750 for j in range(num_jobs)}
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
@@ -145,7 +145,7 @@ else:
 if dc:
     estnu_for_sim = stnu
     sim = Simulator(model, stnu, solution, duration_distributions, objective="makespan")
-    summary = sim.run_many(runs=200)
+    summary = sim.run_many(runs=100)
     logger.info(f"Deadline violations in {summary['total_runs']} runs: {summary['violations']}")
     # -------------------------
     # Gantt Chart for First Run
@@ -165,7 +165,7 @@ def run_soft_deadline_sweep(
     data, job_deadlines,
     num_machines: int,
     sampler: DiscreteUniformSampler,
-    sim_runs: int = 5
+    sim_runs: int = 100
 ):
     results = []
 
@@ -264,18 +264,12 @@ if __name__ == "__main__":
 
     we_values = [0, 1, 5, 10, 20, 50, 100]
     wt_values = [0,1,5,10,20,50,100]
-    sweep = run_soft_deadline_sweep(
-        we_values, wt_values, make_model,
-        data, job_deadlines,
-        NUM_MACHINES, sampler,
-        sim_runs=5
+    results = run_soft_deadline_sweep(
+        we_values, wt_values, make_model, data, job_deadlines, NUM_MACHINES, sampler, sim_runs=100
     )
-
     import pandas as pd
 
-    df = pd.DataFrame(run_soft_deadline_sweep(
-        we_values, wt_values, make_model, data, job_deadlines, NUM_MACHINES, sampler, sim_runs=200
-    ))
+    df = pd.DataFrame(results)
 
     ax = df.plot(
         x="w_e",
@@ -362,7 +356,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------
     # 3) Box‐plots of makespan distribution at key (w_e,w_t)
     # -----------------------------------------------------------------------------
-    def simulate_setting(we, wt, sim_runs=200):
+    def simulate_setting(we, wt, sim_runs=100):
         """ Re-run sim_runs and return list of makespans. """
         # rebuild & solve CP as in your sweep but only for one (we,wt)
         model = make_model()

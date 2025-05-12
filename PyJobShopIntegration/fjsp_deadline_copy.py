@@ -20,7 +20,7 @@ import general.logger
 
 # Initialize logger
 logger = general.logger.get_logger(__name__)
-parsed_data = parse_data_fjsp("data/fjsp/kacem/Kacem1.fjs")
+parsed_data = parse_data_fjsp("data/fjsp/barnes/seti5c12.fjs")
 
 # -------------------------
 # PHASE 1: Problem Definition
@@ -31,7 +31,7 @@ NUM_MACHINES = parsed_data[0]
 data = parsed_data[1]
 num_jobs = len(data)
 
-job_deadlines = {j: 175 for j in range(num_jobs)}
+job_deadlines = {j: 3500 for j in range(num_jobs)}
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------

@@ -31,7 +31,7 @@ NUM_MACHINES = parsed_data[0]
 data = parsed_data[1]
 num_jobs = len(data)
 
-job_deadlines = {j: 2700 for j in range(num_jobs)}
+job_deadlines = {j: 2350 for j in range(num_jobs)}
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
@@ -147,6 +147,7 @@ if dc:
     sim = Simulator(model, stnu, solution, duration_distributions, objective="makespan")
     summary = sim.run_many(runs=200)
     logger.info(f"Deadline violations in {summary['total_runs']} runs: {summary['violations']}")
+    logger.info(f"Avg makespan : {summary['makespans'].mean()}")
     # -------------------------
     # Gantt Chart for First Run
     # -------------------------

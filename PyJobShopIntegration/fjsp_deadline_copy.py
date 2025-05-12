@@ -31,7 +31,7 @@ NUM_MACHINES = parsed_data[0]
 data = parsed_data[1]
 num_jobs = len(data)
 
-job_deadlines = {j: 2350 for j in range(num_jobs)}
+job_deadlines = {j: 2650 for j in range(num_jobs)}
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------

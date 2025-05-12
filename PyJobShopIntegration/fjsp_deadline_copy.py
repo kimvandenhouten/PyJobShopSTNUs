@@ -147,7 +147,6 @@ if dc:
     sim = Simulator(model, stnu, solution, duration_distributions, objective="makespan")
     summary = sim.run_many(runs=200)
     logger.info(f"Deadline violations in {summary['total_runs']} runs: {summary['violations']}")
-    logger.info(f"Avg makespan : {summary['makespans'].mean()}")
     # -------------------------
     # Gantt Chart for First Run
     # -------------------------

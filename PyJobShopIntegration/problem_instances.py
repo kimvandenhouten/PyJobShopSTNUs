@@ -8,7 +8,22 @@ from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 
 # Parent class of all instances, could include more important methods if needed
 class Instance():
-    def get_objective(self, rte_data, objective="makespan"):
+
+    def __init__(self, num_tasks, num_resources, successors, predecessors):
+        """
+        Initialize the instance.
+
+        :param num_tasks: Number of tasks in the project.
+        :param num_resources: Number of resources available.
+        :param successors: List of successors for each task.
+        :param predecessors: List of predecessors for each task.
+        """
+        self.num_tasks = num_tasks
+        self.num_resources = num_resources
+        self.successors = successors
+        self.predecessors = predecessors
+        self.model = None
+    def get_objective_rte(self, rte_data, objective="makespan"):
         """
         Get the objective value from the RTE data.
 
@@ -20,6 +35,46 @@ class Instance():
             return max(rte_data.f.values())
         else:
             raise ValueError("Unknown objective type.")
+
+    def get_objective(self, result_tasks, objective="makespan"):
+        """
+        Get the objective value from the result tasks.
+
+        :param result_tasks: The result tasks containing the results.
+        :param objective: The type of objective to retrieve (default is "makespan").
+        :return: The objective value.
+        """
+        if objective == "makespan":
+            return max(task.end for task in result_tasks)
+        else:
+            raise ValueError("Unknown objective type.")
+
+    def check_duration_feasibility(self, start_times, finish_times, durations):
+        """
+        Check the duration feasibility of the tasks.
+        :param start_times: Start times of the tasks.
+        :param finish_times: Finish times of the tasks.
+        :param durations: Durations of the tasks.
+        :return: True if feasible, False otherwise.
+        """
+        for (job, dur) in enumerate(durations):
+            if finish_times[job] - start_times[job] != dur or dur < 0:
+                return False
+        return True
+
+    def check_precedence_feasibility(self, start_times, finish_times, successors):
+        """
+        Check the precedence feasibility of the tasks.
+        :param start_times: Start times of the tasks.
+        :param finish_times: Finish times of the tasks.
+        :param successors: Successors of the tasks.
+        :return: True if feasible, False otherwise.
+        """
+        for (job, job_successors) in enumerate(successors):
+            for suc in job_successors:
+                if finish_times[suc] < start_times[job]:
+                    return False
+        return True
 
     def check_feasibility(self, start_times, finish_times, *args):
         raise NotImplementedError("Subclasses should implement this method.")
@@ -37,6 +92,13 @@ class Instance():
     def get_schedule(self, result_tasks):
         """
         Get the schedule for the tasks.
+        This method should be implemented in subclasses.
+        """
+        raise NotImplementedError("Subclasses should implement this method.")
+
+    def solve_reactive(self, *args):
+        """
+        Solve the problem using a reactive approach.
         This method should be implemented in subclasses.
         """
         raise NotImplementedError("Subclasses should implement this method.")
@@ -96,6 +158,32 @@ class MMRCPSP(Instance):
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
+    def check_resource_feasibility(self, start_times, durations, demands):
+        """
+        Check the resource feasibility of the tasks.
+        :param start_times: Start times of the tasks.
+        :param durations: Durations of the tasks.
+        :param demands: Resource demands for each task.
+        :return: True if feasible, False otherwise.
+        """
+        num_resources = len(self.capacities)
+        num_jobs = len(durations)
+        used = np.zeros((sum(durations), num_resources))
+
+        for job in range(num_jobs):
+            start_job = start_times[job]
+            duration = durations[job]
+            job_needs = demands[job]
+            used[start_job:start_job + duration] += job_needs
+        # np.set_printoptions(threshold=np.inf)
+        # print("Used resources: ", used)
+        resource_feasible = True
+        for t in range(sum(durations)):
+            for r, resource_usage in enumerate(used[t]):
+                if resource_usage > self.capacities[r]:
+                    resource_feasible = False
+        return resource_feasible
+
 class MMRCPSPD(MMRCPSP):
     """
     Class to represent a Multi-mode Resource-Constrained Project Scheduling Problem with Deadlines (MMRCPSPD).
@@ -117,7 +205,7 @@ class MMRCPSPD(MMRCPSP):
 
         # resources = [model.add_renewable(capacity) for capacity in instance.capacities]
         resources = [
-            model.add_renewable(capacity) if self.renewable[idx] else model.add_non_renewable(capacity)
+            model.add_renewable(capacity)
             for idx, capacity in enumerate(self.capacities)
         ]
         # We add jobs for each task and each deadline dummy task
@@ -177,7 +265,6 @@ class MMRCPSPD(MMRCPSP):
         :param nb_scenarios: Number of scenarios to sample.
         :return: List of sampled durations.
         """
-        # TODO implement sampling logic
         lower_bound, upper_bound = self.get_bounds(noise_factor)
         duration_distributions = DiscreteUniformSampler(
             lower_bounds=lower_bound,
@@ -185,10 +272,9 @@ class MMRCPSPD(MMRCPSP):
         )
         return duration_distributions.sample(nb_scenarios), duration_distributions
 
-    # TODO potentially need more checks
-    def check_feasibility(self, start_times, finish_times, *args):
+    def check_deadline_feasibility(self, finish_times):
         """
-        Check the feasibility of the solution.
+        Check the deadline feasibility of the tasks.
         :param start_times: Start times of the tasks.
         :param finish_times: Finish times of the tasks.
         :return: True if feasible, False otherwise.
@@ -197,7 +283,20 @@ class MMRCPSPD(MMRCPSP):
             if idx in self.deadlines and finish_times[idx] > self.deadlines[idx]:
                 return False
         return True
-
+    def check_feasibility(self, start_times, finish_times, durations, demands):
+        """
+        Check the feasibility of the solution.
+        :param start_times: Start times of the tasks.
+        :param finish_times: Finish times of the tasks.
+        :param durations: Durations of the tasks.
+        :param demands: Resource demands for each task.
+        :return: True if feasible, False otherwise.
+        """
+        duration_feasible = self.check_duration_feasibility(start_times, finish_times, durations)
+        precedence_feasible = self.check_precedence_feasibility(start_times, finish_times, self.successors)
+        resource_feasible = self.check_resource_feasibility(start_times, durations, demands)
+        deadline_feasible = self.check_deadline_feasibility(finish_times)
+        return duration_feasible and precedence_feasible and resource_feasible and deadline_feasible
     def get_sample_length(self):
         """
         Get the length of the sample.
@@ -205,7 +304,7 @@ class MMRCPSPD(MMRCPSP):
         """
         return len(self.modes) + len(self.deadlines)
 
-    def get_objective(self, rte_data, objective="makespan"):
+    def get_objective_rte(self, rte_data, objective="makespan"):
         """
         Get the objective value from the RTE data.
 
@@ -216,11 +315,28 @@ class MMRCPSPD(MMRCPSP):
         if objective == "makespan":
             makespan = max([
                 time for node, time in rte_data.f.items()
-                if node < self.num_tasks
+                if node < self.num_tasks - 1
             ])
             return makespan
         elif objective == "deadline":
             return sum(finish_time for idx, finish_time in enumerate(rte_data.f.values()) if idx in self.deadlines)
+        else:
+            raise ValueError("Unknown objective type.")
+
+    def get_objective(self, schedule, objective="makespan"):
+        """
+        Get the objective value from the result tasks.
+
+        :param schedule: The schedule containing the results.
+        :param objective: The type of objective to retrieve (default is "makespan").
+        :return: The objective value.
+        """
+        if objective == "makespan":
+            makespan = max(task["end"] for task in schedule if task["task"] < self.num_tasks - 1)
+            print(f"---------------------------------{makespan}---------------------------------")
+            return makespan
+        elif objective == "deadline":
+            return sum(task["end"] for task in schedule if task["task"] in self.deadlines)
         else:
             raise ValueError("Unknown objective type.")
 
@@ -230,7 +346,7 @@ class MMRCPSPD(MMRCPSP):
         """
         schedule = []
         for i, task in enumerate(result_tasks):
-            if i < self.num_tasks:
+            if i < self.num_tasks - 1:
                 schedule.append({
                     "task": i,
                     "start": task.start,
@@ -242,8 +358,42 @@ class MMRCPSPD(MMRCPSP):
                     "start": 0,
                     "end": task.end - task.start
                 })
+        return schedule
 
-            return schedule
+    def solve_reactive(self, durations, scheduled_start_times, current_time, time_limit=None, initial_solution=None):
+
+        # Build model with given durations
+        print("Durations: ", durations)
+        model = self.create_model(durations)
+
+        # Apply fixed start times or release times based on current schedule
+        for task_id, scheduled_start in enumerate(scheduled_start_times):
+            task = model.tasks[task_id]
+            if scheduled_start >= 0:
+                model.tasks[task_id] = model.add_task(model.jobs[task.job], earliest_start=scheduled_start, latest_start=scheduled_start)
+                # model.tasks[task_id].latest_start = scheduled_start
+                # model.tasks[task_id].earliest_start = scheduled_start
+            else:
+                model.tasks[task_id] = model.add_task(model.jobs[task.job], earliest_start=current_time)
+        print("Tasks: ", model.tasks)
+        # TODO potentially implement the warm start solver with initial_solution
+        # # Apply initial solution if provided
+        # if initial_solution:
+        #     for task_id, start_time in initial_solution.items():
+        #         model.add_start_hint(model.tasks[task_id], start_time)
+
+        # Solve model
+        result = model.solve(time_limit=time_limit)
+        result_tasks = result.best.tasks
+
+        # Extract start times and makespan
+        if result_tasks:
+            start_times = [task.start for task in result_tasks]
+            finish_times = [task.end for task in result_tasks]
+            makespan = self.get_objective(self.get_schedule(result_tasks))
+            return start_times, makespan
+        else:
+            return None, np.inf
 
     def __str__(self):
         """

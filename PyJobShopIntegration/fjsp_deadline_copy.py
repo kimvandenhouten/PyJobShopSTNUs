@@ -146,7 +146,7 @@ if dc:
     estnu_for_sim = stnu
     sim = Simulator(model, stnu, solution, duration_distributions, objective="makespan")
     summary = sim.run_many(runs=200)
-    logger.info(f"Deadline violations in {summary["total_runs"]} runs: {summary["violations"]}")
+    logger.info(f"Deadline violations in {summary['total_runs']} runs: {summary['violations']}")
     # -------------------------
     # Gantt Chart for First Run
     # -------------------------

@@ -57,7 +57,7 @@ def make_model_with_deadlines(data, job_deadlines, num_machines):
 if __name__ == "__main__":
     # 1) load instance
     from PyJobShopIntegration.parser import parse_data_fjsp
-    num_machines, data = parse_data_fjsp("data/fjsp/kacem/Kacem1.fjs")
+    num_machines, data = parse_data_fjsp("data/fjsp/barnes/seti5c12.fjs")
     num_jobs = len(data)
 
     # 2) each job’s minimal sum of mins
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     total_lb = int(lb_nom.sum())
     total_ub = int(ub_nom.sum())
     gap = total_ub - total_lb
-    deltas = sorted(set(range(0, gap + 100, max(1, (gap + 20) // 20))))
+    deltas = sorted(set(range(0, gap + 1500, max(1, (gap + 20) // 20))))
 
     cp_ok = []
     dc_ok = []

@@ -1,6 +1,9 @@
 import os
 import sys
 
+repo_root = os.path.abspath(os.path.join(__file__, os.pardir))
+sys.path.insert(0, repo_root)
+
 import numpy as np
 from matplotlib import pyplot as plt
 from pyjobshop.Model import Model
@@ -10,9 +13,6 @@ from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 from temporal_networks.stnu import STNU
-
-repo_root = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir))
-sys.path.insert(0, repo_root)
 
 def make_model_with_deadlines(data, job_deadlines, num_machines):
     model = Model()

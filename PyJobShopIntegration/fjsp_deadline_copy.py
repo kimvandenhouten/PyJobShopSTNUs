@@ -165,7 +165,7 @@ def run_soft_deadline_sweep(
     data, job_deadlines,
     num_machines: int,
     sampler: DiscreteUniformSampler,
-    sim_runs: int = 100
+    sim_runs: int = 20
 ):
     results = []
 
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     we_values = [0, 1, 5, 10, 20, 50, 100]
     wt_values = [0,1,5,10,20,50,100]
     results = run_soft_deadline_sweep(
-        we_values, wt_values, make_model, data, job_deadlines, NUM_MACHINES, sampler, sim_runs=100
+        we_values, wt_values, make_model, data, job_deadlines, NUM_MACHINES, sampler, sim_runs=20
     )
     import pandas as pd
 
@@ -356,7 +356,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------
     # 3) Box‐plots of makespan distribution at key (w_e,w_t)
     # -----------------------------------------------------------------------------
-    def simulate_setting(we, wt, sim_runs=100):
+    def simulate_setting(we, wt, sim_runs=20):
         """ Re-run sim_runs and return list of makespans. """
         # rebuild & solve CP as in your sweep but only for one (we,wt)
         model = make_model()
@@ -387,7 +387,7 @@ if __name__ == "__main__":
 
     # pick three settings
     settings = [(0, 0), (5, 0), (20, 0)]
-    box_data = {f"{we}/{wt}": simulate_setting(we, wt, sim_runs=50)
+    box_data = {f"{we}/{wt}": simulate_setting(we, wt, sim_runs=20)
                 for we, wt in settings}
 
     df_box = pd.DataFrame(box_data)
@@ -420,7 +420,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------
     # 5) Per‐job tardiness bar‐chart at two settings
     # -----------------------------------------------------------------------------
-    def per_job_p_tardy(we, wt, sim_runs=200):
+    def per_job_p_tardy(we, wt, sim_runs=20):
         """ Return list of p_tardy per job for this (we,wt). """
         # re‐use simulate_setting code but track per‐job counts
         model = make_model()
@@ -454,8 +454,8 @@ if __name__ == "__main__":
 
 
     # compare (0,0) vs (5,0)
-    p0 = per_job_p_tardy(0, 0, sim_runs=100)
-    p5 = per_job_p_tardy(5, 0, sim_runs=100)
+    p0 = per_job_p_tardy(0, 0, sim_runs=20)
+    p5 = per_job_p_tardy(5, 0, sim_runs=20)
 
     x = np.arange(num_jobs)
     width = 0.35

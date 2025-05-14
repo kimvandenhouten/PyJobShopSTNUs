@@ -1,7 +1,10 @@
+# import os.path
 import os
 from pathlib import Path
 import tomli as tomllib
 
+# PYPROJECT = "pyproject.toml"
+# PYPROJECT_DEFAULT = "pyproject.default.toml"
 # Dynamically determine the project root, assuming config.py is in /general
 ROOT_DIR = Path(__file__).resolve().parent.parent
 PYPROJECT = ROOT_DIR / "pyproject.toml"
@@ -9,6 +12,7 @@ PYPROJECT_DEFAULT = ROOT_DIR / "pyproject.default.toml"
 
 class Config:
     config = None
+    # if not os.path.exists(PYPROJECT) and os.path.exists(PYPROJECT_DEFAULT):
     if not PYPROJECT.exists() and PYPROJECT_DEFAULT.exists():
         import shutil
         print(f"copying {PYPROJECT_DEFAULT} to {PYPROJECT} for first run")

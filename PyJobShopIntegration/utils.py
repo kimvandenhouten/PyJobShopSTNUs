@@ -5,7 +5,11 @@ import numpy as np
 from pyjobshop import Solution
 from temporal_networks.stnu import STNU
 from temporal_networks.rte_star import RTEdata
+from pathlib import Path
 
+def get_project_root()->Path:
+    """Returns the root path of the project."""
+    return Path(__file__).resolve().parents[1]
 
 def find_schedule_per_resource(solution: Solution) -> Dict[int, list[int]]:
     """
@@ -63,7 +67,6 @@ def get_resource_chains(schedule, capacity, resources, complete=False) -> (list[
     resource_use = {}
 
     resource_assignment = []
-    print(schedule)
     for d in sorted(schedule, key=lambda d: d['start']):
         for resource_index, required in enumerate(resources[d['task']]):
             reservations = reserved_until[resource_index]
@@ -139,36 +142,42 @@ def get_start_and_finish_from_rte(estnu: STNU, rte_data:RTEdata, num_tasks: int)
     to the task indices
     """
     # TODO: can we make this faster / vectorize, or should it even be integrated in the RTE*?
-    start_times, finish_times = [], []
+    start_times = []
+    finish_times = []
+
     for task in range(num_tasks):
-        node_idx_start = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_START}']
-        node_idx_finish = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_FINISH}']
+        start_key = f"{task}_{STNU.EVENT_START}"
+        finish_key = f"{task}_{STNU.EVENT_FINISH}"
+
+        if start_key not in estnu.translation_dict_reversed or finish_key not in estnu.translation_dict_reversed:
+            # Skip tasks not included in the STNU
+            continue
+
+        node_idx_start = estnu.translation_dict_reversed[start_key]
+        node_idx_finish = estnu.translation_dict_reversed[finish_key]
+
         start_times.append(rte_data.f[node_idx_start])
         finish_times.append(rte_data.f[node_idx_finish])
+
     return start_times, finish_times
 
 
-def get_start_and_finish_from_rte(estnu: STNU, rte_data:RTEdata, num_tasks: int) -> (list[int], list[int]):
+def overwrite_pyjobshop_solution(solution, start_times, finish_times):
     """
-    This function can be used to link the start times and finish times from the rte_dta
-    to the task indices
+    Updates a PyJobShop solution with new start/finish times.
+    Assumes start_times and finish_times only apply to tasks present in the STNU.
     """
-    # TODO: can we make this faster / vectorize, or should it even be integrated in the RTE*?
-    start_times, finish_times = [], []
-    for task in range(num_tasks):
-        node_idx_start = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_START}']
-        node_idx_finish = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_FINISH}']
-        start_times.append(rte_data.f[node_idx_start])
-        finish_times.append(rte_data.f[node_idx_finish])
-    return start_times, finish_times
+    from copy import deepcopy
+    simulated_solution = deepcopy(solution)
 
-def overwrite_pyjobshop_solution(solution: Solution, start_times: list[int], finish_times: list[int])\
-        -> (Solution, int):
-    simulated_solution = copy.deepcopy(solution)
+    st_idx = 0  # index in start_times and finish_times
 
-    for i in range(len(solution.tasks)):
-        simulated_solution.tasks[i].start = start_times[i]
-        simulated_solution.tasks[i].end = finish_times[i]
+    for i, task in enumerate(simulated_solution.tasks):
+        if st_idx >= len(start_times):
+            continue
+        simulated_solution.tasks[i].start = start_times[st_idx]
+        simulated_solution.tasks[i].end = finish_times[st_idx]
+        st_idx += 1
 
     return simulated_solution
 
@@ -190,16 +199,51 @@ def rte_data_to_pyjobshop_solution(solution: Solution, estnu: STNU, rte_data: RT
 
     return simulated_solution, objective_value
 
-
 def sample_for_rte(sample_duration: np.ndarray, estnu: STNU) -> dict[int, int]:
     """
-    This function converts a sample into a dictionary that connects the samples to the keys of the contingent
-    nodes in the STNU
+    Converts a duration sample into a mapping from each contingent‐link node
+    index in estnu._contingent_nodes to its drawn duration.
     """
     sample = {}
-    for task, duration in enumerate(sample_duration):
-        find_contingent_node = estnu.translation_dict_reversed[f'{task}_{STNU.EVENT_FINISH}']
-        sample[find_contingent_node] = duration
+    for task_idx, dur in enumerate(sample_duration):
+        start_key = f"{task_idx}_{STNU.EVENT_START}"
+        finish_key = f"{task_idx}_{STNU.EVENT_FINISH}"
+        # skip any task whose nodes weren’t even in this STNU
+        if start_key not in estnu.translation_dict_reversed or finish_key not in estnu.translation_dict_reversed:
+            continue
+
+        s = estnu.translation_dict_reversed[start_key]
+        f = estnu.translation_dict_reversed[finish_key]
+        # only sample for truly contingent links
+        if (s, f) in estnu.contingent_links:
+            sample[f] = int(dur)
+
     return sample
-def get_project_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+
+
+def check_feasibility_fjsp(
+    start_times: list[int],
+    durations: list[int],
+    precedence_relations: list[tuple[int,int]],
+    machine_chains: dict[int, list[int]]
+) -> bool:
+    """
+    Returns True iff
+      • for every (pred, succ) in precedence_relations, finish[pred] ≤ start[succ], and
+      • on each machine chain, finish of each task ≤ start of the next.
+    """
+    finish = [start_times[i] + durations[i] for i in range(len(start_times))]
+
+    # 1) precedence constraints
+    for pred, succ in precedence_relations:
+        if finish[pred] > start_times[succ]:
+            return False
+
+    # 2) resource chains (per‐machine sequences)
+    for chain in machine_chains.values():
+        for i in range(len(chain) - 1):
+            t1, t2 = chain[i], chain[i+1]
+            if finish[t1] > start_times[t2]:
+                return False
+
+    return True

@@ -68,9 +68,12 @@ class RTEdata:
         # Initialize enabled timepoints
         rte_data.enabled_tp = get_enabled_tp(rte_data, estnu)
 
-        # Initialize time windows and waits for ALL executable nodes
+        # for tp in u_x:
         for tp in estnu.get_executable_time_points():
+            # Initialize time windows
             rte_data.time_windows[tp] = TimeWindow(tp)
+
+            # Initialize activated waits
             rte_data.act_waits[tp] = []
 
         return rte_data
@@ -556,5 +559,4 @@ def hce_update(S: STNU, D: RTEdata, rho: float, tau: list):
 
         # Line 6: Update D.Enabled_x due to incoming negative edges to C or any deleted C-waits
         D.enabled_tp = get_enabled_tp(D, S)
-
     return D

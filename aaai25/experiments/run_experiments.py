@@ -1,5 +1,5 @@
 # Import
-import os
+import os.path
 
 import numpy as np
 import pandas as pd
@@ -11,6 +11,7 @@ import copy
 import datetime
 # Import reactive approach
 from scheduling_methods.reactive_method import run_reactive_online
+from PyJobShopIntegration.utils import get_project_root
 
 # Import proactive approach
 from scheduling_methods.proactive_method import run_proactive_offline, run_proactive_online
@@ -30,7 +31,7 @@ these experiments a new csv file is generated including the results with a time 
 
 # GENERAL SETTINGS
 SEED = 1
-DIRECTORY_INSTANCES = 'rcpsp_max/data'
+DIRECTORY_INSTANCES = os.path.join('rcpsp_max', 'data')
 
 perfect_information = False
 
@@ -49,7 +50,7 @@ mode_stnu = "robust"
 
 
 # SETTINGS EXPERIMENTS
-DIRECTORY_PI = "aaai25/results_perfect_information"
+DIRECTORY_PI = os.path.join("aaai25", "results_perfect_information")
 INSTANCE_FOLDERS = ["j10", "j20", "j30", "ubo50", "ubo100"]
 INSTANCE_IDS = range(1, 51)
 NOISE_FACTORS = [1, 2]
@@ -63,6 +64,7 @@ now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
 project_root = get_project_root()
 
 def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
+    project_root = get_project_root()
     df = pd.read_csv(os.path.join(project_root, f'{DIRECTORY_PI}', f'results_pi_{instance_folder}_{noise_factor}.csv'))
     filtered_df = df[(df['instance_id'] == instance_id) & (df['sample'] == sample_index)]
     assert len(filtered_df) == 1

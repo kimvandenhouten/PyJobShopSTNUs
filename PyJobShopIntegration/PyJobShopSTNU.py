@@ -19,28 +19,30 @@ class PyJobShopSTNU(STNU):
     def from_concrete_model(cls, model: Model, duration_distributions: DiscreteRVSampler):
         stnu = cls(origin_horizon=False)
 
+        # prepare storage for exactly the nodes we will sample
+        stnu._contingent_nodes = []
         lower_bounds, upper_bounds = duration_distributions.get_bounds()
         for task_idx, task in enumerate(model.tasks):
-            task_start = stnu.add_node(f'{task_idx}_{STNU.EVENT_START}')
-            task_finish = stnu.add_node(f'{task_idx}_{STNU.EVENT_FINISH}')
+            s = stnu.add_node(f'{task_idx}_{STNU.EVENT_START}')
+            f = stnu.add_node(f'{task_idx}_{STNU.EVENT_FINISH}')
 
-            if lower_bounds[task_idx] == upper_bounds[task_idx]:
-                stnu.add_tight_constraint(task_start, task_finish, lower_bounds[task_idx])
+            lb, ub = lower_bounds[task_idx], upper_bounds[task_idx]
+            if lb == ub:
+                stnu.add_tight_constraint(s, f, lb)
             else:
-                stnu.add_contingent_link(task_start, task_finish, lower_bounds[task_idx], upper_bounds[task_idx])
+                stnu.add_contingent_link(s, f, lb, ub)
+                # remember to sample for this finish node
+                stnu._contingent_nodes.append(f)
 
+        # then your existing temporal constraints…
         for cons in model.constraints.end_before_start:
             stnu.add_end_before_start_constraints(cons)
-
         for cons in model.constraints.end_before_end:
             stnu.add_end_before_end_constraints(cons)
-
         for cons in model.constraints.start_before_end:
             stnu.add_start_before_end_constraints(cons)
-
         for cons in model.constraints.start_before_start:
             stnu.add_start_before_start_constraints(cons)
-
         for cons in model.constraints.setup_times:
             stnu.add_setup_times(cons)
 

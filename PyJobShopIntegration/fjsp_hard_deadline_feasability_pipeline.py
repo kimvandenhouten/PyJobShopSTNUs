@@ -96,7 +96,7 @@ os.makedirs(xml_folder, exist_ok=True)
 total_lb = int(lb_nom.sum())
 total_ub = int(ub_nom.sum())
 gap = total_ub - total_lb
-deltas = sorted(set(range(0, gap + 1500, max(1, (gap + 20) // 20))))
+deltas = sorted(set(range(0, gap + 400, max(1, (gap + 20) // 20))))
 
 cp_ok = []
 dc_ok = []
@@ -186,4 +186,5 @@ if delta_star is not None:
     ax2.text(delta_star, 0.5, f" Δ*={delta_star}", color="C3", va="center", ha="left", rotation=90)
 
 plt.tight_layout()
+plt.savefig("images/fjsp_deadlines/delta_star.png")
 plt.show()

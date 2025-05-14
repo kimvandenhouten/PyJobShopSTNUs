@@ -272,6 +272,29 @@ class MMRCPSPD(MMRCPSP):
         )
         return duration_distributions.sample(nb_scenarios), duration_distributions
 
+
+    def sample_mode(self, mode):
+        """
+        Sample a mode for the tasks in the project.
+        :param mode: The mode to sample.
+        :return: List of sampled durations.
+        """
+        lower_bound, upper_bound = self.get_bounds()
+        if mode == "robust":
+            durations = upper_bound
+        elif mode == "mean":
+            durations = [(lb + ub) // 2 for lb, ub in zip(lower_bound, upper_bound)]
+        elif mode == "quantile_0.25":
+            durations = [int(lb + 0.25 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+        elif mode == "quantile_0.75":
+            durations = [int(lb + 0.75 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+        elif mode == "quantile_0.9":
+            durations = [int(lb + 0.9 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+        else:
+            raise ValueError("Unknown mode type.")
+        return durations
+
+
     def check_deadline_feasibility(self, finish_times):
         """
         Check the deadline feasibility of the tasks.

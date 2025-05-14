@@ -1,0 +1,60 @@
+
+=== Evaluating method: proactive_quantile_0.9 ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10
+  • Avg Makespan : 23.01000
+  • Var Makespan : 25.22797
+  • Avg Online Time : 0.00102
+  • Var Online Time : 0.00000
+  • Avg Offline Time : 0.07349
+  • Var Offline Time : 0.00108
+  • Feasibility Ratio : 1.00000
+--------------------------------------------------
+
+=== Evaluating method: reactive ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10
+  • Avg Makespan : 23.01000
+  • Var Makespan : 25.22797
+  • Avg Online Time : 0.00069
+  • Var Online Time : 0.00000
+  • Avg Offline Time : 0.07349
+  • Var Offline Time : 0.00108
+  • Feasibility Ratio : 1.00000
+--------------------------------------------------
+
+=== Evaluating method: stnu ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10
+  • Avg Makespan : 23.94444
+  • Var Makespan : 50.34327
+  • Avg Online Time : 0.00916
+  • Var Online Time : 0.00003
+  • Avg Offline Time : 0.59585
+  • Var Offline Time : 0.02331
+  • Feasibility Ratio : 1.00000
+--------------------------------------------------
+
+=== Feasibility Summary ===
+                                        count  sum  ratio
+method                 instance_folder                   
+proactive_quantile_0.9 j10                400  400    1.0
+reactive               j10                400  400    1.0
+stnu                   j10                360  180    0.5
+
+=== Wilcoxon Test Results ===
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: Not enough data for comparison
+proactive_quantile_0.9 vs stnu: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 5419.5, sum_neg_ranks = 59515.5, n_pairs = 360
+reactive vs proactive_quantile_0.9: Not enough data for comparison
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 5419.5, sum_neg_ranks = 59515.5, n_pairs = 360
+stnu vs proactive_quantile_0.9: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 59515.5, sum_neg_ranks = 5419.5, n_pairs = 360
+stnu vs reactive: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 59515.5, sum_neg_ranks = 5419.5, n_pairs = 360
+stnu vs stnu: Not enough data for comparison

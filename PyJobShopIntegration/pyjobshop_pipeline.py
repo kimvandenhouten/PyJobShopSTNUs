@@ -93,6 +93,7 @@ for noise_factor in NOISE_FACTORS:
 
                     # Run reactive online
                     data_dict_reactive = copy.copy(data_dict)
+                    print("Data dict reactive", data_dict_reactive)
                     data_dict_reactive = run_reactive_online(instance, ds, data_dict_reactive, time_limit_rescheduling)
                     data_dict_reactive["method"] = "reactive"
                     data_to_csv(instance_folder=instance_folder, solution=data_dict_reactive, output_file=output_file)
@@ -100,7 +101,7 @@ for noise_factor in NOISE_FACTORS:
                     pass
                 if stnu:
                     start_offline = time.time()
-                    model = instance.create_model(duration_sample)
+                    model = instance.create_model(instance.sample_mode(mode_stnu))
                     result = model.solve(time_limit=5, display=False)
                     result_tasks = result.best.tasks
                     if result_tasks == []:

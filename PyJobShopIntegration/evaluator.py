@@ -58,33 +58,12 @@ def evaluate_methods(df, output):
             summary[instance_folder]['var_offline_time'] = instance_df['time_offline'].var()
             summary[instance_folder]['feasibility_ratio'] = instance_df['feasibility'].mean()
 
-        # summary = (
-        #     method_df
-        #     .groupby(['instance_folder', 'method'])
-        #     .agg(
-        #         avg_makespan = ('obj', 'mean'),
-        #         var_makespan = ('obj', 'var'),
-        #         avg_online_time = ('time_online', 'mean'),
-        #         var_online_time = ('time_online', 'var'),
-        #         avg_offline_time = ('time_offline', 'mean'),
-        #         var_offline_time = ('time_offline', 'var'),
-        #         feasibility_ratio = ('feasibility', 'mean'),
-        #     )
-        #     .reset_index()
-        # )
         print("\n=== Method Evaluation Summary ===\n", file=output)
         for instance_folder, metrics in summary.items():
             print(f"Instance: {instance_folder}", file=output)
             for metric, value in metrics.items():
                 print(f"  • {metric.replace('_', ' ').title()} : {value:.5f}", file=output)
             print("-" * 50, file=output)
-        # for _, row in summary.iterrows():
-        #     print(f"Method: {method} | Instance: {row['instance_folder']}", file=output)
-        #     print(f"  • Avg. makespan     : {row['avg_makespan']:.5f} (var {row['var_makespan']:.5f})", file=output)
-        #     print(f"  • Avg. online time  : {row['avg_online_time']:.5f} (var {row['var_online_time']:.5f})", file=output)
-        #     print(f"  • Avg. offline time : {row['avg_offline_time']:.5f} (var {row['var_offline_time']:.5f})", file=output)
-        #     print(f"  • Feasibility ratio : {row['feasibility_ratio']:.5%}", file=output)
-        #     print("-" * 50, file=output)
 
 def summarize_feasibility(df, output):
     feasibility_summary = df.groupby(['method', 'instance_folder'])['feasibility'].agg(['count', 'sum'])

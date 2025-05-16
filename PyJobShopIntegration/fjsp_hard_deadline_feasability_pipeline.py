@@ -58,7 +58,6 @@ def make_model_with_deadlines(data, job_deadlines, num_machines):
     return model, tasks
 
 
-
 from PyJobShopIntegration.parser import parse_data_fjsp
 num_machines, data = parse_data_fjsp("data/fjsp/barnes/seti5c12.fjs")
 num_jobs = len(data)

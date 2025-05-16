@@ -66,7 +66,7 @@ for noise_factor in NOISE_FACTORS:
             if n == 5:
                 break
             # Load data
-            instance = create_instance(os.path.join(folder_path, file), problem_type)
+            instance = create_instance(os.path.join(folder_path, file), problem_type, False)
             # TODO change this to reflect the noise factor
             duration_distributions = DiscreteUniformSampler(
                 lower_bounds=np.random.randint(lb_low, lb_high, instance.get_sample_length()), # get_sample_length should return just the number of tasks or jobs in single mode instances

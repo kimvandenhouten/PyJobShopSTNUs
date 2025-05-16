@@ -70,8 +70,8 @@ for noise_factor in NOISE_FACTORS:
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
-            if n == 30:
-                break
+            # if n == 30:
+            #     break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
             test_durations_samples, duration_distributions = instance.sample_durations(nb_scenarios_test, noise_factor)
@@ -93,7 +93,6 @@ for noise_factor in NOISE_FACTORS:
 
                     # Run reactive online
                     data_dict_reactive = copy.copy(data_dict)
-                    print("Data dict reactive", data_dict_reactive)
                     data_dict_reactive = run_reactive_online(instance, ds, data_dict_reactive, time_limit_rescheduling)
                     data_dict_reactive["method"] = "reactive"
                     data_to_csv(instance_folder=instance_folder, solution=data_dict_reactive, output_file=output_file)
@@ -197,11 +196,14 @@ for noise_factor in NOISE_FACTORS:
                             figsize=(12, 16),
                             gridspec_kw={"height_ratios": [6] + [1] * d.num_resources},
                         )
-
-                        plot_task_gantt(solution_plot, d, ax=axes[0])
-                        plot_resource_usage(solution_plot, d, axes=axes[1:])
-                        time_now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
-                        plt.savefig(os.path.join(os.path.join(images_folder, file), f'{file}_{i}_{noise_factor}_{time_now}.png'))
+                        try:
+                            plot_task_gantt(solution_plot, d, ax=axes[0])
+                            plot_resource_usage(solution_plot, d, axes=axes[1:])
+                            time_now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
+                            plt.savefig(os.path.join(os.path.join(images_folder, file), f'{file}_{i}_{noise_factor}_{time_now}.png'))
+                            plt.close(fig)
+                        except Exception as e:
+                            logger.error(f"Error plotting Gantt chart: {e}")
                         data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
                     # TODO update infeasible solutions count
                     else:

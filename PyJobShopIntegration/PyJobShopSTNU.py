@@ -43,9 +43,6 @@ class PyJobShopSTNU(STNU):
             stnu.add_start_before_end_constraints(cons)
         for cons in model.constraints.start_before_start:
             stnu.add_start_before_start_constraints(cons)
-        for cons in model.constraints.setup_times:
-            stnu.add_setup_times(cons)
-
         return stnu
 
     def add_end_before_end_constraints(self, cons: EndBeforeEnd):
@@ -80,14 +77,14 @@ class PyJobShopSTNU(STNU):
         suc_idx = self.translation_dict_reversed[f'{cons.task2}_{STNU.EVENT_START}']
         self.set_ordinary_edge(suc_idx, pred_idx, -cons.delay)
 
-    def add_setup_times(self, cons: SetupTime):
-        """
-        Set-up times are machine-dependent, so they can only been added when the schedule per resource is known
-        """
-        raise NotImplementedError
-
     def add_resource_chains(self, sol: Solution, model: Model):
         schedule_per_resource = find_schedule_per_resource(sol)
+
+        # Add up set-up delays
+        setup_delay = {
+            (c.machine, c.task1, c.task2): c.duration
+            for c in model.constraints.setup_times
+        }
 
         # Add resource chains
         for machine, sequence in schedule_per_resource.items():
@@ -101,9 +98,9 @@ class PyJobShopSTNU(STNU):
                 suc_idx_start = self.translation_dict_reversed[
                     f"{second_idx}_{STNU.EVENT_START}"]  # Get translation index from start of successor
 
-                # add constraint between predecessor and successor
-                self.set_ordinary_edge(suc_idx_start, pred_idx_finish, 0)
-
-        # TODO: implement set-up times
-        if len(model.constraints.setup_times) > 0:
-            raise NotImplementedError(f'Setup times are not yet implemented')
+                # If there is a sequence-dependent set-up time, determine delay
+                delay = setup_delay.get((machine, first_idx, second_idx), 0)
+                # add constraint between predecessor and successor, with sequence dependent set up times this is a delay
+                self.set_ordinary_edge(suc_idx_start, pred_idx_finish, -delay)
+                if delay > 0:
+                    logger.info(f"Resource {machine}: SDST {first_idx} → {second_idx} delay={delay}")

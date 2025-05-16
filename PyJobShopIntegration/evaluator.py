@@ -92,84 +92,78 @@ def summarize_feasibility(df, output):
     print("\n=== Feasibility Summary ===", file=output)
     print(feasibility_summary, file=output)
 
-def wilcoxon_test(df, output, alpha=0.05, min_samples=2):
-    print("\n=== Wilcoxon Test Results ===", file=output)
-    methods = df['method'].unique()
-    results = defaultdict(dict)
 
-    # Pivot the data for easy pairwise comparison
-    pivot_df = df.pivot(columns='method', values='obj')
+def _perform_wilcoxon(metric_df, methods, alpha, min_samples):
+    metric_results = defaultdict(dict)
+    pivot_df = metric_df.pivot(columns='method', values='value')
 
     for i in methods:
         for j in methods:
             if i == j:
-                results[i][j] = {'p': None, 'significant': False, 'better': None}
+                metric_results[i][j] = {'p': None, 'significant': False, 'better': None}
                 continue
 
             scores_i = pivot_df[i].dropna().reset_index()
             scores_j = pivot_df[j].dropna().reset_index()
 
-            # Check if both methods have enough samples for comparison
             if len(scores_i) < min_samples or len(scores_j) < min_samples:
-                results[i][j] = {'p': None, 'significant': False, 'better': None}
+                metric_results[i][j] = {'p': None, 'significant': False, 'better': None}
                 continue
 
-            # Align the indices to ensure scores are matched by row
             aligned = pd.concat([scores_i, scores_j], axis=1, join="inner").dropna()
-            # if i == 'reactive' and j == 'proactive_quantile_0.9':
-            #     # Special case for 'reactive' vs 'proactive'
-            #     print(aligned)
             if aligned.shape[0] < min_samples:
-                results[i][j] = {'p': None, 'significant': False, 'better': None}
+                metric_results[i][j] = {'p': None, 'significant': False, 'better': None}
                 continue
 
             try:
                 stat, p = wilcoxon(aligned[i], aligned[j])
                 significant = p < alpha
 
-                # Calculate the differences and ranks
                 differences = np.array(aligned[i]) - np.array(aligned[j])
                 ranks = rankdata([abs(diff) for diff in differences])
-                signed_ranks = []
+                signed_ranks = [rank if diff > 0 else -rank for diff, rank in zip(differences, ranks) if diff != 0]
 
-                for diff, rank in zip(differences, ranks):
-                    if diff > 0:
-                        signed_ranks.append(rank)
-                    elif diff < 0:
-                        signed_ranks.append(-rank)
+                sum_pos = sum(rank for rank in signed_ranks if rank > 0)
+                sum_neg = sum(-rank for rank in signed_ranks if rank < 0)
 
-                sum_positive_ranks = sum(rank for rank in signed_ranks if rank > 0)
-                sum_negative_ranks = sum(-rank for rank in signed_ranks if rank < 0)
+                better = i if sum_pos > sum_neg else (j if sum_neg > sum_pos else None)
 
-                # Determine which method is better based on positive and negative ranks
-                better = None
-                if sum_positive_ranks > sum_negative_ranks:
-                    better = i
-                elif sum_negative_ranks > sum_positive_ranks:
-                    better = j
-
-                # Save the test results including rank sums and p-value
-                results[i][j] = {
+                metric_results[i][j] = {
                     'p': p,
                     'significant': significant,
                     'better': better,
-                    'sum_pos_ranks': sum_positive_ranks,
-                    'sum_neg_ranks': sum_negative_ranks,
+                    'sum_pos_ranks': sum_pos,
+                    'sum_neg_ranks': sum_neg,
                     'n_pairs': len(aligned),
                 }
             except ValueError:
-                results[i][j] = {'p': None, 'significant': False, 'better': None}
-    # Print results
-    for i in methods:
-        for j in methods:
-            if results[i][j]['p'] is not None:
-                print(
-                    f"{i} vs {j}: p-value = {results[i][j]['p']:.5f}, significant = {results[i][j]['significant']}, "
-                    f"better = {results[i][j]['better']}, sum_pos_ranks = {results[i][j]['sum_pos_ranks']}, "
-                    f"sum_neg_ranks = {results[i][j]['sum_neg_ranks']}, n_pairs = {results[i][j]['n_pairs']}",
-                    file=output)
-            else:
-                print(f"{i} vs {j}: Not enough data for comparison", file=output)
+                metric_results[i][j] = {'p': None, 'significant': False, 'better': None}
+
+    return metric_results
+
+
+def wilcoxon_test(df, output, alpha=0.05, min_samples=2):
+    print("\n=== Wilcoxon Test Results ===", file=output)
+    methods = df['method'].unique()
+
+    for metric in ['obj', 'time_online', 'time_offline']:
+        print(f"\n--- Metric: {metric} ---", file=output)
+
+        metric_df = df[['method', metric]].copy()
+        metric_df.columns = ['method', 'value']
+
+        results = _perform_wilcoxon(metric_df, methods, alpha, min_samples)
+
+        for i in methods:
+            for j in methods:
+                if results[i][j]['p'] is not None:
+                    print(
+                        f"{i} vs {j}: p-value = {results[i][j]['p']:.5f}, significant = {results[i][j]['significant']}, "
+                        f"better = {results[i][j]['better']}, sum_pos_ranks = {results[i][j]['sum_pos_ranks']}, "
+                        f"sum_neg_ranks = {results[i][j]['sum_neg_ranks']}, n_pairs = {results[i][j]['n_pairs']}",
+                        file=output)
+                else:
+                    print(f"{i} vs {j}: Not enough data for comparison", file=output)
 
 # Example usage:
-evaluate_results("05_13_2025,21_06")
+evaluate_results("05_15_2025,17_33")

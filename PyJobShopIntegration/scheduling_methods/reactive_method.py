@@ -154,7 +154,7 @@ def run_reactive_online(instance, duration_sample, data_dict, time_limit_resched
             logger.info("Schedule is not feasible")
             makespan = np.inf
         else:
-            makespan = instance.get_objective(instance.get_schedule(data_dict["result_tasks"]))
+            makespan = max(finish_times[:instance.num_tasks-1])  # TODO: check if this is correct
             logger.info(f'Schedule is FEASIBLE with makespan {makespan} with true durations {real_durations} ')
             logger.info(f'With {solver_calls} solver calls')
 

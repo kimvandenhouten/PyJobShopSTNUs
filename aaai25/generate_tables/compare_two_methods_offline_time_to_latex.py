@@ -1,5 +1,9 @@
+import os
+
 import pandas as pd
 import numpy as np
+
+from PyJobShopIntegration.utils import get_project_root
 from general.latex_table_from_list import generate_latex_table_from_lists
 from scipy.stats import binomtest
 from scipy.stats import wilcoxon
@@ -17,7 +21,8 @@ script generates Table 16 and Table 17 from the Supplementary Material when nois
 """
 
 ### SETTINGS ###
-RESULTS_DIR = "aaai25/final_results"
+root = get_project_root()
+RESULTS_DIR = f"{root}/aaai25/final_results"
 noise_factor = 1
 printing_insignificant = True
 # Please refer to the csv file including all results from the experiments

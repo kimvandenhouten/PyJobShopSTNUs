@@ -1,22 +1,15 @@
-from pathlib import Path
-
 from PyJobShopIntegration.problem_instances import *
 import re
 from typing import NamedTuple
-
 def create_instance(file, problem_type):
     if problem_type.startswith("mmrcpsp"):
-        # existing RCPSP parser; returns appropriate object
         return parse_data_rcpsp(file, problem_type)
-    elif problem_type.startswith("fjsp"):
-        num_machines, data = parse_data_fjsp(file)
-        return build_model_fjsp(num_machines, data)
-    else:
-        raise ValueError(f"Unsupported problem type: {problem_type}")
-
+    elif problem_type.startswith("fjsp", problem_type):
+        return parse_data_fjsp(file)
 
 # TODO implement parser for rcpsp instances
 def parse_data_rcpsp(file, problem_type):
+    # TODO define this outside the function to use for other parts of the code
     class Mode(NamedTuple):
         job: int
         duration: int
@@ -76,6 +69,27 @@ def parse_data_rcpsp(file, problem_type):
             int(line.split()[0]) - 1: int(line.split()[1])
             for line in lines[deadlines_idx + 2: -1]
         }
+
+        sink_predecessors = predecessors.pop()
+        sink_successors = successors.pop()
+        sink_mode = modes.pop()
+        # Add predecessors for deadline tasks
+        for i, (idx, deadline) in enumerate(deadlines.items()):
+            mode = Mode(i + int(job_idx) - 1, deadline, [0] * (len(capacities)))
+            modes.append(mode)
+            # Add supersource as direct predecessor of each deadline task
+            predecessors.append([0])
+            successors.append([])
+            successors[0].append(i + int(job_idx) - 1)
+        predecessors.append(sink_predecessors)
+        successors.append(sink_successors)
+
+        modes.append(Mode(int(job_idx)+len(deadlines) - 1, 0, [0] * len(capacities)))
+        # Adjust predecessors and successors for the sink task
+        for i in range(len(successors)):
+            if i in sink_predecessors:
+                idx = successors[i].index(int(job_idx) - 1)
+                successors[i][idx] = len(successors) - 1
         return MMRCPSPD(
             int(job_idx),
             len(capacities),
@@ -101,75 +115,6 @@ def parse_data_rcpsp(file, problem_type):
         )
     else:
         raise ValueError(f"Unknown problem type: {problem_type}")
-
+# TODO implement parser for fjsp instances
 def parse_data_fjsp(file):
-    path = Path(file)
-    with open(path, 'r') as f:
-        # Read header line
-        header_tokens = re.findall(r"\S+", f.readline())
-        total_jobs, total_machines, _ = header_tokens
-        num_jobs = int(total_jobs)
-        num_machines = int(total_machines)
-
-        data = []
-        # Parse each job line
-        for _ in range(num_jobs):
-            line = f.readline()
-            parsed = re.findall(r"\S+", line)
-            i = 1  # skip first token per original logic
-            job_ops = []
-
-            while i < len(parsed):
-                mode_count = int(parsed[i])
-                i += 1
-                options = []
-                for _ in range(mode_count):
-                    machine_id = int(parsed[i]) - 1  # to 0-based
-                    duration = int(parsed[i + 1])
-                    options.append((machine_id, duration))
-                    i += 2
-                job_ops.append(options)
-
-            data.append(job_ops)
-
-    return num_machines, data
-
-def build_model_fjsp(num_machines, data):
-    # Construct the model
-    model = Model()
-
-    # Add machines
-    machines = [
-        model.add_machine(name=f"Machine {idx}")
-        for idx in range(num_machines)
-    ]
-
-    # Prepare job and task containers
-    jobs = {}
-    tasks = {}
-
-    # First pass: create jobs and task placeholders
-    for job_idx, job_data in enumerate(data):
-        job = model.add_job(name=f"Job {job_idx}")
-        jobs[job_idx] = job
-        for idx in range(len(job_data)):
-            task_key = (job_idx, idx)
-            tasks[task_key] = model.add_task(job, name=f"Task {task_key}")
-
-    # Second pass: add modes and precedence
-    for job_idx, job_data in enumerate(data):
-        # Add mode options for each task
-        for idx, task_data in enumerate(job_data):
-            task_key = (job_idx, idx)
-            task = tasks[task_key]
-            for machine_id, duration in task_data:
-                machine = machines[machine_id]
-                model.add_mode(task, machine, duration)
-
-        # Add precedence constraints within the job. Not sure to keep this, also in example.
-        for idx in range(len(job_data) - 1):
-            first = tasks[(job_idx, idx)]
-            second = tasks[(job_idx, idx + 1)]
-            model.add_end_before_start(first, second)
-
-    return model
+    pass

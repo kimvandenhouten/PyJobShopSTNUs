@@ -9,7 +9,7 @@ logger = general.logger.get_logger(__name__)
 
 class RCPSP_CP_Benchmark:
     def __init__(self, capacity, durations, successors, needs, temporal_constraints=None, problem_type="RCPSP",
-                 instance_folder="", instance_id="", noise_factor=1):
+                 instance_folder="", instance_id="", noise_factor=1, modes=[]):
         # convert to RCPSP instance
         self.capacity = capacity
         self.durations = durations
@@ -21,6 +21,7 @@ class RCPSP_CP_Benchmark:
         self.instance_id = instance_id
         self.num_tasks = len(self.durations)
         self.noise_factor = noise_factor
+        self.modes = modes
 
     @classmethod
     def parsche_file(cls, directory, instance_folder, instance_id, noise_factor):
@@ -372,5 +373,6 @@ class RCPSP_CP_Benchmark:
 
         return scenarios
 
-
+    def update_needs(self, schedule):
+        pass
 

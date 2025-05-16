@@ -20,10 +20,6 @@ def evaluate_results(now):
     df = pd.read_csv(file)
 
     with open(report_file, "w") as output:
-        df_stnu = df[df['method'] == 'stnu']
-        df_proactive = df[df['method'].str.startswith('proactive')]
-        df_reactive = df[df['method'] == 'reactive']
-
         evaluate_methods(df, output)
         summarize_feasibility(df, output)
         wilcoxon_test(df, output)
@@ -38,32 +34,38 @@ def evaluate_methods(df, output):
         method_df['feasibility'] = pd.to_numeric(method_df['feasibility'], errors='coerce')
 
         mask = (
-            np.isfinite(method_df['obj']) &
-            np.isfinite(method_df['time_online']) &
-            np.isfinite(method_df['time_offline']) &
-            np.isfinite(method_df['feasibility'])
+                np.isfinite(method_df['obj']) &
+                np.isfinite(method_df['time_online']) &
+                np.isfinite(method_df['time_offline']) &
+                np.isfinite(method_df['feasibility'])
         )
         method_df = method_df[mask]
-        # summary = DataFrame()
-        summary = {}
-        for instance_folder in method_df['instance_folder'].unique():
-            instance_df = method_df[method_df['instance_folder'] == instance_folder]
-            # summary = pd.concat([summary, instance_df])
-            summary[instance_folder] = {}
-            summary[instance_folder]['avg_makespan'] = instance_df['obj'].mean()
-            summary[instance_folder]['var_makespan'] = instance_df['obj'].var()
-            summary[instance_folder]['avg_online_time'] = instance_df['time_online'].mean()
-            summary[instance_folder]['var_online_time'] = instance_df['time_online'].var()
-            summary[instance_folder]['avg_offline_time'] = instance_df['time_offline'].mean()
-            summary[instance_folder]['var_offline_time'] = instance_df['time_offline'].var()
-            summary[instance_folder]['feasibility_ratio'] = instance_df['feasibility'].mean()
 
         print("\n=== Method Evaluation Summary ===\n", file=output)
-        for instance_folder, metrics in summary.items():
-            print(f"Instance: {instance_folder}", file=output)
-            for metric, value in metrics.items():
-                print(f"  • {metric.replace('_', ' ').title()} : {value:.5f}", file=output)
-            print("-" * 50, file=output)
+
+        for instance_folder in method_df['instance_folder'].unique():
+            folder_df = method_df[method_df['instance_folder'] == instance_folder]
+
+            for noise in sorted(folder_df['noise_factor'].unique()):
+                sub_df = folder_df[folder_df['noise_factor'] == noise]
+
+                avg_makespan = sub_df['obj'].mean()
+                var_makespan = sub_df['obj'].var()
+                avg_online_time = sub_df['time_online'].mean()
+                var_online_time = sub_df['time_online'].var()
+                avg_offline_time = sub_df['time_offline'].mean()
+                var_offline_time = sub_df['time_offline'].var()
+                feasibility_ratio = sub_df['feasibility'].mean()
+
+                print(f"Instance: {instance_folder}, Noise Factor: {noise}", file=output)
+                print(f"  • Avg Makespan       : {avg_makespan:.5f}", file=output)
+                print(f"  • Var Makespan       : {var_makespan:.5f}", file=output)
+                print(f"  • Avg Online Time    : {avg_online_time:.5f}", file=output)
+                print(f"  • Var Online Time    : {var_online_time:.5f}", file=output)
+                print(f"  • Avg Offline Time   : {avg_offline_time:.5f}", file=output)
+                print(f"  • Var Offline Time   : {var_offline_time:.5f}", file=output)
+                print(f"  • Feasibility Ratio  : {feasibility_ratio:.5f}", file=output)
+                print("-" * 60, file=output)
 
 def summarize_feasibility(df, output):
     feasibility_summary = df.groupby(['method', 'instance_folder'])['feasibility'].agg(['count', 'sum'])

@@ -15,13 +15,13 @@ from temporal_networks.stnu import STNU
 
 logger = general.logger.get_logger(__name__)
 
-PATH = "PyJobShopIntegration/data/fjsp_sdst/fattahi/Fattahi_setup_13.fjs"
+PATH = "PyJobShopIntegration/data/fjsp_sdst/fattahi/Fattahi_setup_18.fjs"
 PROBLEM_TYPE = "fjsp"
 model = create_instance(PATH, PROBLEM_TYPE, True)
 
 
 # Solving
-result = model.solve(display=False)
+result = model.solve(solver='cpoptimizer', display=False)
 solution = result.best
 
 ### HERE STARTS OUR CODE ###

@@ -70,7 +70,6 @@ for noise_factor in NOISE_FACTORS:
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
-            logger.info("Sample: %s", n)
             if n == 10:
                 break
             # Load data
@@ -79,6 +78,7 @@ for noise_factor in NOISE_FACTORS:
             # Run experiments on proactive, reactive and stnu
             # TODO implement the proactive, reactive and stnu approaches possibly reusing already existing code
             for i, duration_sample in enumerate(test_durations_samples):
+                logger.info(f"Running sample {i} for file {file} with noise factor {noise_factor}")
                 if proactive_reactive:
                     data_dict = run_proactive_offline(instance, noise_factor, time_limit_proactive, mode_proactive)
                     # Run proactive online

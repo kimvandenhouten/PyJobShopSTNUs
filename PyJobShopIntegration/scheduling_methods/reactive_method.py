@@ -61,7 +61,7 @@ def run_reactive_offline(instance, noise_factor=1, time_limit_initial=60, mode="
     return data_dict
 
 
-def run_reactive_online(instance, duration_sample, data_dict, time_limit_rescheduling):
+def run_reactive_online(instance, duration_sample, data_dict, time_limit_rescheduling, result_tasks):
 
     data_dict = copy.deepcopy(data_dict)
     data_dict["time_limit_rescheduling"] = time_limit_rescheduling
@@ -122,7 +122,7 @@ def run_reactive_online(instance, duration_sample, data_dict, time_limit_resched
                 f'Start rescheduling procedure with processing times {estimated_durations} and scheduled start times {scheduled_start_times}')
             if estimated_completion_times[next_completed_job] != real_completion_times[next_completed_job]:
                 estimated_start_times, estimated_makespan = instance.solve_reactive(estimated_durations, scheduled_start_times,
-                                                                                current_time, time_limit=time_limit_rescheduling,
+                                                                                current_time, result_tasks=result_tasks, time_limit=time_limit_rescheduling,
                                                                                      initial_solution=estimated_start_times)
                 solver_calls += 1
 
@@ -146,7 +146,6 @@ def run_reactive_online(instance, duration_sample, data_dict, time_limit_resched
         start_times = estimated_start_times
         finish_times = [start_times[i] + real_durations[i] for i in range(len(start_times))]
 
-        # TODO: model this in RCPSP_max object
         check_feasibility = instance.check_feasibility(start_times, finish_times, real_durations, data_dict["demands"])
 
         if not check_feasibility:

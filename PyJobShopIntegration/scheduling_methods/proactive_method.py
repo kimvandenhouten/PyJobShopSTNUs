@@ -48,7 +48,11 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
         result = model.solve(time_limit=time_limit, display=False)
         if result:
             start_times = [task.start for task in result.best.tasks]
-            data_dict["estimated_durations"] = durations
+            estimated_durations = []
+            for i, task in enumerate(result.best.tasks):
+                mode = task.mode
+                estimated_durations.append(durations[mode])
+            data_dict["estimated_durations"] = estimated_durations
             data_dict["result_tasks"] = [task for task in result.best.tasks]
     elif mode in quantile_map.keys():
         quantile = quantile_map.get(mode)
@@ -57,15 +61,17 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
         else:
             raise ValueError(f"Unsupported mode: {mode}")
 
-        data_dict["estimated_durations"] = durations
         logger.debug(f'Start solving upper bound schedule {durations}')
         model = instance.create_model(durations)
         result = model.solve(time_limit=time_limit, display=False)
         if result:
             start_times = [task.start for task in result.best.tasks]
             data_dict["result_tasks"] = [task for task in result.best.tasks]
-
-
+            estimated_durations = []
+            for i, task in enumerate(result.best.tasks):
+                mode = task.mode
+                estimated_durations.append(durations[mode])
+            data_dict["estimated_durations"] = estimated_durations
 
     # elif mode == "SAA":
     #     # Sample scenarios for Sample Average Approximation and solve

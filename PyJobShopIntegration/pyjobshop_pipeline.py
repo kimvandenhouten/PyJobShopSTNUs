@@ -29,7 +29,7 @@ problem_type = sys.argv[-1]
 # make sure to have a folder with your data with the same name
 folder = problem_type
 # SETTINGS HEURISTIC PROACTIVE APPROACH
-mode_proactive = "quantile_0.9"
+mode_proactive = "quantile_0.5"
 time_limit_proactive = 600
 # SETTINGS REACTIVE APPROACH
 time_limit_rescheduling = 2
@@ -43,7 +43,7 @@ mode_stnu = "robust"
 
 # SETTINGS EXPERIMENTS
 INSTANCE_FOLDERS = ["j10"]
-NOISE_FACTORS = [1, 2]
+NOISE_FACTORS = [1]
 nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
@@ -70,8 +70,9 @@ for noise_factor in NOISE_FACTORS:
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
-            # if n == 30:
-            #     break
+            logger.info("Sample: %s", n)
+            if n == 10:
+                break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
             test_durations_samples, duration_distributions = instance.sample_durations(nb_scenarios_test, noise_factor)
@@ -83,17 +84,16 @@ for noise_factor in NOISE_FACTORS:
                     # Run proactive online
                     data_dict_proactive = copy.copy(data_dict)
                     result_tasks = data_dict["result_tasks"]
-                    ds = [instance.modes[task.mode].duration for task in result_tasks]
-                    if ds == []:
+                    real_durations = instance.get_real_durations(result_tasks, duration_sample)
+                    if real_durations == []:
                         logger.info("The solution is infeasible")
                         break
-                    data_dict["estimated_durations"] = ds
-                    data_dict_proactive = run_proactive_online(instance, ds, data_dict_proactive)
+                    data_dict_proactive = run_proactive_online(instance, real_durations, data_dict_proactive)
                     data_to_csv(instance_folder=instance_folder, solution=data_dict_proactive, output_file=output_file)
 
                     # Run reactive online
                     data_dict_reactive = copy.copy(data_dict)
-                    data_dict_reactive = run_reactive_online(instance, ds, data_dict_reactive, time_limit_rescheduling)
+                    data_dict_reactive = run_reactive_online(instance, real_durations, data_dict_reactive, time_limit_rescheduling, result_tasks)
                     data_dict_reactive["method"] = "reactive"
                     data_to_csv(instance_folder=instance_folder, solution=data_dict_reactive, output_file=output_file)
                 if proactive_saa:
@@ -104,15 +104,15 @@ for noise_factor in NOISE_FACTORS:
                     result = model.solve(time_limit=5, display=False)
                     result_tasks = result.best.tasks
                     if result_tasks == []:
-                        print(f"Infeasible solution for duration sample: {duration_sample}, file: {file}, noise factor: {noise_factor}")
+                        # print(f"Infeasible solution for duration sample: {duration_sample}, file: {file}, noise factor: {noise_factor}")
                         logger.info("The solution is infeasible")
                         continue
                     stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions=duration_distributions, result_tasks=result_tasks)
                     # TODO potentially add other fields depending on the problem
                     schedule = instance.get_schedule(result_tasks)
-                    ds = [instance.modes[task.mode].duration for task in result_tasks]
+                    real_durations = instance.get_real_durations(result_tasks, duration_sample)
                     # TODO the update of the infeasible sample needs to happen elsewhere
-                    if ds == []:
+                    if real_durations == []:
                         if file not in infeasible_sample["stnu"][noise_factor]:
                             infeasible_sample["stnu"][noise_factor][file] = 0
                         infeasible_sample["stnu"][noise_factor][file] += 1
@@ -131,9 +131,9 @@ for noise_factor in NOISE_FACTORS:
                     dc, output_location = run_dc_algorithm(
                         "temporal_networks/cstnu_tool/xml_files", file_name)
                     if dc:
-                        logger.info(f'The network resulting from the PyJobShop solution is DC for sample {ds}')
+                        # logger.info(f'The network resulting from the PyJobShop solution is DC for sample {ds}')
                         estnu = STNU.from_graphml(output_location)
-                        rte_sample = sample_for_rte(ds, estnu)
+                        rte_sample = sample_for_rte(real_durations, estnu)
                         finish_offline = time.time()
                         start_online = time.time()
                         rte_data = rte_star(estnu, oracle="sample", sample=rte_sample)
@@ -146,7 +146,7 @@ for noise_factor in NOISE_FACTORS:
                         for i, task in enumerate(result_tasks):
                             mode = task.mode
                             demands.append(instance.modes[mode].demands)
-                        feasibility = instance.check_feasibility(start_times, finish_times, ds, demands)
+                        feasibility = instance.check_feasibility(start_times, finish_times, real_durations, demands)
                         if not feasibility:
                             finish_offline = time.time()
                             solution = {'obj': np.inf,
@@ -157,9 +157,9 @@ for noise_factor in NOISE_FACTORS:
                                         'noise_factor': noise_factor,
                                         'method': 'stnu',
                                         'time_limit': time_limit_cp_stnu,
-                                        'real_durations': str(ds)}
+                                        'real_durations': str(real_durations)}
                             data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
-                            logger.info(f'The network is not DC for sample{ds}')
+                            logger.info(f'The network is not DC for sample{real_durations}')
                             continue
                         schedule = []
                         for i, (start, end) in enumerate(zip(start_times, finish_times)):
@@ -183,7 +183,7 @@ for noise_factor in NOISE_FACTORS:
                                     'noise_factor': noise_factor,
                                     'method': 'stnu',
                                     'time_limit': time_limit_cp_stnu,
-                                    'real_durations': str(ds)}
+                                    'real_durations': str(real_durations)}
                         task_data = []
                         for task, start, finish in zip(result_tasks, start_times, finish_times):
                             mode = task.mode
@@ -216,9 +216,9 @@ for noise_factor in NOISE_FACTORS:
                                     'noise_factor': noise_factor,
                                     'method': 'stnu',
                                     'time_limit': time_limit_cp_stnu,
-                                    'real_durations': str(ds)}
+                                    'real_durations': str(real_durations)}
                         data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
-                        logger.info(f'The network is not DC for sample{ds}')
+                        logger.info(f'The network is not DC for sample{real_durations}')
     # Analyze the results perform statistical tests and create plots
 evaluate_results(now=now)
 # TODO potentially add this to evaluate_results for analysis

@@ -49,120 +49,120 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="nVertices">29</data>
 <data key="Name">mmrcpspd_pyjobshop_stnu_j1014_6.mm_1_13.stnu</data>
 <node id="0_start">
-<data key="x">45.0</data>
-<data key="y">74.0</data>
+<data key="x">87.0</data>
+<data key="y">48.0</data>
 </node>
 <node id="12_finish">
-<data key="x">108.0</data>
-<data key="y">53.0</data>
+<data key="x">138.0</data>
+<data key="y">100.0</data>
 </node>
 <node id="2_start">
-<data key="x">97.0</data>
-<data key="y">50.0</data>
+<data key="x">181.0</data>
+<data key="y">69.0</data>
 </node>
 <node id="6_start">
-<data key="x">96.0</data>
-<data key="y">62.0</data>
+<data key="x">149.0</data>
+<data key="y">188.0</data>
 </node>
 <node id="6_finish">
-<data key="x">44.0</data>
-<data key="y">113.0</data>
+<data key="x">178.0</data>
+<data key="y">185.0</data>
 </node>
 <node id="4_start">
-<data key="x">185.0</data>
-<data key="y">177.0</data>
+<data key="x">187.0</data>
+<data key="y">134.0</data>
 </node>
 <node id="4_finish">
-<data key="x">183.0</data>
-<data key="y">56.0</data>
+<data key="x">185.0</data>
+<data key="y">112.0</data>
 </node>
 <node id="Z">
 <data key="x">10.0</data>
 <data key="y">10.0</data>
 </node>
 <node id="12_start">
-<data key="x">47.0</data>
-<data key="y">69.0</data>
+<data key="x">109.0</data>
+<data key="y">133.0</data>
 </node>
 <node id="13_start">
-<data key="x">145.0</data>
-<data key="y">61.0</data>
+<data key="x">195.0</data>
+<data key="y">145.0</data>
 </node>
 <node id="9_start">
-<data key="x">119.0</data>
-<data key="y">45.0</data>
+<data key="x">124.0</data>
+<data key="y">99.0</data>
 </node>
 <node id="8_start">
-<data key="x">53.0</data>
-<data key="y">50.0</data>
+<data key="x">188.0</data>
+<data key="y">123.0</data>
 </node>
 <node id="8_finish">
-<data key="x">176.0</data>
-<data key="y">181.0</data>
+<data key="x">86.0</data>
+<data key="y">123.0</data>
 </node>
 <node id="9_finish">
-<data key="x">152.0</data>
-<data key="y">167.0</data>
+<data key="x">149.0</data>
+<data key="y">128.0</data>
 </node>
 <node id="11_finish">
-<data key="x">117.0</data>
+<data key="x">115.0</data>
 <data key="y">143.0</data>
 </node>
 <node id="10_start">
-<data key="x">167.0</data>
-<data key="y">128.0</data>
+<data key="x">64.0</data>
+<data key="y">130.0</data>
 </node>
 <node id="11_start">
 <data key="x">101.0</data>
-<data key="y">47.0</data>
+<data key="y">97.0</data>
 </node>
 <node id="10_finish">
-<data key="x">183.0</data>
-<data key="y">67.0</data>
+<data key="x">132.0</data>
+<data key="y">128.0</data>
 </node>
 <node id="1_start">
-<data key="x">105.0</data>
-<data key="y">133.0</data>
+<data key="x">113.0</data>
+<data key="y">51.0</data>
 </node>
 <node id="13_finish">
-<data key="x">133.0</data>
-<data key="y">103.0</data>
+<data key="x">57.0</data>
+<data key="y">123.0</data>
 </node>
 <node id="3_start">
-<data key="x">121.0</data>
-<data key="y">114.0</data>
+<data key="x">114.0</data>
+<data key="y">120.0</data>
 </node>
 <node id="7_finish">
-<data key="x">41.0</data>
-<data key="y">76.0</data>
+<data key="x">134.0</data>
+<data key="y">194.0</data>
 </node>
 <node id="7_start">
-<data key="x">154.0</data>
-<data key="y">57.0</data>
+<data key="x">171.0</data>
+<data key="y">64.0</data>
 </node>
 <node id="5_finish">
-<data key="x">54.0</data>
-<data key="y">106.0</data>
+<data key="x">47.0</data>
+<data key="y">170.0</data>
 </node>
 <node id="5_start">
-<data key="x">105.0</data>
-<data key="y">146.0</data>
+<data key="x">156.0</data>
+<data key="y">181.0</data>
 </node>
 <node id="0_finish">
-<data key="x">108.0</data>
-<data key="y">135.0</data>
+<data key="x">74.0</data>
+<data key="y">100.0</data>
 </node>
 <node id="1_finish">
-<data key="x">174.0</data>
-<data key="y">198.0</data>
+<data key="x">185.0</data>
+<data key="y">199.0</data>
 </node>
 <node id="3_finish">
-<data key="x">107.0</data>
-<data key="y">69.0</data>
+<data key="x">109.0</data>
+<data key="y">170.0</data>
 </node>
 <node id="2_finish">
-<data key="x">188.0</data>
-<data key="y">108.0</data>
+<data key="x">68.0</data>
+<data key="y">97.0</data>
 </node>
 <edge id="7_start-4_start" source="7_start" target="4_start">
 <data key="Type">derived</data>

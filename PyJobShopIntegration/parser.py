@@ -8,12 +8,13 @@ def create_instance(file, problem_type):
         return parse_data_fjsp(file)
 
 # TODO implement parser for rcpsp instances
+class Mode(NamedTuple):
+    job: int
+    duration: int
+    demands: list[int]
 def parse_data_rcpsp(file, problem_type):
     # TODO define this outside the function to use for other parts of the code
-    class Mode(NamedTuple):
-        job: int
-        duration: int
-        demands: list[int]
+
     with open(file) as fh:
         lines = fh.readlines()
 

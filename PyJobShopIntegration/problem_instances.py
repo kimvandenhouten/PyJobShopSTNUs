@@ -1,7 +1,7 @@
 from typing import NamedTuple
 
 import numpy as np
-from pyjobshop import Model, MAX_VALUE
+from pyjobshop import Model, MAX_VALUE, Task
 
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 
@@ -102,6 +102,17 @@ class Instance():
         This method should be implemented in subclasses.
         """
         raise NotImplementedError("Subclasses should implement this method.")
+    # TODO this might not work for single mode
+    def get_real_durations(self, result_tasks, duration_sample):
+        """
+        Get the real durations for the tasks.
+        This method should be implemented in subclasses.
+        """
+        real_durations = []
+        for task in result_tasks:
+            mode = task.mode
+            real_durations.append(duration_sample[mode])
+        return [int(duration) for duration in real_durations]
 class MMRCPSP(Instance):
     """
     Class to represent a Multi-mode Resource-Constrained Project Scheduling Problem (MMRCPSP).
@@ -194,13 +205,6 @@ class MMRCPSPD(MMRCPSP):
         self.deadlines = deadlines
 
     def create_model(self, durations):
-        class Mode(NamedTuple):
-            job: int
-            duration: int
-            demands: list[int]
-
-            def __str__(self):
-                return f"Mode(job={self.job}, duration={self.duration}, demands={self.demands})"
         model = Model()
 
         # resources = [model.add_renewable(capacity) for capacity in instance.capacities]
@@ -356,7 +360,6 @@ class MMRCPSPD(MMRCPSP):
         """
         if objective == "makespan":
             makespan = max(task["end"] for task in schedule if task["task"] < self.num_tasks - 1)
-            print(f"---------------------------------{makespan}---------------------------------")
             return makespan
         elif objective == "deadline":
             return sum(task["end"] for task in schedule if task["task"] in self.deadlines)
@@ -383,22 +386,70 @@ class MMRCPSPD(MMRCPSP):
                 })
         return schedule
 
-    def solve_reactive(self, durations, scheduled_start_times, current_time, time_limit=None, initial_solution=None):
-
+    def solve_reactive(self, durations, scheduled_start_times, current_time, result_tasks, time_limit=None, initial_solution=None):
+        class Mode(NamedTuple):
+            job: int
+            duration: int
+            demands: list[int]
         # Build model with given durations
-        print("Durations: ", durations)
-        model = self.create_model(durations)
+        model = Model()
+        resources = [
+            model.add_renewable(capacity) for capacity in self.capacities
+        ]
+        jobs = [
+            model.add_job(due_date=self.deadlines.get(idx, MAX_VALUE))
+            for idx in range(self.num_tasks)
+        ]
+        tasks = [
+            model.add_task(job=jobs[idx]) for idx in range(self.num_tasks)
+        ]
+        modes = [self.modes[task.mode] for task in result_tasks]
+        modes = modes[:self.num_tasks - 1] + [modes[-1]]
+        modes[-1] = Mode(self.num_tasks - 1, 0, [0] * len(self.capacities))
+        ds = durations[:self.num_tasks - 1] + [durations[-1]]
+        for (idx, _, demands), duration in zip(modes, ds):
+            model.add_mode(tasks[idx], resources, duration, demands)
+        for idx in range(self.num_tasks):
+            task = tasks[idx]
+            try:
+                for pred in self.predecessors[idx]:
+                    model.add_end_before_start(tasks[pred], task)
+            except IndexError:
+                pass
+            try:
+                for succ in self.successors[idx]:
+                    model.add_end_before_start(task, tasks[succ])
+            except IndexError:
+                pass
+        model.set_objective(
+            weight_makespan=1,
+        )
 
         # Apply fixed start times or release times based on current schedule
-        for task_id, scheduled_start in enumerate(scheduled_start_times):
+        sst = scheduled_start_times[:self.num_tasks - 1] + [scheduled_start_times[-1]]
+        for task_id, scheduled_start in enumerate(sst):
             task = model.tasks[task_id]
+            job = model.jobs[task.job] if task.job < len(model.jobs) else None
+            job_idx = model._id2job[id(job)] if job is not None else None
             if scheduled_start >= 0:
-                model.tasks[task_id] = model.add_task(model.jobs[task.job], earliest_start=scheduled_start, latest_start=scheduled_start)
+                task_new = Task(
+                    job_idx,
+                    earliest_start=scheduled_start,
+                    latest_start=scheduled_start,
+                )
+                model._id2task[id(task)] = task_id
+                model.tasks[task_id] = task_new
                 # model.tasks[task_id].latest_start = scheduled_start
                 # model.tasks[task_id].earliest_start = scheduled_start
             else:
-                model.tasks[task_id] = model.add_task(model.jobs[task.job], earliest_start=current_time)
-        print("Tasks: ", model.tasks)
+                task_new = Task(
+                    job_idx,
+                    earliest_start=current_time
+                )
+                model._id2task[id(task)] = task_id
+                model.tasks[task_id] = task_new
+
+                # model.tasks[task_id] = model.add_task(model.jobs[task.job], earliest_start=current_time)
         # TODO potentially implement the warm start solver with initial_solution
         # # Apply initial solution if provided
         # if initial_solution:
@@ -406,7 +457,7 @@ class MMRCPSPD(MMRCPSP):
         #         model.add_start_hint(model.tasks[task_id], start_time)
 
         # Solve model
-        result = model.solve(time_limit=time_limit)
+        result = model.solve(time_limit=time_limit, display=False)
         result_tasks = result.best.tasks
 
         # Extract start times and makespan
@@ -417,6 +468,19 @@ class MMRCPSPD(MMRCPSP):
             return start_times, makespan
         else:
             return None, np.inf
+
+    def get_real_durations(self, result_tasks, duration_sample):
+        """
+        Get the real durations for the tasks.
+        :param result_tasks: The result tasks containing the results.
+        :param duration_sample: The sampled durations.
+        :return: List of real durations.
+        """
+        real_durations = []
+        for task in result_tasks:
+            mode = task.mode
+            real_durations.append(duration_sample[mode])
+        return [int(duration) for duration in real_durations]
 
     def __str__(self):
         """

@@ -70,6 +70,7 @@ for noise_factor in NOISE_FACTORS:
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
+            logger.info("Sample: %s", n)
             if n == 10:
                 break
             # Load data

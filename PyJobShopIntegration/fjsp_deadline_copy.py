@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from pyjobshop.Model import Model
 from pyjobshop.plot import plot_machine_gantt
 
+from PyJobShopIntegration.deadline_utils import get_distribution_bounds
 from PyJobShopIntegration.parser import parse_data_fjsp
 from PyJobShopIntegration.plot_gantt_and_stats import plot_simulation_statistics
 from PyJobShopIntegration.reactive_left_shift import group_shift_solution_resequenced
@@ -20,7 +21,7 @@ import general.logger
 
 # Initialize logger
 logger = general.logger.get_logger(__name__)
-parsed_data = parse_data_fjsp("data/fjsp/barnes/seti5c12.fjs")
+parsed_data = parse_data_fjsp("data/fjsp/kacem/Kacem1.fjs")
 
 # -------------------------
 # PHASE 1: Problem Definition
@@ -31,7 +32,11 @@ NUM_MACHINES = parsed_data[0]
 data = parsed_data[1]
 num_jobs = len(data)
 
-job_deadlines = {j: 2750 for j in range(num_jobs)}
+job_deadlines = {0:20,
+                 1:76,
+                 2:30,
+                 3:22
+                 }
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
@@ -41,15 +46,15 @@ if infeasible_jobs:
     print("[WARNING] Infeasible jobs found:")
     for job_idx, needed, deadline in infeasible_jobs:
         print(f" - Job {job_idx}: needs ≥ {needed}, deadline = {deadline}")
-w_e = 100
-w_t = 0
-is_soft_deadline = True
+w_e = 20
+w_t = 100
+is_soft_deadline = False
 model = Model()
 model.set_objective(
     weight_makespan=1,
     weight_total_earliness=w_e,
     weight_total_tardiness=w_t,
-    weight_max_lateness=1000,
+    weight_max_lateness=1,
 )
 weights = compute_slack_weights(data, job_deadlines)
 
@@ -94,28 +99,18 @@ for idx, task in enumerate(solution.tasks):
     print(f"{task_name}: start={task.start}, end={task.end}, duration={task.end - task.start}")
 
 # -------------------------
-# PHASE 3: STNU Construction
+# PHASE 2: Prepare uncertainty sampler (same as main pipeline)
 # -------------------------
-mins = []
-maxs = []
-for job in data:
-    for opts in job:
-        durs = [d for (_, d) in opts]
-        mins.append(min(durs))
-        maxs.append(max(durs))
-# now expand your uncertainty window a bit
-global_min = min(mins)
-global_max = max(maxs)
-span = global_max - global_min
-lo = max(1, global_min - int(0.5*span))   # e.g. 50% below your observed min
-hi = global_max + int(0.5*span)           # 50% above your observed max
+# gather global min/max per real task
+duration_distributions = get_distribution_bounds(model, data)
+assert len(duration_distributions.lower_bounds) == len(model.tasks)
+assert len(duration_distributions.upper_bounds) == len(model.tasks)
+for t, lb, ub in zip(model.tasks,
+                     duration_distributions.lower_bounds,
+                     duration_distributions.upper_bounds):
+    print(f"{t.name:<15}  →   [{lb:2d}, {ub:2d}]")
 
-duration_distributions = DiscreteUniformSampler(
-  lower_bounds=np.full(len(model.tasks), lo, dtype=int),
-  upper_bounds=np.full(len(model.tasks), hi, dtype=int)
-)
-
-# 3. Build the STNU
+# PHASE 3. Build the STNU
 stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
 stnu.add_resource_chains(solution, model)
 
@@ -123,7 +118,6 @@ stnu.add_resource_chains(solution, model)
 for job_idx, deadline in job_deadlines.items():
     last_task = tasks[(job_idx, len(data[job_idx]) - 1)]
     task_index = model.tasks.index(last_task)
-
     finish_node = stnu.translation_dict_reversed[f"{task_index}_{STNU.EVENT_FINISH}"]
     origin_node = STNU.ORIGIN_IDX
 # -------------------------
@@ -165,7 +159,7 @@ def run_soft_deadline_sweep(
     data, job_deadlines,
     num_machines: int,
     sampler: DiscreteUniformSampler,
-    sim_runs: int = 20
+    sim_runs: int = 100
 ):
     results = []
 
@@ -195,8 +189,7 @@ def run_soft_deadline_sweep(
             res = model.solve(display=False)
             cp_time = res.runtime
             sol = res.best
-            cp_makespan = max(t.end for t in sol.tasks)
-
+            cp_makespan = res.objective
             # 2) Build STNU (no DC check for soft‐deadline sweep)
             stnu = PyJobShopSTNU.from_concrete_model(model, sampler)
             stnu.add_resource_chains(sol, model)
@@ -252,12 +245,6 @@ def run_soft_deadline_sweep(
 
 if __name__ == "__main__":
     total_tasks = sum(len(job) for job in data)
-    sampler = DiscreteUniformSampler(
-        lower_bounds=np.full(len(model.tasks), lo, dtype=int),
-        upper_bounds=np.full(len(model.tasks), hi, dtype=int),
-    )
-
-
     def make_model():
         return Model()
 
@@ -265,7 +252,7 @@ if __name__ == "__main__":
     we_values = [0, 1, 5, 10, 20, 50, 100]
     wt_values = [0,1,5,10,20,50,100]
     results = run_soft_deadline_sweep(
-        we_values, wt_values, make_model, data, job_deadlines, NUM_MACHINES, sampler, sim_runs=20
+        we_values, wt_values, make_model, data, job_deadlines, NUM_MACHINES, duration_distributions, sim_runs=100
     )
     import pandas as pd
 
@@ -296,8 +283,8 @@ if __name__ == "__main__":
     plt.savefig("images/fjsp_deadlines/w_e_vs_p_t.png")
     plt.show()
 
-    x_col = "p_early"  # or "avg_earliness"
-    y_col = "p_tardy"  # or "avg_tardiness"
+    x_col = "avg_earliness"  # or "avg_earliness"
+    y_col = "avg_tardiness"  # or "avg_tardiness"
     pts = df[[x_col, y_col]].to_numpy()
 
     is_pareto = np.ones(len(pts), dtype=bool)
@@ -356,7 +343,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------
     # 3) Box‐plots of makespan distribution at key (w_e,w_t)
     # -----------------------------------------------------------------------------
-    def simulate_setting(we, wt, sim_runs=20):
+    def simulate_setting(we, wt, sim_runs=100):
         """ Re-run sim_runs and return list of makespans. """
         # rebuild & solve CP as in your sweep but only for one (we,wt)
         model = make_model()
@@ -374,9 +361,9 @@ if __name__ == "__main__":
                 model.add_end_before_start(tasks[(j, t_idx)], tasks[(j, t_idx + 1)])
         sol = model.solve(display=False).best
 
-        stnu = PyJobShopSTNU.from_concrete_model(model, sampler)
+        stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
         stnu.add_resource_chains(sol, model)
-        sim = Simulator(model, stnu, sol, sampler, objective="makespan")
+        sim = Simulator(model, stnu, sol, duration_distributions, objective="makespan")
 
         makespans = []
         for _ in range(sim_runs):
@@ -387,7 +374,7 @@ if __name__ == "__main__":
 
     # pick three settings
     settings = [(0, 0), (5, 0), (20, 0)]
-    box_data = {f"{we}/{wt}": simulate_setting(we, wt, sim_runs=20)
+    box_data = {f"{we}/{wt}": simulate_setting(we, wt, sim_runs=100)
                 for we, wt in settings}
 
     df_box = pd.DataFrame(box_data)
@@ -404,70 +391,138 @@ if __name__ == "__main__":
     # 4) Avg‐earliness vs avg‐tardiness Pareto front
     # -----------------------------------------------------------------------------
     plt.figure(figsize=(6, 6))
-    plt.scatter(df.avg_earliness, df.avg_tardiness, alpha=0.3, label="all points")
+    plt.scatter(df.avg_earliness, df.avg_tardiness,
+                alpha=0.3, label="all points")
     plt.scatter(pareto_df.avg_earliness, pareto_df.avg_tardiness,
                 color='C1', edgecolor='k', s=100, label="Pareto front")
+
+    # annotate each Pareto point with its (w_e, w_t)
+    for _, row in pareto_df.iterrows():
+        x = row.avg_earliness
+        y = row.avg_tardiness
+        label = f"({int(row.w_e)},{int(row.w_t)})"
+        plt.annotate(label,
+                     (x, y),
+                     textcoords="offset points",
+                     xytext=(5, 5),
+                     fontsize=8,
+                     color='C1')
+
     plt.xlabel("Average Earliness")
     plt.ylabel("Average Tardiness")
     plt.title("Avg Earliness vs. Avg Tardiness Pareto Front")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("images/fjsp_deadlines/avg_earliness_vs_tardiness_pareto.png")
+    plt.savefig("images/fjsp_deadlines/avg_earliness_vs_tardiness_pareto_annotated.png")
     plt.show()
 
 
     # -----------------------------------------------------------------------------
     # 5) Per‐job tardiness bar‐chart at two settings
     # -----------------------------------------------------------------------------
-    def per_job_p_tardy(we, wt, sim_runs=20):
-        """ Return list of p_tardy per job for this (we,wt). """
-        # re‐use simulate_setting code but track per‐job counts
-        model = make_model()
-        model.set_objective(1, we, wt, 0)
+    def per_job_p_tardy(we, wt, sim_runs=100):
+        """
+        Return list of p_tardy per job for this (we,wt).
+        If is_soft_deadline=False, builds a HARD-deadline model.
+        """
+        # 1) Build & solve the CP model
+        model = Model()
+        model.set_objective(
+            weight_makespan=1,
+            weight_total_earliness=we,
+            weight_total_tardiness=wt,
+            weight_max_lateness=0,
+        )
+
         machines = [model.add_machine(f"M{i}") for i in range(NUM_MACHINES)]
         tasks = {}
+        deadline_res = model.add_renewable(capacity=999, name="DeadlineResource")
+
         for j, job_data in enumerate(data):
             job = model.add_job(name=f"J{j}", due_date=job_deadlines[j])
+
+            # add the real tasks + modes
             for t_idx, opts in enumerate(job_data):
-                t = model.add_task(job, name=f"J{j}_T{t_idx}")
+                t = model.add_task(job=job, name=f"J{j}_T{t_idx}")
                 tasks[(j, t_idx)] = t
                 for m, d in opts:
                     model.add_mode(t, machines[m], d)
+
+            # chain within‐job precedences
             for t_idx in range(len(job_data) - 1):
-                model.add_end_before_start(tasks[(j, t_idx)], tasks[(j, t_idx + 1)])
-        sol = model.solve(display=False).best
+                model.add_end_before_start(tasks[(j, t_idx)],
+                                           tasks[(j, t_idx + 1)])
 
-        stnu = PyJobShopSTNU.from_concrete_model(model, sampler)
+            # if HARD deadline, stick on a dummy deadline-task
+            if not is_soft_deadline:
+                last = tasks[(j, len(job_data) - 1)]
+                d = model.add_task(
+                    name=f"Deadline_J{j}",
+                    earliest_start=0,
+                    latest_end=job_deadlines[j]
+                )
+                model.add_mode(d, deadline_res, duration=1)
+                model.add_end_before_start(last, d)
+
+        res = model.solve(display=False)
+        sol = res.best
+
+        # 2) Build the STNU
+        dist = duration_distributions  # assume precomputed global sampler
+        stnu = PyJobShopSTNU.from_concrete_model(model, dist)
         stnu.add_resource_chains(sol, model)
-        sim = Simulator(model, stnu, sol, sampler, objective="makespan")
 
+        # if HARD deadline, inject origin → finish edges
+        if not is_soft_deadline:
+            for job_idx, deadline in job_deadlines.items():
+                last_task = tasks[(job_idx, len(data[job_idx]) - 1)]
+                task_index = model.tasks.index(last_task)
+                finish_node = stnu.translation_dict_reversed[f"{task_index}_{STNU.EVENT_FINISH}"]
+                origin_node = STNU.ORIGIN_IDX
+
+        # 3) Simulate runs
+        sim = Simulator(model, stnu, sol, dist, objective="makespan")
         tardy_counts = np.zeros(num_jobs, dtype=int)
+        successful = 0
+
         for _ in range(sim_runs):
             sim_sol, _ = sim.run_once()
+            if sim_sol is None:
+                continue
+            successful += 1
             for j in range(num_jobs):
-                last_idx = len(data[j]) * j + (len(data[j]) - 1)
-                F = sim_sol.tasks[last_idx].end
+                # finish of last real task for job j
+                idx = len(data[j]) * j + (len(data[j]) - 1)
+                F = sim_sol.tasks[idx].end
                 if F > job_deadlines[j]:
                     tardy_counts[j] += 1
-        return tardy_counts / sim_runs
+
+        return tardy_counts / successful if successful > 0 else np.zeros(num_jobs)
 
 
     # compare (0,0) vs (5,0)
-    p0 = per_job_p_tardy(0, 0, sim_runs=20)
-    p5 = per_job_p_tardy(5, 0, sim_runs=20)
+    # compare (0,0), (5,0) and (10,0)
+    p0 = per_job_p_tardy(0, 0, sim_runs=100)
+    p5 = per_job_p_tardy(5, 0, sim_runs=100)
+    p10 = per_job_p_tardy(10, 0, sim_runs=100)
 
     x = np.arange(num_jobs)
-    width = 0.35
+    width = 0.2  # narrower so three bars fit
+
     plt.figure(figsize=(6, 4))
-    plt.bar(x - width / 2, p0, width, label="w_e=0")
-    plt.bar(x + width / 2, p5, width, label="w_e=5")
+    plt.bar(x - width, p0, width, label="w_e=0", edgecolor="C0")
+    plt.bar(x, p5, width, label="w_e=5", edgecolor="C1")
+    plt.bar(x + width, p10, width, label="w_e=10", edgecolor="C2")
+
     plt.xlabel("Job index")
     plt.ylabel("P(job tardy)")
     plt.title("Per‐Job Tardiness Probability")
     plt.xticks(x)
+    plt.ylim(-0.05, 1.0)  # give a little space below zero
     plt.legend()
-    plt.grid(True)
+    plt.grid(True, axis="y", linestyle="--", alpha=0.5)
     plt.tight_layout()
     plt.savefig("images/fjsp_deadlines/per_job_p_tardy.png")
     plt.show()
+

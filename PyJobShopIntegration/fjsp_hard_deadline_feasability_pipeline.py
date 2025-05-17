@@ -1,6 +1,11 @@
 import os
 import sys
 
+import pandas as pd
+
+from PyJobShopIntegration.deadline_utils import get_distribution_bounds
+
+# ensure repo root on path
 repo_root = os.path.abspath(os.path.join(__file__, os.pardir))
 sys.path.insert(0, repo_root)
 
@@ -8,182 +13,183 @@ import numpy as np
 from matplotlib import pyplot as plt
 from pyjobshop.Model import Model
 
+from PyJobShopIntegration.parser import parse_data_fjsp
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 from temporal_networks.stnu import STNU
+import general.logger
 
-def make_model_with_deadlines(data, job_deadlines, num_machines):
-    model = Model()
-    # Just minimize makespan
-    model.set_objective(weight_makespan=1,
-                        weight_total_earliness=0,
-                        weight_total_tardiness=0,
-                        weight_max_lateness=0)
+logger = general.logger.get_logger(__name__)
 
-    machines = [model.add_machine(f"M{i}") for i in range(num_machines)]
-    deadline_res = model.add_renewable(capacity=999, name="DeadlineResource")
-
-    tasks = {}
-    for j, job_ops in enumerate(data):
-        # capture the Job object here
-        job = model.add_job(name=f"J{j}", due_date=job_deadlines[j])
-
-        # real tasks
-        for t_idx, opts in enumerate(job_ops):
-            # pass job=job, not job=j
-            t = model.add_task(job=job, name=f"J{j}_T{t_idx}")
-            tasks[(j, t_idx)] = t
-            for m, d in opts:
-                model.add_mode(t, machines[m], d)
-
-        # precedence within job
-        for t_idx in range(len(job_ops) - 1):
-            model.add_end_before_start(
-                tasks[(j, t_idx)], tasks[(j, t_idx + 1)]
-            )
-
-        # dummy deadline task of duration=1
-        last = tasks[(j, len(job_ops) - 1)]
-        d = model.add_task(
-            job=None,  # no job association needed
-            name=f"Deadline_J{j}",
-            earliest_start=0,
-            latest_end=job_deadlines[j]
-        )
-        model.add_mode(d, deadline_res, duration=1)
-        model.add_end_before_start(last, d)
-
-    return model, tasks
-
-
-
-from PyJobShopIntegration.parser import parse_data_fjsp
-num_machines, data = parse_data_fjsp("data/fjsp/barnes/seti5c12.fjs")
+# -------------------------
+# PHASE 1: Load instance & problem definition
+# -------------------------
+NUM_MACHINES, data = parse_data_fjsp("data/fjsp/kacem/Kacem1.fjs")
 num_jobs = len(data)
 
-# 2) each job’s minimal sum of mins
+# compute per-job sum of minimal durations
 lb_sum_per_job = {
     j: sum(min(d for _, d in data[j][t]) for t in range(len(data[j])))
     for j in range(num_jobs)
 }
+ub_sum_per_job = {
+    j: sum(max(d for _, d in data[j][t]) for t in range(len(data[j])))
+    for j in range(num_jobs)
+}
 
-print(lb_sum_per_job)
 
-# 3) build a sampler for all real tasks + dummy tasks
-all_lb, all_ub = [], []
-for job_ops in data:
-    for opts in job_ops:
-        ds = [d for _, d in opts]
-        all_lb.append(min(ds))
-        all_ub.append(max(ds))
-lb_nom = np.array(all_lb, int)
-ub_nom = np.array(all_ub, int)
-pad_lb = np.ones(num_jobs, int)
-pad_ub = np.ones(num_jobs, int)
+# theo_gap = int((duration_distributions.upper_bounds - duration_distributions.lower_bounds).sum())
 
-sampler = DiscreteUniformSampler(
-    lower_bounds=np.concatenate([lb_nom, pad_lb]),
-    upper_bounds=np.concatenate([ub_nom, pad_ub])
-)
-
-# 4) prepare XML folder
+# -------------------------
+# PHASE 3: Deadline Slack Sweep
+# -------------------------
+# prepare xml output folder
 xml_folder = "temporal_networks/cstnu_tool/xml_files"
 os.makedirs(xml_folder, exist_ok=True)
 
-# 5) choose Δ range
-total_lb = int(lb_nom.sum())
-total_ub = int(ub_nom.sum())
-gap = total_ub - total_lb
-deltas = sorted(set(range(0, gap + 400, max(1, (gap + 20) // 20))))
+# generate delta values
+deltas = list(range(0, 100 + 1, max(1, 100 // 5)))
 
 cp_ok = []
 dc_ok = []
 
+# helper to build CP + STNU with hard deadlines
 for delta in deltas:
-    # deadlines = minimal job length + delta
-    job_deadlines = {j: lb_sum_per_job[j] + delta for j in range(num_jobs)}
+    # set each job's deadline = nominal_sum + delta
+    job_deadlines = { j: lb_sum_per_job[j] + delta for j in range(num_jobs) }
 
-    # build & solve CP
-    model, tasks = make_model_with_deadlines(data, job_deadlines, num_machines)
+    # build CP model with dummy deadline tasks
+    model = Model()
+    model.set_objective(weight_makespan=1, weight_total_earliness=0,
+                        weight_total_tardiness=0, weight_max_lateness=0)
+    machines = [model.add_machine(name=f"Machine {idx}") for idx in range(NUM_MACHINES)]
+    tasks = {}
+    deadline_resource = model.add_renewable(capacity=999, name="DeadlineResource")
+
+    for job_idx, job_data in enumerate(data):
+        job = model.add_job(name=f"Job {job_idx}", due_date=job_deadlines[job_idx])
+
+        for idx, task_options in enumerate(job_data):
+            task_idx = (job_idx, idx)
+            task = model.add_task(job=job, name=f"Task {task_idx}")
+            tasks[task_idx] = task
+
+            for machine_idx, duration in task_options:
+                model.add_mode(task, machines[machine_idx], duration)
+
+        # Add precedence constraints
+        for idx in range(len(job_data) - 1):
+            model.add_end_before_start(tasks[(job_idx, idx)], tasks[(job_idx, idx + 1)])
+
+        # Deadline constraint via dummy task
+        last_task = tasks[(job_idx, len(job_data) - 1)]
+        deadline_task = model.add_task(
+            name=f"Deadline for Job {job_idx}",
+            earliest_start=0,
+            latest_end=job_deadlines[job_idx],
+        )
+        model.add_mode(deadline_task, deadline_resource, duration=1)
+        model.add_end_before_start(last_task, deadline_task)
+
+    # solve CP
     res = model.solve(display=False)
-    status = res.status.name
-    feas_cp = status in ("OPTIMAL", "FEASIBLE")
-    cp_ok.append(int(feas_cp))
-
-    if not feas_cp:
+    feas = 1 if res.status.name in ("FEASIBLE","OPTIMAL") else 0
+    cp_ok.append(feas)
+    if not feas:
         dc_ok.append(0)
         continue
-
     sol = res.best
+    duration_distributions = get_distribution_bounds(model, data)
 
-    # STNU + resource chains
-    stnu = PyJobShopSTNU.from_concrete_model(model, sampler)
+    # build STNU
+    stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
     stnu.add_resource_chains(sol, model)
-
     # inject deadline edges
     origin = STNU.ORIGIN_IDX
-    for j in range(num_jobs):
-        last = tasks[(j, len(data[j]) - 1)]
-        ti = model.tasks.index(last)
-        fn = stnu.translation_dict_reversed[f"{ti}_{STNU.EVENT_FINISH}"]
-        stnu.set_ordinary_edge(origin, fn, job_deadlines[j])
+    for job_idx, deadline in job_deadlines.items():
+        last_task = tasks[(job_idx, len(data[job_idx]) - 1)]
+        task_index = model.tasks.index(last_task)
+        finish_node = stnu.translation_dict_reversed[f"{task_index}_{STNU.EVENT_FINISH}"]
+        origin_node = STNU.ORIGIN_IDX
+    # export & DC check
+    stnu_to_xml(stnu, "deadline_stnu", xml_folder)
+    dc, _ = run_dc_algorithm(xml_folder, "deadline_stnu")
+    dc_ok.append(1 if dc else 0)
+df = pd.DataFrame({
+    "delta": deltas,
+    "cp_ok":  cp_ok,
+    "dc_ok":  dc_ok
+})
 
-    # export & DC‐check
-    xml_name = "fjsp_deadlines_stnu"
-    stnu_to_xml(stnu, xml_name, xml_folder)
-    dc, _ = run_dc_algorithm(xml_folder, xml_name)
-    dc_ok.append(int(dc))
+print(df)
+delta_star = next((d for d, c, dcc in zip(deltas, cp_ok, dc_ok) if c and dcc), None)
+print(f"\nComputed Δ* = {delta_star}")
 
-theo_gap = sum(ub_nom) - sum(lb_nom)
-print(f"Theoretical full‐horizon gap  ∑(max–min) = {theo_gap}")
-
-# find Δ* = first delta where cp_ok=1 and dc_ok=1
-delta_star = None
-for d, cpf, dcc in zip(deltas, cp_ok, dc_ok):
-    if cpf == 1 and dcc == 1:
-        delta_star = d
-        break
-
-if delta_star is None:
-    print("No Δ in your sweep makes both CP‐feasible and STNU‐controllable.")
-else:
-    print(f"Critical slack Δ* = {delta_star}")
-    print(f"  → Δ* / theoretical gap = {delta_star:.1f} / {theo_gap:.1f} = {delta_star / theo_gap:.2f}")
-
-theo_gap = sum(ub_nom) - sum(lb_nom)
-delta_star = next((d for d, cpf, dcc in zip(deltas, cp_ok, dc_ok) if cpf and dcc), None)
-
-# --- now the enriched plotting ---
+# -------------------------
+# PHASE 4: Plotting results
+# -------------------------
+# critical delta*
+try:
+    delta_star = next(d for d, c, dcc in zip(deltas, cp_ok, dc_ok) if c and dcc)
+except StopIteration:
+    delta_star = None
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4), sharex=True)
 
-# panel 1: CP feasibility
+# Panel 1: CP Feasibility vs Δ
 ax1.plot(deltas, cp_ok, "o-", label="CP Feasible")
-ax1.axvline(theo_gap, color="C2", linestyle="--", label="Theoretical gap")
+ax1.axvline(100, linestyle="--", label="Theoretical gap")
 if delta_star is not None:
-    ax1.axvline(delta_star, color="C3", linestyle=":", label="Critical Δ*")
+    ax1.axvline(delta_star, linestyle=":", label="Critical Δ*")
+optimal_deadlines = {
+  j: ub_sum_per_job[j] + delta_star
+  for j in range(num_jobs)
+}
+
+
+# 2a) Print them to the console
+print(f"Found Δ* = {delta_star}")
+print("Optimal hard‐deadlines per job:")
+for j, D in optimal_deadlines.items():
+    print(f"  Job {j}: D_j = {D}")
+
+# 2b) Export as JSON
+import json
+with open("optimal_deadlines.json", "w") as f:
+    json.dump(optimal_deadlines, f, indent=2)
+print("Wrote optimal_deadlines.json")
+
+# ——— or ———
+
+# 2c) Export as CSV via pandas
+import pandas as pd
+df_dead = pd.DataFrame.from_dict(optimal_deadlines,
+                                 orient="index",
+                                 columns=["deadline"])
+df_dead.index.name = "job"
+df_dead.to_csv("optimal_deadlines.csv")
+print("Wrote optimal_deadlines.csv")
+
+
 ax1.set_title("CP Feasibility vs Δ")
 ax1.set_xlabel("Δ (slack)")
+ax1.set_ylabel("Feasible (1) / Infeasible (0)")
 ax1.set_ylim(-0.1, 1.1)
 ax1.grid(True)
 ax1.legend(loc="upper left")
 
-# panel 2: STNU controllability
-ax2.plot(deltas, dc_ok, "o-", color="C1", label="STNU Controllable")
-ax2.axvline(theo_gap, color="C2", linestyle="--")
+# Panel 2: STNU Controllability vs Δ
+ax2.plot(deltas, dc_ok, "o-", label="STNU Controllable")
+ax2.axvline(100, linestyle="--", label="Theoretical gap")
 if delta_star is not None:
-    ax2.axvline(delta_star, color="C3", linestyle=":")
+    ax2.axvline(delta_star, linestyle=":", label="Critical Δ*")
 ax2.set_title("STNU Controllability vs Δ")
 ax2.set_xlabel("Δ (slack)")
+ax2.set_ylabel("Controllable (1) / Not controllable (0)")
 ax2.set_ylim(-0.1, 1.1)
 ax2.grid(True)
 ax2.legend(loc="upper left")
-
-# annotate exact values
-ax2.text(theo_gap, 0.5, f" gap={theo_gap}", color="C2", va="center", ha="right", rotation=90)
-if delta_star is not None:
-    ax2.text(delta_star, 0.5, f" Δ*={delta_star}", color="C3", va="center", ha="left", rotation=90)
 
 plt.tight_layout()
 plt.savefig("images/fjsp_deadlines/delta_star.png")

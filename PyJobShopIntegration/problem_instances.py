@@ -533,15 +533,274 @@ class MMRCPSPGTL(MMRCPSP):
     Class to represent a Multi-mode Resource-Constrained Project Scheduling Problem with Generalized Time Lags (MMRCPSPGTL).
     """
 
-    def __init__(self, num_tasks, num_resources, successors, predecessors, modes, capacities, renewable, args):
+    def __init__(self, num_tasks, num_resources, successors, predecessors, modes, capacities, renewable, start_start, end_start, start_end, end_end):
         super().__init__(num_tasks, num_resources, successors, predecessors, modes, capacities, renewable)
-        # TODO implement the gtl arguments
-        self.args = args
+
+        self.start_start = start_start
+        self.end_start = end_start
+        self.start_end = start_end
+        self.end_end = end_end
 
     def create_model(self, durations):
-        pass
+        model = Model()
 
+        resources = [
+            model.add_renewable(capacity)
+            for idx, capacity in enumerate(self.capacities)
+        ]
+
+        jobs = [model.add_job() for _ in range(self.num_tasks)]
+
+        tasks = [
+            model.add_task(job=jobs[idx]) for idx in range(self.num_tasks)
+        ]
+
+
+        for (idx, _, demands), duration in zip(self.modes, durations):
+            model.add_mode(tasks[idx], resources, duration, demands)
+
+
+        for start_arr in self.start_start:
+            model.add_start_before_start(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+        for end_arr in self.end_start:
+            model.add_end_before_start(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
+        for start_arr in self.start_end:
+            model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+        for end_arr in self.end_end:
+            model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
+        model.set_objective(
+            weight_makespan=1,
+        )
+        return model
+
+    def get_bounds(self, noise_factor=0.0):
+        lb = []
+        ub = []
+        for i, mode in enumerate(self.modes):
+            duration = mode.duration
+            job = mode.job
+            if duration == 0:
+                lb.append(0)
+                ub.append(0)
+            elif job >= self.num_tasks - 1:
+                lb.append(duration)
+                ub.append(duration)
+            else:
+                lower_bound = int(max(1, duration - noise_factor * np.sqrt(duration)))
+                upper_bound = int(duration + noise_factor * np.sqrt(duration))
+                if lower_bound == upper_bound:
+                    upper_bound += 1
+                lb.append(lower_bound)
+                ub.append(upper_bound)
+        return lb, ub
+    # TODO change this to add uncertainty
     def sample_durations(self, nb_scenarios, noise_factor=0.0):
-        pass
+        """
+        Sample durations for the tasks in the project.
+        :param nb_scenarios: Number of scenarios to sample.
+        :return: List of sampled durations.
+        """
+        lower_bound, upper_bound = self.get_bounds(noise_factor)
+        duration_distributions = DiscreteUniformSampler(
+            lower_bounds=lower_bound,
+            upper_bounds=upper_bound
+        )
+        return duration_distributions.sample(nb_scenarios), duration_distributions
+
+
+    def check_feasibility(self, start_times, finish_times, durations, demands):
+        """
+        Check the feasibility of the solution.
+        :param start_times: Start times of the tasks.
+        :param finish_times: Finish times of the tasks.
+        :param durations: Durations of the tasks.
+        :param demands: Resource demands for each task.
+        :return: True if feasible, False otherwise.
+        """
+        duration_feasible = self.check_duration_feasibility(start_times, finish_times, durations)
+        precedence_feasible = self.check_precedence_feasibility(start_times, finish_times, self.successors)
+        resource_feasible = self.check_resource_feasibility(start_times, durations, demands)
+        return duration_feasible and precedence_feasible and resource_feasible
+    def get_sample_length(self):
+        """
+        Get the length of the sample.
+        :return: Length of the sample.
+        """
+        return len(self.modes)
+
+    def get_objective_rte(self, rte_data, objective="makespan"):
+        """
+        Get the objective value from the RTE data.
+
+        :param rte_data: The RTE data containing the results.
+        :param objective: The type of objective to retrieve (default is "makespan").
+        :return: The objective value.
+        """
+        if objective == "makespan":
+            makespan = max([
+                time for node, time in rte_data.f.items()
+                if node < self.num_tasks - 1
+            ])
+            return makespan
+        elif objective == "deadline":
+            return sum(finish_time for idx, finish_time in enumerate(rte_data.f.values()) if idx in self.deadlines)
+        else:
+            raise ValueError("Unknown objective type.")
+
+    def get_objective(self, schedule, objective="makespan"):
+        """
+        Get the objective value from the result tasks.
+
+        :param schedule: The schedule containing the results.
+        :param objective: The type of objective to retrieve (default is "makespan").
+        :return: The objective value.
+        """
+        if objective == "makespan":
+            makespan = max(task["end"] for task in schedule if task["task"] < self.num_tasks - 1)
+            # print(f"---------------------------------{makespan}---------------------------------")
+            return makespan
+        elif objective == "deadline":
+            return sum(task["end"] for task in schedule if task["task"] in self.deadlines)
+        else:
+            raise ValueError("Unknown objective type.")
+
+    def get_schedule(self, result_tasks):
+        """
+        Get the schedule for the tasks.
+        """
+        schedule = []
+        for i, task in enumerate(result_tasks):
+            if i < self.num_tasks - 1:
+                schedule.append({
+                    "task": i,
+                    "start": task.start,
+                    "end": task.end
+                })
+            else:
+                schedule.append({
+                    "task": i,
+                    "start": 0,
+                    "end": task.end - task.start
+                })
+        return schedule
+
+    def solve_reactive(self, durations, scheduled_start_times, current_time, result_tasks, time_limit=None,
+                       initial_solution=None):
+        class Mode(NamedTuple):
+            job: int
+            duration: int
+            demands: list[int]
+        # Build model with given durations
+        model = Model()
+        resources = [
+            model.add_renewable(capacity) for capacity in self.capacities
+        ]
+        jobs = [model.add_job() for _ in range(self.num_tasks)]
+        tasks = [
+            model.add_task(job=jobs[idx]) for idx in range(self.num_tasks)
+        ]
+        modes = [self.modes[task.mode] for task in result_tasks]
+        modes = modes[:self.num_tasks - 1] + [modes[-1]]
+        modes[-1] = Mode(self.num_tasks - 1, 0, [0] * len(self.capacities))
+        ds = durations[:self.num_tasks - 1] + [durations[-1]]
+        for (idx, _, demands), duration in zip(modes, ds):
+            model.add_mode(tasks[idx], resources, duration, demands)
+        for idx in range(self.num_tasks):
+            task = tasks[idx]
+            try:
+                for start_arr in self.start_start:
+                    model.add_start_before_start(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+                for end_arr in self.end_start:
+                    model.add_end_before_start(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
+                for start_arr in self.start_end:
+                    model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+                for end_arr in self.end_end:
+                    model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
+                model.set_objective(
+                    weight_makespan=1,
+                )
+            except IndexError:
+                pass
+        model.set_objective(
+            weight_makespan=1,
+        )
+
+        # Apply fixed start times or release times based on current schedule
+        sst = scheduled_start_times[:self.num_tasks - 1] + [scheduled_start_times[-1]]
+        for task_id, scheduled_start in enumerate(sst):
+            task = model.tasks[task_id]
+            job = model.jobs[task.job] if task.job < len(model.jobs) else None
+            job_idx = model._id2job[id(job)] if job is not None else None
+            if scheduled_start >= 0:
+                task_new = Task(
+                    job_idx,
+                    earliest_start=scheduled_start,
+                    latest_start=scheduled_start,
+                )
+                model._id2task[id(task)] = task_id
+                model.tasks[task_id] = task_new
+                # model.tasks[task_id].latest_start = scheduled_start
+                # model.tasks[task_id].earliest_start = scheduled_start
+            else:
+                task_new = Task(
+                    job_idx,
+                    earliest_start=current_time
+                )
+                model._id2task[id(task)] = task_id
+                model.tasks[task_id] = task_new
+
+                # model.tasks[task_id] = model.add_task(model.jobs[task.job], earliest_start=current_time)
+        # TODO potentially implement the warm start solver with initial_solution
+        # # Apply initial solution if provided
+        # if initial_solution:
+        #     for task_id, start_time in initial_solution.items():
+        #         model.add_start_hint(model.tasks[task_id], start_time)
+
+        # Solve model
+        result = model.solve(time_limit=time_limit, display=False)
+        result_tasks = result.best.tasks
+
+        # Extract start times and makespan
+        if result_tasks:
+            start_times = [task.start for task in result_tasks]
+            finish_times = [task.end for task in result_tasks]
+            makespan = self.get_objective(self.get_schedule(result_tasks))
+            return start_times, makespan
+        else:
+            return None, np.inf
+
+    def sample_mode(self, mode):
+        """
+        Sample a mode for the tasks in the project.
+        :param mode: The mode to sample.
+        :return: List of sampled durations.
+        """
+        lower_bound, upper_bound = self.get_bounds()
+        if mode == "robust":
+            durations = upper_bound
+        elif mode == "mean":
+            durations = [(lb + ub) // 2 for lb, ub in zip(lower_bound, upper_bound)]
+        elif mode == "quantile_0.25":
+            durations = [int(lb + 0.25 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+        elif mode == "quantile_0.75":
+            durations = [int(lb + 0.75 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+        elif mode == "quantile_0.9":
+            durations = [int(lb + 0.9 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+        else:
+            raise ValueError("Unknown mode type.")
+        return durations
+
+    def get_real_durations(self, result_tasks, duration_sample):
+        """
+        Get the real durations for the tasks.
+        :param result_tasks: The result tasks containing the results.
+        :param duration_sample: The sampled durations.
+        :return: List of real durations.
+        """
+        real_durations = []
+        for task in result_tasks:
+            mode = task.mode
+            real_durations.append(duration_sample[mode])
+        return [int(duration) for duration in real_durations]
 
 #TODO implement the other problem instances

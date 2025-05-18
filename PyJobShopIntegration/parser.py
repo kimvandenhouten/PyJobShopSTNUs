@@ -17,7 +17,6 @@ def parse_data_rcpsp(file, problem_type):
 
     with open(file) as fh:
         lines = fh.readlines()
-
     prec_idx = lines.index("PRECEDENCE RELATIONS:\n")
     req_idx = lines.index("REQUESTS/DURATIONS:\n")
     avail_idx = lines.index("RESOURCEAVAILABILITIES:\n")
@@ -102,8 +101,35 @@ def parse_data_rcpsp(file, problem_type):
             deadlines,
         )
     elif problem_type.endswith("gtl"):
-        # TODO implement parsing the gtl data
-        args = []
+        lags_idx = lines.index("MAXIMAL LAGS:\n")
+        start_end = []
+        start_start = []
+        end_start = []
+        end_end = []
+        for line in lines[lags_idx + 2: -1]:
+            split_line = line.split()
+            if split_line[2]== "SE":
+                start_end.append([int(split_line[0])-1, int(split_line[1])-1, int(split_line[3])])
+
+            elif split_line[2] == "SS":
+                start_start.append([int(split_line[0])-1, int(split_line[1])-1, int(split_line[3])])
+
+            elif split_line[2] == "ES":
+                end_start.append([int(split_line[0])-1, int(split_line[1])-1, int(split_line[3])])
+
+            elif split_line[2] == "EE":
+                end_end.append([int(split_line[0])-1, int(split_line[1])-1, int(split_line[3])])
+
+
+        sink_predecessors = predecessors.pop()
+        sink_successors = successors.pop()
+        predecessors.append(sink_predecessors)
+        successors.append(sink_successors)
+        for i in range(len(successors)):
+            if i in sink_predecessors:
+                idx = successors[i].index(int(job_idx) - 1)
+                successors[i][idx] = len(successors) - 1
+
         return MMRCPSPGTL(
             int(job_idx),
             len(capacities),
@@ -112,7 +138,10 @@ def parse_data_rcpsp(file, problem_type):
             modes,
             capacities,
             renewable,
-            args,
+            start_start,
+            start_end,
+            end_start,
+            end_end
         )
     else:
         raise ValueError(f"Unknown problem type: {problem_type}")

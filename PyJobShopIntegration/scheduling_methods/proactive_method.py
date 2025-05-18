@@ -40,7 +40,6 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
         "quantile_0.75": 0.75,
         "quantile_0.9": 0.9,
     }
-
     if mode == "robust":
         durations = ub
         logger.debug(f'Start solving upper bound schedule {durations}')
@@ -65,6 +64,7 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
         model = instance.create_model(durations)
         result = model.solve(time_limit=time_limit, display=False)
         if result:
+            print("Solution found proactively quantile")
             start_times = [task.start for task in result.best.tasks]
             data_dict["result_tasks"] = [task for task in result.best.tasks]
             estimated_durations = []

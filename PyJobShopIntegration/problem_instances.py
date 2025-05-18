@@ -172,28 +172,38 @@ class MMRCPSP(Instance):
     def check_resource_feasibility(self, start_times, durations, demands):
         """
         Check the resource feasibility of the tasks.
-        :param start_times: Start times of the tasks.
-        :param durations: Durations of the tasks.
-        :param demands: Resource demands for each task.
+
+        :param start_times: List of start times for each task.
+        :param durations: List of durations for each task.
+        :param demands: List of resource demands per task; demands[i][r] is the demand of task i for resource r.
         :return: True if feasible, False otherwise.
         """
+        num_tasks = len(start_times)
         num_resources = len(self.capacities)
-        num_jobs = len(durations)
-        used = np.zeros((sum(durations), num_resources))
 
-        for job in range(num_jobs):
-            start_job = start_times[job]
-            duration = durations[job]
-            job_needs = demands[job]
-            used[start_job:start_job + duration] += job_needs
-        # np.set_printoptions(threshold=np.inf)
-        # print("Used resources: ", used)
-        resource_feasible = True
-        for t in range(sum(durations)):
-            for r, resource_usage in enumerate(used[t]):
-                if resource_usage > self.capacities[r]:
-                    resource_feasible = False
-        return resource_feasible
+        # Build a time line: gather all start and end times
+        time_points = sorted(set(
+            t for i in range(num_tasks)
+            for t in [start_times[i], start_times[i] + durations[i]]
+        ))
+
+        # Check at each time interval between two time points
+        for t_index in range(len(time_points) - 1):
+            t_start = time_points[t_index]
+            t_end = time_points[t_index + 1]
+
+            active_tasks = [
+                i for i in range(num_tasks)
+                if start_times[i] < t_end and (start_times[i] + durations[i]) > t_start
+            ]
+
+            for r in range(num_resources):
+                total_demand = sum(demands[i][r] for i in active_tasks)
+                if total_demand > self.capacities[r]:
+                    return False  # Overload on resource r at this time interval
+
+        return True  # No overloads found
+
 
 class MMRCPSPD(MMRCPSP):
     """
@@ -323,6 +333,7 @@ class MMRCPSPD(MMRCPSP):
         precedence_feasible = self.check_precedence_feasibility(start_times, finish_times, self.successors)
         resource_feasible = self.check_resource_feasibility(start_times, durations, demands)
         deadline_feasible = self.check_deadline_feasibility(finish_times)
+        print(f"Duration feasible: {duration_feasible}, Precedence feasible: {precedence_feasible}, Resource feasible: {resource_feasible}, Deadline feasible: {deadline_feasible}")
         return duration_feasible and precedence_feasible and resource_feasible and deadline_feasible
     def get_sample_length(self):
         """
@@ -455,6 +466,15 @@ class MMRCPSPD(MMRCPSP):
         # if initial_solution:
         #     for task_id, start_time in initial_solution.items():
         #         model.add_start_hint(model.tasks[task_id], start_time)
+        # print all the data about the model
+        # for idx, task in enumerate(model.tasks):
+        #     print(f"Task {idx}, Job {task.job}, Earliest start: {task.earliest_start}, Latest start: {task.latest_start}, Earliest finish: {task.earliest_end}, Latest finish: {task.latest_end}")
+        # for idx, mode in enumerate(model.modes):
+        #     print(f"Mode {idx}, Job {mode.task}, Duration: {mode.duration}, Demands: {mode.demands}")
+        # for idx, job in enumerate(model.jobs):
+        #     print(f"Job {idx}, Due date: {job.due_date}, Tasks: {job.tasks}")
+        # for idx, resource in enumerate(resources):
+        #     print(f"Resource {idx}: {resource.name}")
 
         # Solve model
         result = model.solve(time_limit=time_limit, display=False)
@@ -462,11 +482,27 @@ class MMRCPSPD(MMRCPSP):
 
         # Extract start times and makespan
         if result_tasks:
-            start_times = [task.start for task in result_tasks]
+            start_times = [task.start for task in result_tasks[:-1]]
+            start_times += [0] * len(self.deadlines)
+            start_times.append(result_tasks[-1].start)
             finish_times = [task.end for task in result_tasks]
             makespan = self.get_objective(self.get_schedule(result_tasks))
             return start_times, makespan
         else:
+            # print everything about the model for debugging
+            # print("No solution found.")
+            # print("Model tasks:")
+            # for task in model.tasks:
+            #     print(f"Task {task.job}, Earliest start: {task.earliest_start}, Latest start: {task.latest_start}")
+            # print("Model jobs:")
+            # for job in model.jobs:
+            #     print(f"Job {job.due_date}, Tasks: {job.tasks}")
+            # print("Model resources:")
+            # for idx, resource in enumerate(resources):
+            #     print(f"Resource {idx}: {resource.name}")
+            # print("Model modes:")
+            # for idx, mode in enumerate(model.modes):
+            #     print(f"Mode {idx}, Task {mode.task}, Duration: {mode.duration}, Demands: {mode.demands}")
             return None, np.inf
 
     def get_real_durations(self, result_tasks, duration_sample):

@@ -135,6 +135,7 @@ def run_reactive_online(instance, duration_sample, data_dict, time_limit_resched
 
     finish_online = time.time()
     if infeasible:
+        print("Reached infeasible reactive")
         feasibility, start_times = False, None
         makespan = np.inf
         logger.info("No feasible schedule found")

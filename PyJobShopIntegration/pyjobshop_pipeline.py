@@ -29,7 +29,7 @@ problem_type = sys.argv[-1]
 # make sure to have a folder with your data with the same name
 folder = problem_type
 # SETTINGS HEURISTIC PROACTIVE APPROACH
-mode_proactive = "quantile_0.5"
+mode_proactive = "quantile_0.9"
 time_limit_proactive = 600
 # SETTINGS REACTIVE APPROACH
 time_limit_rescheduling = 2
@@ -70,8 +70,7 @@ for noise_factor in NOISE_FACTORS:
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
-            logger.info("Sample: %s", n)
-            if n == 10:
+            if n == 1:
                 break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
@@ -79,6 +78,7 @@ for noise_factor in NOISE_FACTORS:
             # Run experiments on proactive, reactive and stnu
             # TODO implement the proactive, reactive and stnu approaches possibly reusing already existing code
             for i, duration_sample in enumerate(test_durations_samples):
+                logger.info(f"Sample {i}")
                 if proactive_reactive:
                     data_dict = run_proactive_offline(instance, noise_factor, time_limit_proactive, mode_proactive)
                     # Run proactive online

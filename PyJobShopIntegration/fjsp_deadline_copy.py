@@ -46,8 +46,8 @@ if infeasible_jobs:
     print("[WARNING] Infeasible jobs found:")
     for job_idx, needed, deadline in infeasible_jobs:
         print(f" - Job {job_idx}: needs ≥ {needed}, deadline = {deadline}")
-w_e = 20
-w_t = 100
+w_e = 3
+w_t = 0
 is_soft_deadline = False
 model = Model()
 model.set_objective(
@@ -56,8 +56,6 @@ model.set_objective(
     weight_total_tardiness=w_t,
     weight_max_lateness=1,
 )
-weights = compute_slack_weights(data, job_deadlines)
-
 machines = [model.add_machine(name=f"Machine {idx}") for idx in range(NUM_MACHINES)]
 tasks = {}
 deadline_resource = model.add_renewable(capacity=999, name="DeadlineResource")
@@ -103,12 +101,6 @@ for idx, task in enumerate(solution.tasks):
 # -------------------------
 # gather global min/max per real task
 duration_distributions = get_distribution_bounds(model, data)
-assert len(duration_distributions.lower_bounds) == len(model.tasks)
-assert len(duration_distributions.upper_bounds) == len(model.tasks)
-for t, lb, ub in zip(model.tasks,
-                     duration_distributions.lower_bounds,
-                     duration_distributions.upper_bounds):
-    print(f"{t.name:<15}  →   [{lb:2d}, {ub:2d}]")
 
 # PHASE 3. Build the STNU
 stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)

@@ -3,6 +3,8 @@ import os.path
 
 import numpy as np
 import pandas as pd
+
+from PyJobShopIntegration.utils import get_project_root
 from rcpsp_max.solvers.RCPSP_CP_benchmark import RCPSP_CP_Benchmark
 import ast
 import copy
@@ -59,6 +61,7 @@ stnu = True
 writing = False
 now = datetime.datetime.now().strftime("%m_%d_%Y,%H_%M")
 
+project_root = get_project_root()
 
 def check_pi_feasible(instance_folder, instance_id, sample_index, duration_sample, noise_factor):
     project_root = get_project_root()

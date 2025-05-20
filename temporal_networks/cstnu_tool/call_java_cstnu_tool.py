@@ -97,7 +97,6 @@ class CSTNUTool:
             logger.debug('Network is DC')
         else:
             logger.debug('Network is not DC')
-
         return is_dc
 
 

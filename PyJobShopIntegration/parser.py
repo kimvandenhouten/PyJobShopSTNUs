@@ -4,23 +4,31 @@ from PyJobShopIntegration.problem_instances import *
 import re
 from typing import NamedTuple
 
-def create_instance(file, problem_type):
+
+
+def create_instance(file, problem_type, sdst=False):
     if problem_type.startswith("mmrcpsp"):
-        # existing RCPSP parser; returns appropriate object
         return parse_data_rcpsp(file, problem_type)
+
     elif problem_type.startswith("fjsp"):
-        num_machines, data = parse_data_fjsp(file)
-        return build_model_fjsp(num_machines, data)
+        if sdst:
+            num_machines, data, sdst_matrix = parse_data_fjsp_sdst(file)
+        else:
+            num_machines, data = parse_data_fjsp(file)
+            sdst_matrix = None
+        return build_model_fjsp(num_machines, data, sdst_matrix)
     else:
         raise ValueError(f"Unsupported problem type: {problem_type}")
 
 
 # TODO implement parser for rcpsp instances
+class Mode(NamedTuple):
+    job: int
+    duration: int
+    demands: list[int]
 def parse_data_rcpsp(file, problem_type):
-    class Mode(NamedTuple):
-        job: int
-        duration: int
-        demands: list[int]
+    # TODO define this outside the function to use for other parts of the code
+
     with open(file) as fh:
         lines = fh.readlines()
 
@@ -76,6 +84,27 @@ def parse_data_rcpsp(file, problem_type):
             int(line.split()[0]) - 1: int(line.split()[1])
             for line in lines[deadlines_idx + 2: -1]
         }
+
+        sink_predecessors = predecessors.pop()
+        sink_successors = successors.pop()
+        sink_mode = modes.pop()
+        # Add predecessors for deadline tasks
+        for i, (idx, deadline) in enumerate(deadlines.items()):
+            mode = Mode(i + int(job_idx) - 1, deadline, [0] * (len(capacities)))
+            modes.append(mode)
+            # Add supersource as direct predecessor of each deadline task
+            predecessors.append([0])
+            successors.append([])
+            successors[0].append(i + int(job_idx) - 1)
+        predecessors.append(sink_predecessors)
+        successors.append(sink_successors)
+
+        modes.append(Mode(int(job_idx)+len(deadlines) - 1, 0, [0] * len(capacities)))
+        # Adjust predecessors and successors for the sink task
+        for i in range(len(successors)):
+            if i in sink_predecessors:
+                idx = successors[i].index(int(job_idx) - 1)
+                successors[i][idx] = len(successors) - 1
         return MMRCPSPD(
             int(job_idx),
             len(capacities),
@@ -134,42 +163,112 @@ def parse_data_fjsp(file):
 
     return num_machines, data
 
-def build_model_fjsp(num_machines, data):
-    # Construct the model
+def parse_data_fjsp_sdst(file_path):
+        path = Path(file_path)
+        with open(path, 'r') as f:
+            # 1) Header: total_jobs total_machines max_ops_per_job
+            header = re.findall(r"\S+", f.readline())
+            num_jobs = int(header[0])
+            num_machines = int(header[1])
+
+            # 2) Per-job operation options
+            job_data = []
+            for _ in range(num_jobs):
+                tokens = re.findall(r"\S+", f.readline())
+                i = 1  # skip the “#ops” token
+                ops = []
+                while i < len(tokens):
+                    mode_count = int(tokens[i]);
+                    i += 1
+                    opts = []
+                    for _ in range(mode_count):
+                        m_id = int(tokens[i]) - 1
+                        dur = int(tokens[i + 1])
+                        opts.append((m_id, dur))
+                        i += 2
+                    ops.append(opts)
+                job_data.append(ops)
+
+            # 4) Build empty SDST cube
+            total_ops = sum(len(ops) for ops in job_data)
+            sdst = [
+                [[-1] * total_ops for _ in range(total_ops)]
+                for _ in range(num_machines)
+            ]
+
+            # 5) Skip any blank or header lines until the first numeric row
+            while True:
+                pos = f.tell()
+                line = f.readline()
+                if not line:
+                    raise EOFError("No SDST data found in file.")
+                if re.match(r'^\s*\d', line):
+                    # rewind one line so the numeric row will be read below
+                    f.seek(pos)
+                    break
+
+            # 6) Now read exactly `num_machines` blocks of `total_ops` rows each
+            for m in range(num_machines):
+                for i in range(total_ops):
+                    line = f.readline()
+                    if not line:
+                        raise EOFError(f"Unexpected EOF reading SDST for machine {m}, row {i}")
+                    row = re.findall(r"-?\d+", line)
+                    if len(row) != total_ops:
+                        raise ValueError(
+                            f"Machine {m}, row {i}: expected {total_ops} entries, got {len(row)}"
+                        )
+                    sdst[m][i] = [int(x) for x in row]
+
+            return num_machines, job_data, sdst
+
+def build_model_fjsp(num_machines, data, sdst_matrix=None):
+    """
+    Build a PyJobShop Model:
+      - Adds machines, jobs, tasks, modes
+      - Chains each job’s ops with end-before-start
+      - If sdst_matrix is provided, registers sequence-dependent setup times
+    """
     model = Model()
 
-    # Add machines
+    # A) machines
     machines = [
-        model.add_machine(name=f"Machine {idx}")
-        for idx in range(num_machines)
+        model.add_machine(name=f"Machine {m}")
+        for m in range(num_machines)
     ]
 
-    # Prepare job and task containers
-    jobs = {}
+    # B) create jobs & tasks
     tasks = {}
+    for j_idx, ops in enumerate(data):
+        job = model.add_job(name=f"Job {j_idx}")
+        for o_idx in range(len(ops)):
+            tasks[(j_idx, o_idx)] = model.add_task(job, name=f"Task ({j_idx},{o_idx})")
 
-    # First pass: create jobs and task placeholders
-    for job_idx, job_data in enumerate(data):
-        job = model.add_job(name=f"Job {job_idx}")
-        jobs[job_idx] = job
-        for idx in range(len(job_data)):
-            task_key = (job_idx, idx)
-            tasks[task_key] = model.add_task(job, name=f"Task {task_key}")
+    # C) add modes and chain precedence
+    for j_idx, ops in enumerate(data):
+        for o_idx, options in enumerate(ops):
+            task = tasks[(j_idx, o_idx)]
+            for m_id, dur in options:
+                model.add_mode(task, machines[m_id], duration=dur)
+        for o_idx in range(len(ops)-1):
+            model.add_end_before_start(
+                tasks[(j_idx, o_idx)],
+                tasks[(j_idx, o_idx+1)]
+            )
 
-    # Second pass: add modes and precedence
-    for job_idx, job_data in enumerate(data):
-        # Add mode options for each task
-        for idx, task_data in enumerate(job_data):
-            task_key = (job_idx, idx)
-            task = tasks[task_key]
-            for machine_id, duration in task_data:
-                machine = machines[machine_id]
-                model.add_mode(task, machine, duration)
+    # D) optional: register sequence‐dependent setup times
+    if sdst_matrix is not None:
+        # flatten tasks in the same file‐order the parser used
+        flat_tasks = [
+            tasks[(j_idx, o_idx)]
+            for j_idx, ops in enumerate(data)
+            for o_idx in range(len(ops))
+        ]
 
-        # Add precedence constraints within the job. Not sure to keep this, also in example.
-        for idx in range(len(job_data) - 1):
-            first = tasks[(job_idx, idx)]
-            second = tasks[(job_idx, idx + 1)]
-            model.add_end_before_start(first, second)
+        for m_idx, machine in enumerate(machines):
+            for i, ti in enumerate(flat_tasks):
+                for j, tj in enumerate(flat_tasks):
+                    setup_time = sdst_matrix[m_idx][i][j]
+                    model.add_setup_time(machine, ti, tj, duration=setup_time)
 
     return model

@@ -109,7 +109,7 @@ if dc:
 
     # Convert to PyJobShop solution for visualization
     ## TODO: currently objective is not overwritten in Solution object
-    simulated_solution, objective = rte_data_to_pyjobshop_solution(solution, estnu, rte_data, len(model.tasks), "makespan")
+    simulated_solution, objective = rte_data_to_pyjobshop_solution(solution, estnu, rte_data, len(model.tasks), "makespan", result)
     logger.info(f'The simulated solution is {simulated_solution}')
     logger.info(f'Simulated solution has objective {objective}')
 

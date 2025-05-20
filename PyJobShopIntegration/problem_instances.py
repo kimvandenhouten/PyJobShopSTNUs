@@ -178,31 +178,22 @@ class MMRCPSP(Instance):
         :param demands: List of resource demands per task; demands[i][r] is the demand of task i for resource r.
         :return: True if feasible, False otherwise.
         """
-        num_tasks = len(start_times)
-        num_resources = len(self.capacities)
+        num_resources = self.num_resources
+        num_tasks = len(durations)
+        used = np.zeros((sum(durations), num_resources))
 
-        # Build a time line: gather all start and end times
-        time_points = sorted(set(
-            t for i in range(num_tasks)
-            for t in [start_times[i], start_times[i] + durations[i]]
-        ))
+        for task in range(num_tasks):
+            start_job = start_times[task]
+            duration = durations[task]
+            job_needs = demands[task]
+            used[start_job:start_job + duration] += job_needs
 
-        # Check at each time interval between two time points
-        for t_index in range(len(time_points) - 1):
-            t_start = time_points[t_index]
-            t_end = time_points[t_index + 1]
-
-            active_tasks = [
-                i for i in range(num_tasks)
-                if start_times[i] < t_end and (start_times[i] + durations[i]) > t_start
-            ]
-
-            for r in range(num_resources):
-                total_demand = sum(demands[i][r] for i in active_tasks)
-                if total_demand > self.capacities[r]:
-                    return False  # Overload on resource r at this time interval
-
-        return True  # No overloads found
+        resource_feasible = True
+        for t in range(sum(durations)):
+            for r, resource_usage in enumerate(used[t]):
+                if resource_usage > self.capacities[r]:
+                    resource_feasible = False
+        return resource_feasible
 
 
 class MMRCPSPD(MMRCPSP):
@@ -411,9 +402,13 @@ class MMRCPSPD(MMRCPSP):
             model.add_job(due_date=self.deadlines.get(idx, MAX_VALUE))
             for idx in range(self.num_tasks)
         ]
-        tasks = [
-            model.add_task(job=jobs[idx]) for idx in range(self.num_tasks)
-        ]
+        tasks = []
+        print("Length of scheduled start times: ", len(scheduled_start_times))
+        for idx in range(self.num_tasks):
+            scheduled_start = scheduled_start_times[idx]
+            current_job = jobs[idx]
+            tasks.append(model.add_task(current_job, earliest_start=scheduled_start, latest_start=scheduled_start)
+                         if scheduled_start >= 0 else model.add_task(current_job, earliest_start=current_time))
         modes = [self.modes[task.mode] for task in result_tasks]
         modes = modes[:self.num_tasks - 1] + [modes[-1]]
         modes[-1] = Mode(self.num_tasks - 1, 0, [0] * len(self.capacities))
@@ -432,33 +427,33 @@ class MMRCPSPD(MMRCPSP):
                     model.add_end_before_start(task, tasks[succ])
             except IndexError:
                 pass
-        model.set_objective(
-            weight_makespan=1,
-        )
+        # model.set_objective(
+        #     weight_makespan=1,
+        # )
 
         # Apply fixed start times or release times based on current schedule
-        sst = scheduled_start_times[:self.num_tasks - 1] + [scheduled_start_times[-1]]
-        for task_id, scheduled_start in enumerate(sst):
-            task = model.tasks[task_id]
-            job = model.jobs[task.job] if task.job < len(model.jobs) else None
-            job_idx = model._id2job[id(job)] if job is not None else None
-            if scheduled_start >= 0:
-                task_new = Task(
-                    job_idx,
-                    earliest_start=scheduled_start,
-                    latest_start=scheduled_start,
-                )
-                model._id2task[id(task)] = task_id
-                model.tasks[task_id] = task_new
-                # model.tasks[task_id].latest_start = scheduled_start
-                # model.tasks[task_id].earliest_start = scheduled_start
-            else:
-                task_new = Task(
-                    job_idx,
-                    earliest_start=current_time
-                )
-                model._id2task[id(task)] = task_id
-                model.tasks[task_id] = task_new
+        # sst = scheduled_start_times[:self.num_tasks - 1] + [scheduled_start_times[-1]]
+        # for task_id, scheduled_start in enumerate(sst):
+        #     task = model.tasks[task_id]
+        #     job = model.jobs[task.job] if task.job < len(model.jobs) else None
+        #     job_idx = model._id2job[id(job)] if job is not None else None
+        #     if scheduled_start >= 0:
+        #         task_new = Task(
+        #             job_idx,
+        #             earliest_start=scheduled_start,
+        #             latest_start=scheduled_start,
+        #         )
+        #         model._id2task[id(task)] = task_id
+        #         model.tasks[task_id] = task_new
+        #         # model.tasks[task_id].latest_start = scheduled_start
+        #         # model.tasks[task_id].earliest_start = scheduled_start
+        #     else:
+        #         task_new = Task(
+        #             job_idx,
+        #             earliest_start=current_time
+        #         )
+        #         model._id2task[id(task)] = task_id
+        #         model.tasks[task_id] = task_new
 
                 # model.tasks[task_id] = model.add_task(model.jobs[task.job], earliest_start=current_time)
         # TODO potentially implement the warm start solver with initial_solution
@@ -475,6 +470,15 @@ class MMRCPSPD(MMRCPSP):
         #     print(f"Job {idx}, Due date: {job.due_date}, Tasks: {job.tasks}")
         # for idx, resource in enumerate(resources):
         #     print(f"Resource {idx}: {resource.name}")
+        # # print constraints
+        # for start_before_start in model._constraints.start_before_start:
+        #     print(f"Start before start: {start_before_start}")
+        # for end_before_start in model._constraints.end_before_start:
+        #     print(f"End before start: {end_before_start}")
+        # for start_before_end in model._constraints.start_before_end:
+        #     print(f"Start before end: {start_before_end}")
+        # for end_before_end in model._constraints.end_before_end:
+        #     print(f"End before end: {end_before_end}")
 
         # Solve model
         result = model.solve(time_limit=time_limit, display=False)

@@ -92,6 +92,7 @@ def _perform_wilcoxon(metric_df, methods, alpha, min_samples):
                 continue
 
             aligned = pd.concat([scores_i, scores_j], axis=1, join="inner").dropna()
+            aligned = aligned[np.isfinite(aligned).all(axis=1)]
             if aligned.shape[0] < min_samples:
                 metric_results[i][j] = {'p': None, 'significant': False, 'better': None}
                 continue
@@ -100,14 +101,14 @@ def _perform_wilcoxon(metric_df, methods, alpha, min_samples):
                 stat, p = wilcoxon(aligned[i], aligned[j])
                 significant = p < alpha
 
-                differences = np.array(aligned[i]) - np.array(aligned[j])
+                differences = np.array(aligned[j]) - np.array(aligned[i])
                 ranks = rankdata([abs(diff) for diff in differences])
                 signed_ranks = [rank if diff > 0 else -rank for diff, rank in zip(differences, ranks) if diff != 0]
 
                 sum_pos = sum(rank for rank in signed_ranks if rank > 0)
                 sum_neg = sum(-rank for rank in signed_ranks if rank < 0)
 
-                better = i if sum_pos > sum_neg else (j if sum_neg > sum_pos else None)
+                better = i if sum_pos > sum_neg else (j if sum_neg > sum_pos else "Equal")
 
                 metric_results[i][j] = {
                     'p': p,
@@ -147,4 +148,4 @@ def wilcoxon_test(df, output, alpha=0.05, min_samples=2):
                     print(f"{i} vs {j}: Not enough data for comparison", file=output)
 
 # Example usage:
-evaluate_results("05_15_2025,17_33")
+evaluate_results("05_18_2025,17_30")

@@ -30,7 +30,8 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
     def get_quantile(lb, ub, p):
         if lb == ub:
             quantile = lb
-        quantile = [int(lb[i] + p * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        else:
+            quantile = [int(lb[i] + p * (ub[i] - lb[i] + 1) - 1) for _ in range(len(lb))]
 
         return quantile
 
@@ -59,7 +60,6 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
             durations = get_quantile(lb, ub, quantile)
         else:
             raise ValueError(f"Unsupported mode: {mode}")
-
         logger.debug(f'Start solving upper bound schedule {durations}')
         model = instance.create_model(durations)
         result = model.solve(time_limit=time_limit, display=False)

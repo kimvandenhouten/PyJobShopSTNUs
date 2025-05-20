@@ -642,8 +642,6 @@ class MMRCPSPGTL(MMRCPSP):
                 if node < self.num_tasks - 1
             ])
             return makespan
-        elif objective == "deadline":
-            return sum(finish_time for idx, finish_time in enumerate(rte_data.f.values()) if idx in self.deadlines)
         else:
             raise ValueError("Unknown objective type.")
 
@@ -659,8 +657,6 @@ class MMRCPSPGTL(MMRCPSP):
             makespan = max(task["end"] for task in schedule if task["task"] < self.num_tasks - 1)
             # print(f"---------------------------------{makespan}---------------------------------")
             return makespan
-        elif objective == "deadline":
-            return sum(task["end"] for task in schedule if task["task"] in self.deadlines)
         else:
             raise ValueError("Unknown objective type.")
 
@@ -705,22 +701,21 @@ class MMRCPSPGTL(MMRCPSP):
         ds = durations[:self.num_tasks - 1] + [durations[-1]]
         for (idx, _, demands), duration in zip(modes, ds):
             model.add_mode(tasks[idx], resources, duration, demands)
-        for idx in range(self.num_tasks):
-            task = tasks[idx]
-            try:
-                for start_arr in self.start_start:
-                    model.add_start_before_start(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
-                for end_arr in self.end_start:
-                    model.add_end_before_start(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
-                for start_arr in self.start_end:
-                    model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
-                for end_arr in self.end_end:
-                    model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
-                model.set_objective(
-                    weight_makespan=1,
-                )
-            except IndexError:
-                pass
+
+        try:
+            for start_arr in self.start_start:
+                model.add_start_before_start(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+            for end_arr in self.end_start:
+                model.add_end_before_start(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
+            for start_arr in self.start_end:
+                model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+            for end_arr in self.end_end:
+                model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
+            model.set_objective(
+                weight_makespan=1,
+            )
+        except IndexError:
+            pass
         model.set_objective(
             weight_makespan=1,
         )
@@ -732,6 +727,7 @@ class MMRCPSPGTL(MMRCPSP):
             job = model.jobs[task.job] if task.job < len(model.jobs) else None
             job_idx = model._id2job[id(job)] if job is not None else None
             if scheduled_start >= 0:
+                print(f"Task ID: {task_id}, Scheduled Start: {scheduled_start}, durations: {durations[task_id]}, mode: {modes[task_id]}")
                 task_new = Task(
                     job_idx,
                     earliest_start=scheduled_start,
@@ -759,10 +755,10 @@ class MMRCPSPGTL(MMRCPSP):
         # Solve model
         result = model.solve(time_limit=time_limit, display=False)
         result_tasks = result.best.tasks
-
         # Extract start times and makespan
         if result_tasks:
-            start_times = [task.start for task in result_tasks]
+            start_times = [task.start for task in result_tasks[:-1]]
+            start_times.append(result_tasks[-1].start)
             finish_times = [task.end for task in result_tasks]
             makespan = self.get_objective(self.get_schedule(result_tasks))
             return start_times, makespan

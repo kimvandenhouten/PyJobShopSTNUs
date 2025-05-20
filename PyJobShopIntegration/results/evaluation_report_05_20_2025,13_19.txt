@@ -1,0 +1,75 @@
+
+=== Evaluating method: proactive_quantile_0.9 ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 24.41379
+  • Var Makespan       : 42.10837
+  • Avg Online Time    : 0.00085
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.05430
+  • Var Offline Time   : 0.00004
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Evaluating method: reactive ===
+
+=== Method Evaluation Summary ===
+
+
+=== Evaluating method: stnu ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 23.54000
+  • Var Makespan       : 72.82490
+  • Avg Online Time    : 0.00664
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.44201
+  • Var Offline Time   : 0.00185
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Feasibility Summary ===
+                                        count  sum     ratio
+method                 instance_folder                      
+proactive_quantile_0.9 j10                 80   29  0.362500
+reactive               j10                 80    0  0.000000
+stnu                   j10                 70   50  0.714286
+
+=== Wilcoxon Test Results ===
+
+--- Metric: obj ---
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: Not enough data for comparison
+proactive_quantile_0.9 vs stnu: p-value = 0.89857, significant = False, better = proactive_quantile_0.9, sum_pos_ranks = 89.0, sum_neg_ranks = 82.0, n_pairs = 18
+reactive vs proactive_quantile_0.9: Not enough data for comparison
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: Not enough data for comparison
+stnu vs proactive_quantile_0.9: p-value = 0.89857, significant = False, better = proactive_quantile_0.9, sum_pos_ranks = 82.0, sum_neg_ranks = 89.0, n_pairs = 18
+stnu vs reactive: Not enough data for comparison
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_online ---
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: p-value = 0.00002, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 153.0, sum_neg_ranks = 0, n_pairs = 17
+proactive_quantile_0.9 vs stnu: p-value = 0.00001, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 171.0, sum_neg_ranks = 0, n_pairs = 18
+reactive vs proactive_quantile_0.9: p-value = 0.00002, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 0, sum_neg_ranks = 153.0, n_pairs = 17
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.00003, significant = True, better = stnu, sum_pos_ranks = 0, sum_neg_ranks = 136.0, n_pairs = 16
+stnu vs proactive_quantile_0.9: p-value = 0.00001, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 0, sum_neg_ranks = 171.0, n_pairs = 18
+stnu vs reactive: p-value = 0.00003, significant = True, better = stnu, sum_pos_ranks = 136.0, sum_neg_ranks = 0, n_pairs = 16
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_offline ---
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: Not enough data for comparison
+proactive_quantile_0.9 vs stnu: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 2485.0, sum_neg_ranks = 0, n_pairs = 70
+reactive vs proactive_quantile_0.9: Not enough data for comparison
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 300.0, sum_neg_ranks = 0, n_pairs = 24
+stnu vs proactive_quantile_0.9: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 0, sum_neg_ranks = 2485.0, n_pairs = 70
+stnu vs reactive: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 0, sum_neg_ranks = 300.0, n_pairs = 24
+stnu vs stnu: Not enough data for comparison

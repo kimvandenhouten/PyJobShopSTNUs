@@ -29,7 +29,7 @@ problem_type = sys.argv[-1]
 # make sure to have a folder with your data with the same name
 folder = problem_type
 # SETTINGS HEURISTIC PROACTIVE APPROACH
-mode_proactive = "quantile_0.9"
+mode_proactive = "robust"
 time_limit_proactive = 600
 # SETTINGS REACTIVE APPROACH
 time_limit_rescheduling = 2
@@ -70,7 +70,7 @@ for noise_factor in NOISE_FACTORS:
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
-            if n == 1:
+            if n == 5:
                 break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
@@ -93,6 +93,8 @@ for noise_factor in NOISE_FACTORS:
 
                     # Run reactive online
                     data_dict_reactive = copy.copy(data_dict)
+                    if not result_tasks:
+                        raise ValueError("No tasks found in the result.")
                     data_dict_reactive = run_reactive_online(instance, real_durations, data_dict_reactive, time_limit_rescheduling, result_tasks)
                     data_dict_reactive["method"] = "reactive"
                     data_to_csv(instance_folder=instance_folder, solution=data_dict_reactive, output_file=output_file)

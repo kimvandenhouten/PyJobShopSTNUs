@@ -31,7 +31,7 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
         if lb == ub:
             quantile = lb
         else:
-            quantile = [int(lb[i] + p * (ub[i] - lb[i] + 1) - 1) for _ in range(len(lb))]
+            quantile = [int(lb[i] + p * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
 
         return quantile
 

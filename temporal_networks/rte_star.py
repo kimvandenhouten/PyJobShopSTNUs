@@ -78,6 +78,20 @@ class RTEdata:
 
         return rte_data
 
+    def __str__(self):
+        return (
+            f"RTEdata(\n"
+            f"  u_x={self.u_x},\n"
+            f"  u_c={self.u_c},\n"
+            f"  enabled_tp={self.enabled_tp},\n"
+            f"  now={self.now},\n"
+            f"  f={self.f},\n"
+            f"  time_windows={self.time_windows},\n"
+            f"  act_waits={self.act_waits},\n"
+            f"  sampled_weights={self.sampled_weights}\n"
+            f")"
+        )
+
 
 class RTEdecision:
     def __init__(self, x=None, t=None, wait=False, fail=False):

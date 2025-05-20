@@ -22,11 +22,13 @@ def create_instance(file, problem_type, sdst=False):
 
 
 # TODO implement parser for rcpsp instances
+class Mode(NamedTuple):
+    job: int
+    duration: int
+    demands: list[int]
 def parse_data_rcpsp(file, problem_type):
-    class Mode(NamedTuple):
-        job: int
-        duration: int
-        demands: list[int]
+    # TODO define this outside the function to use for other parts of the code
+
     with open(file) as fh:
         lines = fh.readlines()
 
@@ -82,6 +84,27 @@ def parse_data_rcpsp(file, problem_type):
             int(line.split()[0]) - 1: int(line.split()[1])
             for line in lines[deadlines_idx + 2: -1]
         }
+
+        sink_predecessors = predecessors.pop()
+        sink_successors = successors.pop()
+        sink_mode = modes.pop()
+        # Add predecessors for deadline tasks
+        for i, (idx, deadline) in enumerate(deadlines.items()):
+            mode = Mode(i + int(job_idx) - 1, deadline, [0] * (len(capacities)))
+            modes.append(mode)
+            # Add supersource as direct predecessor of each deadline task
+            predecessors.append([0])
+            successors.append([])
+            successors[0].append(i + int(job_idx) - 1)
+        predecessors.append(sink_predecessors)
+        successors.append(sink_successors)
+
+        modes.append(Mode(int(job_idx)+len(deadlines) - 1, 0, [0] * len(capacities)))
+        # Adjust predecessors and successors for the sink task
+        for i in range(len(successors)):
+            if i in sink_predecessors:
+                idx = successors[i].index(int(job_idx) - 1)
+                successors[i][idx] = len(successors) - 1
         return MMRCPSPD(
             int(job_idx),
             len(capacities),

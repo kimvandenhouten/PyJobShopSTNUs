@@ -82,7 +82,7 @@ class Instance():
     def get_sample_length(self):
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def get_bounds(self):
+    def get_bounds(self, noise_factor):
         """
         Get the bounds for the durations.
         This method should be implemented in subclasses.
@@ -162,7 +162,7 @@ class MMRCPSP(Instance):
         """
         return len(self.modes)
 
-    def get_bounds(self):
+    def get_bounds(self, noise_factor):
         """
         Get the bounds for the durations.
         This method should be implemented in subclasses.
@@ -243,7 +243,7 @@ class MMRCPSPD(MMRCPSP):
         )
         return model
 
-    def get_bounds(self, noise_factor=0.0):
+    def get_bounds(self, noise_factor):
         lb = []
         ub = []
         for i, mode in enumerate(self.modes):
@@ -264,7 +264,7 @@ class MMRCPSPD(MMRCPSP):
                 ub.append(upper_bound)
         return lb, ub
     # TODO change this to add uncertainty
-    def sample_durations(self, nb_scenarios, noise_factor=0.0):
+    def sample_durations(self, nb_scenarios, noise_factor):
         """
         Sample durations for the tasks in the project.
         :param nb_scenarios: Number of scenarios to sample.
@@ -278,13 +278,13 @@ class MMRCPSPD(MMRCPSP):
         return duration_distributions.sample(nb_scenarios), duration_distributions
 
 
-    def sample_mode(self, mode):
+    def sample_mode(self, mode, noise_factor):
         """
         Sample a mode for the tasks in the project.
         :param mode: The mode to sample.
         :return: List of sampled durations.
         """
-        lower_bound, upper_bound = self.get_bounds()
+        lower_bound, upper_bound = self.get_bounds(noise_factor)
         if mode == "robust":
             durations = upper_bound
         elif mode == "mean":
@@ -324,7 +324,6 @@ class MMRCPSPD(MMRCPSP):
         precedence_feasible = self.check_precedence_feasibility(start_times, finish_times, self.successors)
         resource_feasible = self.check_resource_feasibility(start_times, durations, demands)
         deadline_feasible = self.check_deadline_feasibility(finish_times)
-        print(f"Duration feasible: {duration_feasible}, Precedence feasible: {precedence_feasible}, Resource feasible: {resource_feasible}, Deadline feasible: {deadline_feasible}")
         return duration_feasible and precedence_feasible and resource_feasible and deadline_feasible
     def get_sample_length(self):
         """
@@ -406,7 +405,7 @@ class MMRCPSPD(MMRCPSP):
         for idx in range(self.num_tasks-1):
             scheduled_start = scheduled_start_times[idx]
             current_job = jobs[idx]
-            tasks.append(model.add_task(current_job, earliest_start=scheduled_start, latest_end=scheduled_start+durations[idx])
+            tasks.append(model.add_task(current_job, earliest_start=scheduled_start, latest_start=scheduled_start)
                          if scheduled_start >= 0 else model.add_task(current_job, earliest_start=current_time))
         tasks.append(
             model.add_task(jobs[-1], earliest_start=scheduled_start_times[-1], latest_end=scheduled_start_times[-1] + durations[-1])
@@ -418,13 +417,19 @@ class MMRCPSPD(MMRCPSP):
         for (idx, _, demands), duration in zip(modes, ds):
             model.add_mode(tasks[idx], resources, duration, demands)
         for idx in range(self.num_tasks):
+            if idx == self.num_tasks - 1:
+                predecessors = self.predecessors[-1]
+                successors = self.successors[-1]
+            else:
+                predecessors = self.predecessors[idx]
+                successors = self.successors[idx]
             task = tasks[idx]
-            for pred in self.predecessors[idx]:
+            for pred in predecessors:
                 try:
                     model.add_end_before_start(tasks[pred], task)
                 except IndexError:
                     pass
-            for succ in self.successors[idx]:
+            for succ in successors:
                 try:
                     model.add_end_before_start(task, tasks[succ])
                 except IndexError:

@@ -13,7 +13,7 @@ def run_reactive_offline(instance, noise_factor=1, time_limit_initial=60, mode="
     # TODO: the offline procedure can be done once per instance id
     start_offline = time.time()
     # Initialization
-    lb, ub = instance.get_bounds()
+    lb, ub = instance.get_bounds(noise_factor)
 
     if mode == "mean":
         durations = [m.duration for m in instance.modes]
@@ -67,7 +67,6 @@ def run_reactive_online(instance, duration_sample, data_dict, time_limit_resched
     data_dict["time_limit_rescheduling"] = time_limit_rescheduling
     real_durations = duration_sample
     data_dict["real_durations"] = duration_sample
-
     logger.debug(f'real durations is {real_durations}')
     infeasible = True
     if data_dict["estimated_start_times"] is not None:

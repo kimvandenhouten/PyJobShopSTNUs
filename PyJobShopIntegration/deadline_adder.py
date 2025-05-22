@@ -32,12 +32,30 @@ def add_random_deadlines(file_path, output_path=None, min_deadline=1):
         if jobnr != 1 and jobnr != len(precedence_lines):  # skip supersource/sink
             job_numbers.append(jobnr)
 
+    # Parse durations for each job from REQUESTS/DURATIONS section
+    durations_by_job = {}
+    for line in lines[req_start + 2:]:
+        line = line.strip()
+        if line == '' or line.startswith('*'):
+            break
+        parts = line.split()
+        if len(parts) >= 3:
+            job = int(parts[0])
+            duration = int(parts[2])  # jobnr mode duration ...
+            if job not in durations_by_job:
+                durations_by_job[job] = []
+            durations_by_job[job].append(duration)
+
     # Choose random subset of jobs to assign deadlines
     num_with_deadline = random.randint(1, len(job_numbers))
     jobs_with_deadline = random.sample(job_numbers, num_with_deadline)
 
-    # Assign random deadlines
-    deadlines = {job: random.randint(min_deadline, horizon) for job in jobs_with_deadline}
+    # Assign deadlines with minimum set to the job's shortest mode duration
+    deadlines = {}
+    for job in jobs_with_deadline:
+        min_mode_duration = min(durations_by_job.get(job, [min_deadline]))
+        min_valid_deadline = max(min_deadline, min_mode_duration)
+        deadlines[job] = random.randint(min_valid_deadline, horizon)
 
     # Format DEADLINES section
     deadline_section = ["DEADLINES:\n", "jobnr.  deadline\n"]

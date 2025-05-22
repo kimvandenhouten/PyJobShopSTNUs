@@ -25,13 +25,13 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
 
     start_offline = time.time()
     # Solve very conservative schedule
-    lb, ub = instance.get_bounds()
+    lb, ub = instance.get_bounds(noise_factor=noise_factor)
 
     def get_quantile(lb, ub, p):
         if lb == ub:
             quantile = lb
         else:
-            quantile = [int(lb[i] + p * (ub[i] - lb[i] + 1) - 1) for _ in range(len(lb))]
+            quantile = [int(lb[j] + p * (ub[j] - lb[j])) for j in range(len(lb))]
 
         return quantile
 

@@ -29,17 +29,16 @@ class RCPSP_CP_Benchmark:
         directory = get_project_root() / directory
 
         if instance_folder[0] == "j":
-            # filename = f'{directory}/{instance_folder}/PSP{instance_id}.SCH'
-            filename = directory/instance_folder/f"PSP{instance_id}.SCH"
+            filename = directory / instance_folder / f"PSP{instance_id}.SCH"
         elif instance_folder[0:3] == "ubo":
-            # filename = f'{directory}/{instance_folder}/psp{instance_id}.sch'
-            filename = directory/instance_folder/f"psp{instance_id}.sch"
+            filename = directory / instance_folder / f"psp{instance_id}.sch"
         else:
             raise ValueError(f"instance folder is not recognized ({instance_folder})")
 
         print(f"[DEBUG] Loading file from: {filename}")
         if not filename.exists():
             raise FileNotFoundError(f"Could not find: {filename}")
+
         with open(filename, "r") as file:
             lines = file.readlines()
 

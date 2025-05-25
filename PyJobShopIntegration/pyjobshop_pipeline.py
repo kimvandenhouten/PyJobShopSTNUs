@@ -29,7 +29,7 @@ problem_type = sys.argv[-1]
 # make sure to have a folder with your data with the same name
 folder = problem_type
 # SETTINGS HEURISTIC PROACTIVE APPROACH
-mode_proactive = "robust"
+mode_proactive = "quantile_0.9"
 time_limit_proactive = 600
 # SETTINGS REACTIVE APPROACH
 time_limit_rescheduling = 2
@@ -39,10 +39,10 @@ time_limit_saa = 1800
 nb_scenarios_saa = 4
 # SETTINGS STNU APPROACH
 time_limit_cp_stnu = 600
-mode_stnu = "robust"
+mode_stnu = "quantile_0.9"
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["j10"]
+INSTANCE_FOLDERS = ["j20"]
 NOISE_FACTORS = [1]
 nb_scenarios_test = 10
 proactive_reactive = True

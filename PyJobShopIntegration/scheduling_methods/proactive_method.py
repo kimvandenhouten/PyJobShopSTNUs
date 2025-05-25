@@ -31,7 +31,7 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
         if lb == ub:
             quantile = lb
         else:
-            quantile = [int(lb[j] + p * (ub[j] - lb[j])) for j in range(len(lb))]
+            quantile = [int(lb[k] + p * (ub[k] - lb[k] + 1) - 1) for k in range(len(lb))]
 
         return quantile
 
@@ -54,8 +54,8 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
                 estimated_durations.append(durations[mode])
             data_dict["estimated_durations"] = estimated_durations
             data_dict["result_tasks"] = [task for task in result.best.tasks]
-    elif mode in quantile_map.keys():
-        quantile = quantile_map.get(mode)
+    elif mode.startswith("quantile_"):
+        quantile = float(mode.split("_")[1])
         if quantile is not None:
             durations = get_quantile(lb, ub, quantile)
         else:

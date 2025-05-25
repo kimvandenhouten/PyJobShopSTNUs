@@ -289,14 +289,15 @@ class MMRCPSPD(MMRCPSP):
             durations = upper_bound
         elif mode == "mean":
             durations = [(lb + ub) // 2 for lb, ub in zip(lower_bound, upper_bound)]
-        elif mode == "quantile_0.25":
-            durations = [int(lb + 0.25 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
-        elif mode == "quantile_0.75":
-            durations = [int(lb + 0.75 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
-        elif mode == "quantile_0.9":
-            durations = [int(lb + 0.9 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+        elif mode.startswith("quantile_"):
+            try:
+                q = float(mode.split("_")[1])
+                durations = [int(lb + q * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+            except (IndexError, ValueError):
+                raise ValueError(f"Invalid quantile format: {mode}")
         else:
-            raise ValueError("Unknown mode type.")
+            raise ValueError(f"Unknown mode type: {mode}")
+
         return durations
 
 

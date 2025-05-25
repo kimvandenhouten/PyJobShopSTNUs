@@ -1,0 +1,75 @@
+
+=== Evaluating method: proactive_quantile_0.9 ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 23.72414
+  • Var Makespan       : 25.13547
+  • Avg Online Time    : 0.00089
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.05735
+  • Var Offline Time   : 0.00016
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Evaluating method: reactive ===
+
+=== Method Evaluation Summary ===
+
+
+=== Evaluating method: stnu ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 23.41176
+  • Var Makespan       : 72.56706
+  • Avg Online Time    : 0.00667
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.45525
+  • Var Offline Time   : 0.00324
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Feasibility Summary ===
+                                        count  sum     ratio
+method                 instance_folder                      
+proactive_quantile_0.9 j10                 80   29  0.362500
+reactive               j10                 80    0  0.000000
+stnu                   j10                 70   51  0.728571
+
+=== Wilcoxon Test Results ===
+
+--- Metric: obj ---
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: Not enough data for comparison
+proactive_quantile_0.9 vs stnu: p-value = 0.32998, significant = False, better = stnu, sum_pos_ranks = 77.5, sum_neg_ranks = 132.5, n_pairs = 20
+reactive vs proactive_quantile_0.9: Not enough data for comparison
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: Not enough data for comparison
+stnu vs proactive_quantile_0.9: p-value = 0.31179, significant = False, better = stnu, sum_pos_ranks = 132.5, sum_neg_ranks = 77.5, n_pairs = 20
+stnu vs reactive: Not enough data for comparison
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_online ---
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: p-value = 0.03125, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 21.0, sum_neg_ranks = 0, n_pairs = 6
+proactive_quantile_0.9 vs stnu: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 210.0, sum_neg_ranks = 0, n_pairs = 20
+reactive vs proactive_quantile_0.9: p-value = 0.03125, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 0, sum_neg_ranks = 21.0, n_pairs = 6
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.25000, significant = False, better = stnu, sum_pos_ranks = 0, sum_neg_ranks = 6.0, n_pairs = 3
+stnu vs proactive_quantile_0.9: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 0, sum_neg_ranks = 210.0, n_pairs = 20
+stnu vs reactive: p-value = 0.25000, significant = False, better = stnu, sum_pos_ranks = 6.0, sum_neg_ranks = 0, n_pairs = 3
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_offline ---
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: Not enough data for comparison
+proactive_quantile_0.9 vs stnu: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 2485.0, sum_neg_ranks = 0, n_pairs = 70
+reactive vs proactive_quantile_0.9: Not enough data for comparison
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.03125, significant = True, better = reactive, sum_pos_ranks = 21.0, sum_neg_ranks = 0, n_pairs = 6
+stnu vs proactive_quantile_0.9: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 0, sum_neg_ranks = 2485.0, n_pairs = 70
+stnu vs reactive: p-value = 0.03125, significant = True, better = reactive, sum_pos_ranks = 0, sum_neg_ranks = 21.0, n_pairs = 6
+stnu vs stnu: Not enough data for comparison

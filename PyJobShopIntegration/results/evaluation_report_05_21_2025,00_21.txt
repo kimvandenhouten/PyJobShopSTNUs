@@ -1,0 +1,84 @@
+
+=== Evaluating method: proactive_robust ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 37.50000
+  • Var Makespan       : 9.54545
+  • Avg Online Time    : 0.00107
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.05725
+  • Var Offline Time   : 0.00005
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Evaluating method: reactive ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 36.57143
+  • Var Makespan       : 3.28571
+  • Avg Online Time    : 0.16978
+  • Var Online Time    : 0.00125
+  • Avg Offline Time   : 0.05644
+  • Var Offline Time   : 0.00003
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Evaluating method: stnu ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 30.55000
+  • Var Makespan       : 8.15526
+  • Avg Online Time    : 0.00609
+  • Var Online Time    : 0.00001
+  • Avg Offline Time   : 0.43085
+  • Var Offline Time   : 0.00047
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Feasibility Summary ===
+                                  count  sum  ratio
+method           instance_folder                   
+proactive_robust j10                 20   12   0.60
+reactive         j10                 20    7   0.35
+stnu             j10                 20   20   1.00
+
+=== Wilcoxon Test Results ===
+
+--- Metric: obj ---
+proactive_robust vs proactive_robust: Not enough data for comparison
+proactive_robust vs reactive: p-value = 0.68750, significant = False, better = reactive, sum_pos_ranks = 10.5, sum_neg_ranks = 17.5, n_pairs = 7
+proactive_robust vs stnu: p-value = 0.00049, significant = True, better = stnu, sum_pos_ranks = 0, sum_neg_ranks = 78.0, n_pairs = 12
+reactive vs proactive_robust: p-value = 0.57812, significant = False, better = reactive, sum_pos_ranks = 17.5, sum_neg_ranks = 10.5, n_pairs = 7
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.01562, significant = True, better = stnu, sum_pos_ranks = 0, sum_neg_ranks = 28.0, n_pairs = 7
+stnu vs proactive_robust: p-value = 0.00049, significant = True, better = stnu, sum_pos_ranks = 78.0, sum_neg_ranks = 0, n_pairs = 12
+stnu vs reactive: p-value = 0.01562, significant = True, better = stnu, sum_pos_ranks = 28.0, sum_neg_ranks = 0, n_pairs = 7
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_online ---
+proactive_robust vs proactive_robust: Not enough data for comparison
+proactive_robust vs reactive: p-value = 0.01562, significant = True, better = proactive_robust, sum_pos_ranks = 28.0, sum_neg_ranks = 0, n_pairs = 7
+proactive_robust vs stnu: p-value = 0.00049, significant = True, better = proactive_robust, sum_pos_ranks = 78.0, sum_neg_ranks = 0, n_pairs = 12
+reactive vs proactive_robust: p-value = 0.01562, significant = True, better = proactive_robust, sum_pos_ranks = 0, sum_neg_ranks = 28.0, n_pairs = 7
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.01562, significant = True, better = stnu, sum_pos_ranks = 0, sum_neg_ranks = 28.0, n_pairs = 7
+stnu vs proactive_robust: p-value = 0.00049, significant = True, better = proactive_robust, sum_pos_ranks = 0, sum_neg_ranks = 78.0, n_pairs = 12
+stnu vs reactive: p-value = 0.01562, significant = True, better = stnu, sum_pos_ranks = 28.0, sum_neg_ranks = 0, n_pairs = 7
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_offline ---
+proactive_robust vs proactive_robust: Not enough data for comparison
+proactive_robust vs reactive: Not enough data for comparison
+proactive_robust vs stnu: p-value = 0.00000, significant = True, better = proactive_robust, sum_pos_ranks = 210.0, sum_neg_ranks = 0, n_pairs = 20
+reactive vs proactive_robust: Not enough data for comparison
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.01562, significant = True, better = reactive, sum_pos_ranks = 28.0, sum_neg_ranks = 0, n_pairs = 7
+stnu vs proactive_robust: p-value = 0.00000, significant = True, better = proactive_robust, sum_pos_ranks = 0, sum_neg_ranks = 210.0, n_pairs = 20
+stnu vs reactive: p-value = 0.01562, significant = True, better = reactive, sum_pos_ranks = 0, sum_neg_ranks = 28.0, n_pairs = 7
+stnu vs stnu: Not enough data for comparison

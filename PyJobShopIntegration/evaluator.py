@@ -25,6 +25,7 @@ def evaluate_results(now):
         wilcoxon_test(df, output)
 
 def evaluate_methods(df, output):
+
     for method in df['method'].unique():
         print(f"\n=== Evaluating method: {method} ===", file=output)
         method_df = df[df['method'] == method].copy()
@@ -55,7 +56,6 @@ def evaluate_methods(df, output):
                 var_online_time = sub_df['time_online'].var()
                 avg_offline_time = sub_df['time_offline'].mean()
                 var_offline_time = sub_df['time_offline'].var()
-                feasibility_ratio = sub_df['feasibility'].mean()
 
                 print(f"Instance: {instance_folder}, Noise Factor: {noise}", file=output)
                 print(f"  • Avg Makespan       : {avg_makespan:.5f}", file=output)
@@ -64,14 +64,25 @@ def evaluate_methods(df, output):
                 print(f"  • Var Online Time    : {var_online_time:.5f}", file=output)
                 print(f"  • Avg Offline Time   : {avg_offline_time:.5f}", file=output)
                 print(f"  • Var Offline Time   : {var_offline_time:.5f}", file=output)
-                print(f"  • Feasibility Ratio  : {feasibility_ratio:.5f}", file=output)
                 print("-" * 60, file=output)
 
+
+# def summarize_feasibility(df, output):
+#     feasibility_summary = df.groupby(['method', 'instance_folder'])['feasibility'].agg(['count', 'sum'])
+#     feasibility_summary['ratio'] = feasibility_summary['sum'] / feasibility_summary['count']
+#     print("\n=== Feasibility Summary ===", file=output)
+#     print(feasibility_summary, file=output)
+
 def summarize_feasibility(df, output):
+    print("\n=== Feasibility Summary by Method and Instance Folder ===", file=output)
     feasibility_summary = df.groupby(['method', 'instance_folder'])['feasibility'].agg(['count', 'sum'])
     feasibility_summary['ratio'] = feasibility_summary['sum'] / feasibility_summary['count']
-    print("\n=== Feasibility Summary ===", file=output)
     print(feasibility_summary, file=output)
+
+    print("\n=== Feasibility Summary by Method, Instance Folder, and Noise Factor ===", file=output)
+    feasibility_noise_summary = df.groupby(['method', 'instance_folder', 'noise_factor'])['feasibility'].agg(['count', 'sum'])
+    feasibility_noise_summary['ratio'] = feasibility_noise_summary['sum'] / feasibility_noise_summary['count']
+    print(feasibility_noise_summary, file=output)
 
 
 def _perform_wilcoxon(metric_df, methods, alpha, min_samples):
@@ -92,6 +103,7 @@ def _perform_wilcoxon(metric_df, methods, alpha, min_samples):
                 continue
 
             aligned = pd.concat([scores_i, scores_j], axis=1, join="inner").dropna()
+            aligned = aligned[np.isfinite(aligned).all(axis=1)]
             if aligned.shape[0] < min_samples:
                 metric_results[i][j] = {'p': None, 'significant': False, 'better': None}
                 continue
@@ -100,14 +112,14 @@ def _perform_wilcoxon(metric_df, methods, alpha, min_samples):
                 stat, p = wilcoxon(aligned[i], aligned[j])
                 significant = p < alpha
 
-                differences = np.array(aligned[i]) - np.array(aligned[j])
+                differences = np.array(aligned[j]) - np.array(aligned[i])
                 ranks = rankdata([abs(diff) for diff in differences])
                 signed_ranks = [rank if diff > 0 else -rank for diff, rank in zip(differences, ranks) if diff != 0]
 
                 sum_pos = sum(rank for rank in signed_ranks if rank > 0)
                 sum_neg = sum(-rank for rank in signed_ranks if rank < 0)
 
-                better = i if sum_pos > sum_neg else (j if sum_neg > sum_pos else None)
+                better = i if sum_pos > sum_neg else (j if sum_neg > sum_pos else "Equal")
 
                 metric_results[i][j] = {
                     'p': p,
@@ -147,4 +159,4 @@ def wilcoxon_test(df, output, alpha=0.05, min_samples=2):
                     print(f"{i} vs {j}: Not enough data for comparison", file=output)
 
 # Example usage:
-evaluate_results("05_15_2025,17_33")
+evaluate_results("05_23_2025,19_10")

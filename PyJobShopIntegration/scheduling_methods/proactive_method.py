@@ -25,12 +25,13 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
 
     start_offline = time.time()
     # Solve very conservative schedule
-    lb, ub = instance.get_bounds()
+    lb, ub = instance.get_bounds(noise_factor=noise_factor)
 
     def get_quantile(lb, ub, p):
         if lb == ub:
             quantile = lb
-        quantile = [int(lb[i] + p * (ub[i] - lb[i] + 1) - 1) for i in range(len(lb))]
+        else:
+            quantile = [int(lb[k] + p * (ub[k] - lb[k] + 1) - 1) for k in range(len(lb))]
 
         return quantile
 
@@ -40,7 +41,6 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
         "quantile_0.75": 0.75,
         "quantile_0.9": 0.9,
     }
-
     if mode == "robust":
         durations = ub
         logger.debug(f'Start solving upper bound schedule {durations}')
@@ -54,17 +54,17 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
                 estimated_durations.append(durations[mode])
             data_dict["estimated_durations"] = estimated_durations
             data_dict["result_tasks"] = [task for task in result.best.tasks]
-    elif mode in quantile_map.keys():
-        quantile = quantile_map.get(mode)
+    elif mode.startswith("quantile_"):
+        quantile = float(mode.split("_")[1])
         if quantile is not None:
             durations = get_quantile(lb, ub, quantile)
         else:
             raise ValueError(f"Unsupported mode: {mode}")
-
         logger.debug(f'Start solving upper bound schedule {durations}')
         model = instance.create_model(durations)
         result = model.solve(time_limit=time_limit, display=False)
         if result:
+            print("Solution found proactively quantile")
             start_times = [task.start for task in result.best.tasks]
             data_dict["result_tasks"] = [task for task in result.best.tasks]
             estimated_durations = []

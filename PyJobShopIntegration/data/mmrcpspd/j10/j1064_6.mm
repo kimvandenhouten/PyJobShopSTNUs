@@ -72,5 +72,5 @@ RESOURCEAVAILABILITIES:
 DEADLINES:
 jobnr.  deadline
   3       71
-  5       46
+  5       47
 ************************************************************************

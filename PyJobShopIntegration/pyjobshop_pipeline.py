@@ -29,7 +29,7 @@ problem_type = sys.argv[-1]
 # make sure to have a folder with your data with the same name
 folder = problem_type
 # SETTINGS HEURISTIC PROACTIVE APPROACH
-mode_proactive = "quantile_0.5"
+mode_proactive = "quantile_0.9"
 time_limit_proactive = 600
 # SETTINGS REACTIVE APPROACH
 time_limit_rescheduling = 2
@@ -39,7 +39,7 @@ time_limit_saa = 1800
 nb_scenarios_saa = 4
 # SETTINGS STNU APPROACH
 time_limit_cp_stnu = 600
-mode_stnu = "robust"
+mode_stnu = "quantile_0.9"
 
 # SETTINGS EXPERIMENTS
 INSTANCE_FOLDERS = ["j10"]
@@ -70,7 +70,7 @@ for noise_factor in NOISE_FACTORS:
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
-            if n == 10:
+            if n == 100:
                 break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
@@ -78,29 +78,41 @@ for noise_factor in NOISE_FACTORS:
             # Run experiments on proactive, reactive and stnu
             # TODO implement the proactive, reactive and stnu approaches possibly reusing already existing code
             for i, duration_sample in enumerate(test_durations_samples):
-                logger.info(f"Running sample {i} for file {file} with noise factor {noise_factor}")
+                logger.info(f"Sample {i}")
                 if proactive_reactive:
                     data_dict = run_proactive_offline(instance, noise_factor, time_limit_proactive, mode_proactive)
                     # Run proactive online
                     data_dict_proactive = copy.copy(data_dict)
                     result_tasks = data_dict["result_tasks"]
                     real_durations = instance.get_real_durations(result_tasks, duration_sample)
+                    lb, ub = instance.get_bounds(noise_factor=noise_factor)
+                    # print warning if any duration sample is higher than ub and which element is higher
+                    for k, duration in enumerate(duration_sample):
+                        if duration > ub[k]:
+                            print(duration_sample)
+                            print(ub)
+                            raise ValueError(f"Duration sample {duration} is higher than upper bound {ub[k]} for task {k}")
+                        if duration < lb[k]:
+                            print(duration_sample)
+                            print(lb)
+                            raise ValueError(f"Duration sample {duration} is lower than lower bound {lb[k]} for task {k}")
+
                     if real_durations == []:
                         logger.info("The solution is infeasible")
-                        break
-                    data_dict_proactive = run_proactive_online(instance, real_durations, data_dict_proactive)
-                    data_to_csv(instance_folder=instance_folder, solution=data_dict_proactive, output_file=output_file)
+                    else:
+                        data_dict_proactive = run_proactive_online(instance, real_durations, data_dict_proactive)
+                        data_to_csv(instance_folder=instance_folder, solution=data_dict_proactive, output_file=output_file)
 
-                    # Run reactive online
-                    data_dict_reactive = copy.copy(data_dict)
-                    data_dict_reactive = run_reactive_online(instance, real_durations, data_dict_reactive, time_limit_rescheduling, result_tasks)
-                    data_dict_reactive["method"] = "reactive"
-                    data_to_csv(instance_folder=instance_folder, solution=data_dict_reactive, output_file=output_file)
+                        # Run reactive online
+                        data_dict_reactive = copy.copy(data_dict)
+                        data_dict_reactive = run_reactive_online(instance, real_durations, data_dict_reactive, time_limit_rescheduling, result_tasks)
+                        data_dict_reactive["method"] = "reactive"
+                        data_to_csv(instance_folder=instance_folder, solution=data_dict_reactive, output_file=output_file)
                 if proactive_saa:
                     pass
                 if stnu:
                     start_offline = time.time()
-                    model = instance.create_model(instance.sample_mode(mode_stnu))
+                    model = instance.create_model(instance.sample_mode(mode_stnu, noise_factor))
                     result = model.solve(time_limit=5, display=False)
                     result_tasks = result.best.tasks
                     if result_tasks == []:

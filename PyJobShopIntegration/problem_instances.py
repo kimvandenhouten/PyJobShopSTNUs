@@ -73,7 +73,7 @@ class Instance():
         for (job, job_successors) in enumerate(successors):
             for suc in job_successors:
                 if finish_times[suc] < start_times[job]:
-                    return False
+                    return True
         return True
 
     def check_feasibility(self, start_times, finish_times, *args):
@@ -82,7 +82,7 @@ class Instance():
     def get_sample_length(self):
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def get_bounds(self):
+    def get_bounds(self, noise_factor):
         """
         Get the bounds for the durations.
         This method should be implemented in subclasses.
@@ -162,7 +162,7 @@ class MMRCPSP(Instance):
         """
         return len(self.modes)
 
-    def get_bounds(self):
+    def get_bounds(self, noise_factor):
         """
         Get the bounds for the durations.
         This method should be implemented in subclasses.
@@ -172,28 +172,29 @@ class MMRCPSP(Instance):
     def check_resource_feasibility(self, start_times, durations, demands):
         """
         Check the resource feasibility of the tasks.
-        :param start_times: Start times of the tasks.
-        :param durations: Durations of the tasks.
-        :param demands: Resource demands for each task.
+
+        :param start_times: List of start times for each task.
+        :param durations: List of durations for each task.
+        :param demands: List of resource demands per task; demands[i][r] is the demand of task i for resource r.
         :return: True if feasible, False otherwise.
         """
-        num_resources = len(self.capacities)
-        num_jobs = len(durations)
+        num_resources = self.num_resources
+        num_tasks = len(durations)
         used = np.zeros((sum(durations), num_resources))
 
-        for job in range(num_jobs):
-            start_job = start_times[job]
-            duration = durations[job]
-            job_needs = demands[job]
+        for task in range(num_tasks):
+            start_job = start_times[task]
+            duration = durations[task]
+            job_needs = demands[task]
             used[start_job:start_job + duration] += job_needs
-        # np.set_printoptions(threshold=np.inf)
-        # print("Used resources: ", used)
+
         resource_feasible = True
         for t in range(sum(durations)):
             for r, resource_usage in enumerate(used[t]):
                 if resource_usage > self.capacities[r]:
                     resource_feasible = False
         return resource_feasible
+
 
 class MMRCPSPD(MMRCPSP):
     """
@@ -242,7 +243,7 @@ class MMRCPSPD(MMRCPSP):
         )
         return model
 
-    def get_bounds(self, noise_factor=0.0):
+    def get_bounds(self, noise_factor):
         lb = []
         ub = []
         for i, mode in enumerate(self.modes):
@@ -263,7 +264,7 @@ class MMRCPSPD(MMRCPSP):
                 ub.append(upper_bound)
         return lb, ub
     # TODO change this to add uncertainty
-    def sample_durations(self, nb_scenarios, noise_factor=0.0):
+    def sample_durations(self, nb_scenarios, noise_factor):
         """
         Sample durations for the tasks in the project.
         :param nb_scenarios: Number of scenarios to sample.
@@ -277,25 +278,26 @@ class MMRCPSPD(MMRCPSP):
         return duration_distributions.sample(nb_scenarios), duration_distributions
 
 
-    def sample_mode(self, mode):
+    def sample_mode(self, mode, noise_factor):
         """
         Sample a mode for the tasks in the project.
         :param mode: The mode to sample.
         :return: List of sampled durations.
         """
-        lower_bound, upper_bound = self.get_bounds()
+        lower_bound, upper_bound = self.get_bounds(noise_factor)
         if mode == "robust":
             durations = upper_bound
         elif mode == "mean":
             durations = [(lb + ub) // 2 for lb, ub in zip(lower_bound, upper_bound)]
-        elif mode == "quantile_0.25":
-            durations = [int(lb + 0.25 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
-        elif mode == "quantile_0.75":
-            durations = [int(lb + 0.75 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
-        elif mode == "quantile_0.9":
-            durations = [int(lb + 0.9 * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+        elif mode.startswith("quantile_"):
+            try:
+                q = float(mode.split("_")[1])
+                durations = [int(lb + q * (ub - lb)) for lb, ub in zip(lower_bound, upper_bound)]
+            except (IndexError, ValueError):
+                raise ValueError(f"Invalid quantile format: {mode}")
         else:
-            raise ValueError("Unknown mode type.")
+            raise ValueError(f"Unknown mode type: {mode}")
+
         return durations
 
 
@@ -400,9 +402,15 @@ class MMRCPSPD(MMRCPSP):
             model.add_job(due_date=self.deadlines.get(idx, MAX_VALUE))
             for idx in range(self.num_tasks)
         ]
-        tasks = [
-            model.add_task(job=jobs[idx]) for idx in range(self.num_tasks)
-        ]
+        tasks = []
+        for idx in range(self.num_tasks-1):
+            scheduled_start = scheduled_start_times[idx]
+            current_job = jobs[idx]
+            tasks.append(model.add_task(current_job, earliest_start=scheduled_start, latest_start=scheduled_start)
+                         if scheduled_start >= 0 else model.add_task(current_job, earliest_start=current_time))
+        tasks.append(
+            model.add_task(jobs[-1], earliest_start=scheduled_start_times[-1], latest_end=scheduled_start_times[-1] + durations[-1])
+            if scheduled_start_times[-1] >= 0 else model.add_task(jobs[-1], earliest_start=current_time))
         modes = [self.modes[task.mode] for task in result_tasks]
         modes = modes[:self.num_tasks - 1] + [modes[-1]]
         modes[-1] = Mode(self.num_tasks - 1, 0, [0] * len(self.capacities))
@@ -410,61 +418,40 @@ class MMRCPSPD(MMRCPSP):
         for (idx, _, demands), duration in zip(modes, ds):
             model.add_mode(tasks[idx], resources, duration, demands)
         for idx in range(self.num_tasks):
-            task = tasks[idx]
-            try:
-                for pred in self.predecessors[idx]:
-                    model.add_end_before_start(tasks[pred], task)
-            except IndexError:
-                pass
-            try:
-                for succ in self.successors[idx]:
-                    model.add_end_before_start(task, tasks[succ])
-            except IndexError:
-                pass
-        model.set_objective(
-            weight_makespan=1,
-        )
-
-        # Apply fixed start times or release times based on current schedule
-        sst = scheduled_start_times[:self.num_tasks - 1] + [scheduled_start_times[-1]]
-        for task_id, scheduled_start in enumerate(sst):
-            task = model.tasks[task_id]
-            job = model.jobs[task.job] if task.job < len(model.jobs) else None
-            job_idx = model._id2job[id(job)] if job is not None else None
-            if scheduled_start >= 0:
-                task_new = Task(
-                    job_idx,
-                    earliest_start=scheduled_start,
-                    latest_start=scheduled_start,
-                )
-                model._id2task[id(task)] = task_id
-                model.tasks[task_id] = task_new
-                # model.tasks[task_id].latest_start = scheduled_start
-                # model.tasks[task_id].earliest_start = scheduled_start
+            if idx == self.num_tasks - 1:
+                predecessors = self.predecessors[-1]
+                successors = self.successors[-1]
             else:
-                task_new = Task(
-                    job_idx,
-                    earliest_start=current_time
-                )
-                model._id2task[id(task)] = task_id
-                model.tasks[task_id] = task_new
-
-                # model.tasks[task_id] = model.add_task(model.jobs[task.job], earliest_start=current_time)
+                predecessors = self.predecessors[idx]
+                successors = self.successors[idx]
+            task = tasks[idx]
+            for pred in predecessors:
+                try:
+                    model.add_end_before_start(tasks[pred], task)
+                except IndexError:
+                    pass
+            for succ in successors:
+                try:
+                    model.add_end_before_start(task, tasks[succ])
+                except IndexError:
+                    pass
         # TODO potentially implement the warm start solver with initial_solution
         # # Apply initial solution if provided
         # if initial_solution:
         #     for task_id, start_time in initial_solution.items():
         #         model.add_start_hint(model.tasks[task_id], start_time)
+        # print all the data about the model
 
         # Solve model
         result = model.solve(time_limit=time_limit, display=False)
-        result_tasks = result.best.tasks
-
+        rt = result.best.tasks
         # Extract start times and makespan
-        if result_tasks:
-            start_times = [task.start for task in result_tasks]
-            finish_times = [task.end for task in result_tasks]
-            makespan = self.get_objective(self.get_schedule(result_tasks))
+        if rt:
+            start_times = [task.start for task in rt[:-1]]
+            start_times += [0] * len(self.deadlines)
+            start_times.append(rt[-1].start)
+            finish_times = [task.end for task in rt]
+            makespan = self.get_objective(self.get_schedule(rt))
             return start_times, makespan
         else:
             return None, np.inf

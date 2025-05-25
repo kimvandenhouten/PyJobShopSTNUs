@@ -1,0 +1,3 @@
+instance_folder,noise_factor,method,time_limit,feasibility,obj,time_offline,time_online,start_times,real_durations
+j10,1,proactive_quantile_0.9,600,False,inf,0.07042884826660156,inf,"[0, 0, 0, 12, 1, 9, 17, 14, 25, 25, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 69]","""[0, 1, 1, 2, 10, 2, 7, 4, 10, 3, 6, 70, 66, 45, 53, 15, 50, 37, 70, 33, 0]"""
+j10,1,proactive_quantile_0.9,600,False,inf,0.07461690902709961,inf,"[0, 0, 0, 12, 1, 9, 17, 14, 25, 25, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 69]","""[0, 1, 1, 3, 5, 1, 7, 2, 10, 5, 5, 70, 66, 45, 53, 15, 50, 37, 70, 33, 0]"""

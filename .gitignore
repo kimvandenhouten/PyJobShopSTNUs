@@ -4,3 +4,5 @@ __pycache__/
 venv/
 pyproject.toml
 cplex_studio2212.linux_x86_64.bin
+PyJobShopIntegration/results
+PyJobShopIntegration/images

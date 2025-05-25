@@ -29,7 +29,7 @@ problem_type = sys.argv[-1]
 # make sure to have a folder with your data with the same name
 folder = problem_type
 # SETTINGS HEURISTIC PROACTIVE APPROACH
-mode_proactive = "quantile_0.9"
+mode_proactive = "robust"
 time_limit_proactive = 600
 # SETTINGS REACTIVE APPROACH
 time_limit_rescheduling = 2
@@ -39,7 +39,8 @@ time_limit_saa = 1800
 nb_scenarios_saa = 4
 # SETTINGS STNU APPROACH
 time_limit_cp_stnu = 600
-mode_stnu = "quantile_0.9"
+mode_stnu = "robust"
+multimode = problem_type.startswith("mm")
 
 # SETTINGS EXPERIMENTS
 INSTANCE_FOLDERS = ["j10"]
@@ -119,7 +120,7 @@ for noise_factor in NOISE_FACTORS:
                         # print(f"Infeasible solution for duration sample: {duration_sample}, file: {file}, noise factor: {noise_factor}")
                         logger.info("The solution is infeasible")
                         continue
-                    stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions=duration_distributions, result_tasks=result_tasks)
+                    stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions=duration_distributions, result_tasks=result_tasks, multimode=multimode)
                     # TODO potentially add other fields depending on the problem
                     schedule = instance.get_schedule(result_tasks)
                     real_durations = instance.get_real_durations(result_tasks, duration_sample)

@@ -38,12 +38,19 @@ Instance: j20, Noise Factor: 1
   • Var Offline Time   : 0.00272
 ------------------------------------------------------------
 
-=== Feasibility Summary ===
+=== Feasibility Summary by Method and Instance Folder ===
                                         count  sum     ratio
 method                 instance_folder                      
 proactive_quantile_0.9 j20                210  103  0.490476
 reactive               j20                210    3  0.014286
 stnu                   j20                220  120  0.545455
+
+=== Feasibility Summary by Method, Instance Folder, and Noise Factor ===
+                                                     count  sum     ratio
+method                 instance_folder noise_factor                      
+proactive_quantile_0.9 j20             1               210  103  0.490476
+reactive               j20             1               210    3  0.014286
+stnu                   j20             1               220  120  0.545455
 
 === Wilcoxon Test Results ===
 

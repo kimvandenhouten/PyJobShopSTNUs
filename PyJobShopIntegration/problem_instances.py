@@ -23,6 +23,7 @@ class Instance():
         self.successors = successors
         self.predecessors = predecessors
         self.model = None
+
     def get_objective_rte(self, rte_data, objective="makespan"):
         """
         Get the objective value from the RTE data.
@@ -83,18 +84,59 @@ class Instance():
         raise NotImplementedError("Subclasses should implement this method.")
 
     def get_bounds(self, noise_factor):
+        lb = []
+        ub = []
+        for i, mode in enumerate(self.modes):
+            duration = mode.duration
+            job = mode.job
+            if duration == 0:
+                lb.append(0)
+                ub.append(0)
+            elif job >= self.num_tasks - 1:
+                lb.append(duration)
+                ub.append(duration)
+            else:
+                lower_bound = int(max(1, duration - noise_factor * np.sqrt(duration)))
+                upper_bound = int(duration + noise_factor * np.sqrt(duration))
+                if lower_bound == upper_bound:
+                    upper_bound += 1
+                lb.append(lower_bound)
+                ub.append(upper_bound)
+        return lb, ub
+
+
+    def sample_durations(self, nb_scenarios, noise_factor):
         """
-        Get the bounds for the durations.
-        This method should be implemented in subclasses.
+        Sample durations for the tasks in the project.
+        :param nb_scenarios: Number of scenarios to sample.
+        :return: List of sampled durations.
         """
-        raise NotImplementedError("Subclasses should implement this method.")
+        lower_bound, upper_bound = self.get_bounds(noise_factor)
+        duration_distributions = DiscreteUniformSampler(
+            lower_bounds=lower_bound,
+            upper_bounds=upper_bound
+        )
+        return duration_distributions.sample(nb_scenarios), duration_distributions
 
     def get_schedule(self, result_tasks):
         """
         Get the schedule for the tasks.
-        This method should be implemented in subclasses.
         """
-        raise NotImplementedError("Subclasses should implement this method.")
+        schedule = []
+        for i, task in enumerate(result_tasks):
+            if i < self.num_tasks - 1:
+                schedule.append({
+                    "task": i,
+                    "start": task.start,
+                    "end": task.end
+                })
+            else:
+                schedule.append({
+                    "task": i,
+                    "start": 0,
+                    "end": task.end - task.start
+                })
+        return schedule
 
     def solve_reactive(self, *args):
         """
@@ -103,6 +145,7 @@ class Instance():
         """
         raise NotImplementedError("Subclasses should implement this method.")
     # TODO this might not work for single mode
+
     def get_real_durations(self, result_tasks, duration_sample):
         """
         Get the real durations for the tasks.
@@ -113,6 +156,8 @@ class Instance():
             mode = task.mode
             real_durations.append(duration_sample[mode])
         return [int(duration) for duration in real_durations]
+
+
 class MMRCPSP(Instance):
     """
     Class to represent a Multi-mode Resource-Constrained Project Scheduling Problem (MMRCPSP).
@@ -145,13 +190,6 @@ class MMRCPSP(Instance):
         """
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def sample_durations(self, nb_scenarios, noise_factor=0.0):
-        """
-        Sample durations for the tasks in the project.
-        This method should be implemented in subclasses.
-        """
-        raise NotImplementedError("Subclasses should implement this method.")
-
     def check_feasibility(self, start_times, finish_times, *args):
         raise NotImplementedError("Subclasses should implement this method.")
 
@@ -161,13 +199,6 @@ class MMRCPSP(Instance):
         This method should be implemented in subclasses.
         """
         return len(self.modes)
-
-    def get_bounds(self, noise_factor):
-        """
-        Get the bounds for the durations.
-        This method should be implemented in subclasses.
-        """
-        raise NotImplementedError("Subclasses should implement this method.")
 
     def check_resource_feasibility(self, start_times, durations, demands):
         """
@@ -243,41 +274,6 @@ class MMRCPSPD(MMRCPSP):
         )
         return model
 
-    def get_bounds(self, noise_factor):
-        lb = []
-        ub = []
-        for i, mode in enumerate(self.modes):
-            duration = mode.duration
-            job = mode.job
-            if duration == 0:
-                lb.append(0)
-                ub.append(0)
-            elif job >= self.num_tasks - 1:
-                lb.append(duration)
-                ub.append(duration)
-            else:
-                lower_bound = int(max(1, duration - noise_factor * np.sqrt(duration)))
-                upper_bound = int(duration + noise_factor * np.sqrt(duration))
-                if lower_bound == upper_bound:
-                    upper_bound += 1
-                lb.append(lower_bound)
-                ub.append(upper_bound)
-        return lb, ub
-    # TODO change this to add uncertainty
-    def sample_durations(self, nb_scenarios, noise_factor):
-        """
-        Sample durations for the tasks in the project.
-        :param nb_scenarios: Number of scenarios to sample.
-        :return: List of sampled durations.
-        """
-        lower_bound, upper_bound = self.get_bounds(noise_factor)
-        duration_distributions = DiscreteUniformSampler(
-            lower_bounds=lower_bound,
-            upper_bounds=upper_bound
-        )
-        return duration_distributions.sample(nb_scenarios), duration_distributions
-
-
     def sample_mode(self, mode, noise_factor):
         """
         Sample a mode for the tasks in the project.
@@ -300,7 +296,6 @@ class MMRCPSPD(MMRCPSP):
 
         return durations
 
-
     def check_deadline_feasibility(self, finish_times):
         """
         Check the deadline feasibility of the tasks.
@@ -312,6 +307,7 @@ class MMRCPSPD(MMRCPSP):
             if idx in self.deadlines and finish_times[idx] > self.deadlines[idx]:
                 return False
         return True
+
     def check_feasibility(self, start_times, finish_times, durations, demands):
         """
         Check the feasibility of the solution.
@@ -326,6 +322,7 @@ class MMRCPSPD(MMRCPSP):
         resource_feasible = self.check_resource_feasibility(start_times, durations, demands)
         deadline_feasible = self.check_deadline_feasibility(finish_times)
         return duration_feasible and precedence_feasible and resource_feasible and deadline_feasible
+
     def get_sample_length(self):
         """
         Get the length of the sample.
@@ -368,25 +365,6 @@ class MMRCPSPD(MMRCPSP):
         else:
             raise ValueError("Unknown objective type.")
 
-    def get_schedule(self, result_tasks):
-        """
-        Get the schedule for the tasks.
-        """
-        schedule = []
-        for i, task in enumerate(result_tasks):
-            if i < self.num_tasks - 1:
-                schedule.append({
-                    "task": i,
-                    "start": task.start,
-                    "end": task.end
-                })
-            else:
-                schedule.append({
-                    "task": i,
-                    "start": 0,
-                    "end": task.end - task.start
-                })
-        return schedule
 
     def solve_reactive(self, durations, scheduled_start_times, current_time, result_tasks, time_limit=None, initial_solution=None):
         class Mode(NamedTuple):
@@ -456,19 +434,6 @@ class MMRCPSPD(MMRCPSP):
         else:
             return None, np.inf
 
-    def get_real_durations(self, result_tasks, duration_sample):
-        """
-        Get the real durations for the tasks.
-        :param result_tasks: The result tasks containing the results.
-        :param duration_sample: The sampled durations.
-        :return: List of real durations.
-        """
-        real_durations = []
-        for task in result_tasks:
-            mode = task.mode
-            real_durations.append(duration_sample[mode])
-        return [int(duration) for duration in real_durations]
-
     def __str__(self):
         """
         String representation of the MMRCPSPD instance.
@@ -495,4 +460,9 @@ class MMRCPSPGTL(MMRCPSP):
     def sample_durations(self, nb_scenarios, noise_factor=0.0):
         pass
 
-#TODO implement the other problem instances
+
+class FJSP(Instance):
+
+    def __init__(self, num_resources, num_tasks, successors, predecessors, data):
+        super().__init__(num_tasks, num_resources, successors, predecessors)
+        self.data = data

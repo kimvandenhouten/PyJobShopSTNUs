@@ -45,168 +45,168 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <graph edgedefault="directed">
 <data key="nContingent">10</data>
 <data key="NetworkType">STNU</data>
-<data key="nEdges">103</data>
+<data key="nEdges">102</data>
 <data key="nVertices">40</data>
 <data key="Name">mmrcpspd_pyjobshop_stnu_j1010_5.mm_1_19.stnu</data>
 <node id="0_start">
-<data key="x">100</data>
-<data key="y">137</data>
+<data key="x">86</data>
+<data key="y">108</data>
 </node>
 <node id="0_finish">
-<data key="x">141</data>
-<data key="y">91</data>
+<data key="x">111</data>
+<data key="y">79</data>
 </node>
 <node id="1_start">
-<data key="x">79</data>
-<data key="y">146</data>
+<data key="x">152</data>
+<data key="y">126</data>
 </node>
 <node id="1_finish">
-<data key="x">110</data>
-<data key="y">121</data>
+<data key="x">158</data>
+<data key="y">80</data>
 </node>
 <node id="2_start">
-<data key="x">85</data>
-<data key="y">43</data>
+<data key="x">60</data>
+<data key="y">184</data>
 </node>
 <node id="2_finish">
-<data key="x">171</data>
-<data key="y">88</data>
+<data key="x">177</data>
+<data key="y">67</data>
 </node>
 <node id="3_start">
-<data key="x">63</data>
-<data key="y">95</data>
+<data key="x">87</data>
+<data key="y">176</data>
 </node>
 <node id="3_finish">
-<data key="x">112</data>
-<data key="y">94</data>
-</node>
-<node id="4_start">
-<data key="x">142</data>
-<data key="y">188</data>
-</node>
-<node id="4_finish">
-<data key="x">146</data>
-<data key="y">130</data>
-</node>
-<node id="5_start">
-<data key="x">172</data>
-<data key="y">118</data>
-</node>
-<node id="5_finish">
-<data key="x">51</data>
-<data key="y">57</data>
-</node>
-<node id="6_start">
-<data key="x">88</data>
-<data key="y">49</data>
-</node>
-<node id="6_finish">
-<data key="x">88</data>
-<data key="y">157</data>
-</node>
-<node id="7_start">
-<data key="x">82</data>
-<data key="y">90</data>
-</node>
-<node id="7_finish">
-<data key="x">129</data>
-<data key="y">103</data>
-</node>
-<node id="8_start">
-<data key="x">133</data>
-<data key="y">47</data>
-</node>
-<node id="8_finish">
-<data key="x">42</data>
-<data key="y">77</data>
-</node>
-<node id="9_start">
-<data key="x">153</data>
-<data key="y">141</data>
-</node>
-<node id="9_finish">
-<data key="x">175</data>
-<data key="y">192</data>
-</node>
-<node id="10_start">
-<data key="x">122</data>
-<data key="y">102</data>
-</node>
-<node id="10_finish">
-<data key="x">47</data>
-<data key="y">75</data>
-</node>
-<node id="11_start">
-<data key="x">101</data>
-<data key="y">64</data>
-</node>
-<node id="11_finish">
-<data key="x">167</data>
-<data key="y">56</data>
-</node>
-<node id="12_start">
-<data key="x">194</data>
-<data key="y">122</data>
-</node>
-<node id="12_finish">
-<data key="x">104</data>
-<data key="y">174</data>
-</node>
-<node id="13_start">
-<data key="x">176</data>
-<data key="y">65</data>
-</node>
-<node id="13_finish">
-<data key="x">174</data>
+<data key="x">72</data>
 <data key="y">95</data>
 </node>
-<node id="14_start">
-<data key="x">110</data>
-<data key="y">183</data>
+<node id="4_start">
+<data key="x">139</data>
+<data key="y">83</data>
 </node>
-<node id="14_finish">
-<data key="x">200</data>
-<data key="y">137</data>
+<node id="4_finish">
+<data key="x">192</data>
+<data key="y">108</data>
 </node>
-<node id="15_start">
-<data key="x">193</data>
-<data key="y">153</data>
+<node id="5_start">
+<data key="x">102</data>
+<data key="y">140</data>
 </node>
-<node id="15_finish">
-<data key="x">104</data>
+<node id="5_finish">
+<data key="x">41</data>
+<data key="y">91</data>
+</node>
+<node id="6_start">
+<data key="x">59</data>
+<data key="y">155</data>
+</node>
+<node id="6_finish">
+<data key="x">62</data>
 <data key="y">142</data>
 </node>
-<node id="16_start">
-<data key="x">79</data>
-<data key="y">128</data>
+<node id="7_start">
+<data key="x">153</data>
+<data key="y">127</data>
 </node>
-<node id="16_finish">
-<data key="x">157</data>
-<data key="y">55</data>
+<node id="7_finish">
+<data key="x">61</data>
+<data key="y">112</data>
 </node>
-<node id="17_start">
-<data key="x">73</data>
+<node id="8_start">
+<data key="x">65</data>
+<data key="y">51</data>
+</node>
+<node id="8_finish">
+<data key="x">171</data>
 <data key="y">200</data>
 </node>
+<node id="9_start">
+<data key="x">159</data>
+<data key="y">167</data>
+</node>
+<node id="9_finish">
+<data key="x">108</data>
+<data key="y">183</data>
+</node>
+<node id="10_start">
+<data key="x">94</data>
+<data key="y">114</data>
+</node>
+<node id="10_finish">
+<data key="x">123</data>
+<data key="y">57</data>
+</node>
+<node id="11_start">
+<data key="x">129</data>
+<data key="y">54</data>
+</node>
+<node id="11_finish">
+<data key="x">197</data>
+<data key="y">186</data>
+</node>
+<node id="12_start">
+<data key="x">105</data>
+<data key="y">191</data>
+</node>
+<node id="12_finish">
+<data key="x">170</data>
+<data key="y">154</data>
+</node>
+<node id="13_start">
+<data key="x">68</data>
+<data key="y">142</data>
+</node>
+<node id="13_finish">
+<data key="x">164</data>
+<data key="y">158</data>
+</node>
+<node id="14_start">
+<data key="x">158</data>
+<data key="y">146</data>
+</node>
+<node id="14_finish">
+<data key="x">57</data>
+<data key="y">85</data>
+</node>
+<node id="15_start">
+<data key="x">48</data>
+<data key="y">81</data>
+</node>
+<node id="15_finish">
+<data key="x">90</data>
+<data key="y">166</data>
+</node>
+<node id="16_start">
+<data key="x">153</data>
+<data key="y">93</data>
+</node>
+<node id="16_finish">
+<data key="x">63</data>
+<data key="y">163</data>
+</node>
+<node id="17_start">
+<data key="x">174</data>
+<data key="y">94</data>
+</node>
 <node id="17_finish">
-<data key="x">77</data>
-<data key="y">117</data>
+<data key="x">57</data>
+<data key="y">107</data>
 </node>
 <node id="18_start">
-<data key="x">131</data>
-<data key="y">102</data>
+<data key="x">144</data>
+<data key="y">81</data>
 </node>
 <node id="18_finish">
-<data key="x">52</data>
-<data key="y">125</data>
+<data key="x">177</data>
+<data key="y">97</data>
 </node>
 <node id="19_start">
-<data key="x">192</data>
-<data key="y">99</data>
+<data key="x">96</data>
+<data key="y">114</data>
 </node>
 <node id="19_finish">
-<data key="x">45</data>
-<data key="y">167</data>
+<data key="x">98</data>
+<data key="y">44</data>
 </node>
 <edge id="e0_start-0_finish" source="0_start" target="0_finish">
 <data key="Type">requirement</data>
@@ -328,15 +328,15 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="Type">contingent</data>
 <data key="LabeledValue">UC(5_finish):-9</data>
 </edge>
-<edge id="e6_start-1_finish" source="6_start" target="1_finish">
-<data key="Type">requirement</data>
-<data key="Value">0</data>
-</edge>
 <edge id="e6_start-2_finish" source="6_start" target="2_finish">
 <data key="Type">requirement</data>
 <data key="Value">0</data>
 </edge>
 <edge id="e6_start-3_finish" source="6_start" target="3_finish">
+<data key="Type">requirement</data>
+<data key="Value">0</data>
+</edge>
+<edge id="e6_start-4_finish" source="6_start" target="4_finish">
 <data key="Type">requirement</data>
 <data key="Value">0</data>
 </edge>
@@ -346,15 +346,11 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 </edge>
 <edge id="e6_start-6_finish" source="6_start" target="6_finish">
 <data key="Type">contingent</data>
-<data key="LabeledValue">LC(6_finish):1</data>
-</edge>
-<edge id="e6_start-8_finish" source="6_start" target="8_finish">
-<data key="Type">requirement</data>
-<data key="Value">0</data>
+<data key="LabeledValue">LC(6_finish):4</data>
 </edge>
 <edge id="e6_finish-6_start" source="6_finish" target="6_start">
 <data key="Type">contingent</data>
-<data key="LabeledValue">UC(6_finish):-3</data>
+<data key="LabeledValue">UC(6_finish):-9</data>
 </edge>
 <edge id="e7_start-2_finish" source="7_start" target="2_finish">
 <data key="Type">requirement</data>

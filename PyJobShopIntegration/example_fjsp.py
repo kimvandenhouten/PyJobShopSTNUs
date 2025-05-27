@@ -19,7 +19,6 @@ PATH = "PyJobShopIntegration/data/fjsp_sdst/fattahi/Fattahi_setup_18.fjs"
 PROBLEM_TYPE = "fjsp"
 model = create_instance(PATH, PROBLEM_TYPE, True)
 
-
 # Solving
 result = model.solve(solver='cpoptimizer', display=False)
 solution = result.best

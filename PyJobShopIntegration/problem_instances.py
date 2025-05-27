@@ -1,3 +1,4 @@
+import math
 from typing import NamedTuple
 
 import numpy as np
@@ -83,28 +84,6 @@ class Instance():
     def get_sample_length(self):
         raise NotImplementedError("Subclasses should implement this method.")
 
-    def get_bounds(self, noise_factor):
-        lb = []
-        ub = []
-        for i, mode in enumerate(self.modes):
-            duration = mode.duration
-            job = mode.job
-            if duration == 0:
-                lb.append(0)
-                ub.append(0)
-            elif job >= self.num_tasks - 1:
-                lb.append(duration)
-                ub.append(duration)
-            else:
-                lower_bound = int(max(1, duration - noise_factor * np.sqrt(duration)))
-                upper_bound = int(duration + noise_factor * np.sqrt(duration))
-                if lower_bound == upper_bound:
-                    upper_bound += 1
-                lb.append(lower_bound)
-                ub.append(upper_bound)
-        return lb, ub
-
-
     def sample_durations(self, nb_scenarios, noise_factor):
         """
         Sample durations for the tasks in the project.
@@ -157,6 +136,9 @@ class Instance():
             real_durations.append(duration_sample[mode])
         return [int(duration) for duration in real_durations]
 
+    def get_bounds(self, noise_factor):
+        pass
+
 
 class MMRCPSP(Instance):
     """
@@ -199,6 +181,28 @@ class MMRCPSP(Instance):
         This method should be implemented in subclasses.
         """
         return len(self.modes)
+
+    def get_bounds(self, noise_factor):
+        lb = []
+        ub = []
+        for i, mode in enumerate(self.modes):
+            duration = mode.duration
+            job = mode.job
+            if duration == 0:
+                lb.append(0)
+                ub.append(0)
+            elif job >= self.num_tasks - 1:
+                lb.append(duration)
+                ub.append(duration)
+            else:
+                lower_bound = int(max(1, duration - noise_factor * np.sqrt(duration)))
+                upper_bound = int(duration + noise_factor * np.sqrt(duration))
+                if lower_bound == upper_bound:
+                    upper_bound += 1
+                lb.append(lower_bound)
+                ub.append(upper_bound)
+        return lb, ub
+
 
     def check_resource_feasibility(self, start_times, durations, demands):
         """
@@ -466,3 +470,121 @@ class FJSP(Instance):
     def __init__(self, num_resources, num_tasks, successors, predecessors, data):
         super().__init__(num_tasks, num_resources, successors, predecessors)
         self.data = data
+
+    def create_model(self):
+        model = Model()
+
+        # A) machines
+        machines = [
+            model.add_machine(name=f"Machine {m}")
+            for m in range(self.num_resources)
+        ]
+
+        # B) create jobs & tasks
+        tasks = {}
+        for j_idx, ops in enumerate(self.data):
+            job = model.add_job(name=f"Job {j_idx}")
+            for o_idx in range(len(ops)):
+                tasks[(j_idx, o_idx)] = model.add_task(job, name=f"Task ({j_idx},{o_idx})")
+
+        # C) add modes and chain precedence
+        for j_idx, ops in enumerate(self.data):
+            for o_idx, options in enumerate(ops):
+                task = tasks[(j_idx, o_idx)]
+                for m_id, dur in options:
+                    model.add_mode(task, machines[m_id], duration=dur)
+
+            # precedence constraints
+            # for o_idx in range(len(ops) - 1):
+            #     model.add_end_before_start(
+            #         tasks[(j_idx, o_idx)],
+            #         tasks[(j_idx, o_idx + 1)]
+            #     )
+
+
+    def get_bounds(self, noise_factor: float):
+        lb, ub = [], []
+        for job in self.data:
+            for options in job:
+                for machine_id, d in options:
+                    if d == 0:
+                        low = high = 0
+                    else:
+                        delta = noise_factor * np.sqrt(d)
+                        low  = int(max(1, d - delta))
+                        high = int(d + delta)
+                        # ensure non‐degenerate support
+                        if low == high:
+                            high += 1
+                    lb.append(low)
+                    ub.append(high)
+        return lb, ub
+
+
+    def check_feasibility(self, start_times, finish_times, durations):
+        """
+        Check the feasibility of the solution.
+        :param start_times: Start times of the tasks.
+        :param finish_times: Finish times of the tasks.
+        :param durations: Durations of the tasks.
+        :param demands: Resource demands for each task.
+        :return: True if feasible, False otherwise.
+        """
+        #duration_feasible = self.check_duration_feasibility(start_times, finish_times, durations)
+        precedence_feasible = self.check_precedence_feasibility(start_times, finish_times, self.successors)
+        #resource_feasible = self.check_resource_feasibility(start_times, durations, demands)
+        #deadline_feasible = self.check_deadline_feasibility(finish_times)
+        return precedence_feasible
+
+
+class FJSPSDST(FJSP):
+
+    def __init__(self, num_resources, num_tasks, successors, predecessors, data, sdst_matrix):
+        super().__init__(num_resources, num_tasks, successors, predecessors, data)
+        self.sdst_matrix = sdst_matrix
+
+    def create_model(self):
+        model = Model()
+
+        # A) machines
+        machines = [
+            model.add_machine(name=f"Machine {m}")
+            for m in range(self.num_resources)
+        ]
+
+        # B) create jobs & tasks
+        tasks = {}
+        for j_idx, ops in enumerate(self.data):
+            job = model.add_job(name=f"Job {j_idx}")
+            for o_idx in range(len(ops)):
+                tasks[(j_idx, o_idx)] = model.add_task(job, name=f"Task ({j_idx},{o_idx})")
+
+        # C) add modes and chain precedence
+        for j_idx, ops in enumerate(self.data):
+            for o_idx, options in enumerate(ops):
+                task = tasks[(j_idx, o_idx)]
+                for m_id, dur in options:
+                    model.add_mode(task, machines[m_id], duration=dur)
+
+            # precedence constraints
+            # for o_idx in range(len(ops) - 1):
+            #     model.add_end_before_start(
+            #         tasks[(j_idx, o_idx)],
+            #         tasks[(j_idx, o_idx + 1)]
+            #     )
+
+        if self.sdst_matrix is not []:
+            # flatten tasks in the same file‐order the parser used
+            flat_tasks = [
+                tasks[(j_idx, o_idx)]
+                for j_idx, ops in enumerate(self.data)
+                for o_idx in range(len(ops))
+            ]
+
+            for m_idx, machine in enumerate(machines):
+                for i, ti in enumerate(flat_tasks):
+                    for j, tj in enumerate(flat_tasks):
+                        setup_time = self.sdst_matrix[m_idx][i][j]
+                        model.add_setup_time(machine, ti, tj, duration=setup_time)
+
+        return model

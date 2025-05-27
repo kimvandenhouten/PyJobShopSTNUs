@@ -46,7 +46,7 @@ if infeasible_jobs:
     print("[WARNING] Infeasible jobs found:")
     for job_idx, needed, deadline in infeasible_jobs:
         print(f" - Job {job_idx}: needs ≥ {needed}, deadline = {deadline}")
-w_e = 3
+w_e = 5
 w_t = 0
 is_soft_deadline = False
 model = Model()

@@ -26,21 +26,30 @@ logger = general.logger.get_logger(__name__)
 # -------------------------
 # PHASE 1: Load instance & problem definition
 # -------------------------
-NUM_MACHINES, data = parse_data_fjsp("data/fjsp/kacem/Kacem1.fjs")
+NUM_MACHINES, data = parse_data_fjsp("data/fjsp/barnes/mt10xy.fjs")
 num_jobs = len(data)
 
 # compute per-job sum of minimal durations
+# before your loop:
 lb_sum_per_job = {
-    j: sum(min(d for _, d in data[j][t]) for t in range(len(data[j])))
+    j: sum(min(d for _,d in data[j][t]) for t in range(len(data[j])))
     for j in range(num_jobs)
 }
 ub_sum_per_job = {
-    j: sum(max(d for _, d in data[j][t]) for t in range(len(data[j])))
+    j: sum(max(d for _,d in data[j][t]) for t in range(len(data[j])))
     for j in range(num_jobs)
 }
 
+# per-job gap:
+job_gaps = { j: ub_sum_per_job[j] - lb_sum_per_job[j]
+             for j in range(num_jobs) }
 
-# theo_gap = int((duration_distributions.upper_bounds - duration_distributions.lower_bounds).sum())
+# global required slack:
+theo_gap = max(job_gaps.values())
+
+# now sweep Δ from 0 up to theo_gap:
+deltas = list(range(0, theo_gap + 1, max(1, theo_gap // 20)))
+
 
 # -------------------------
 # PHASE 3: Deadline Slack Sweep
@@ -48,9 +57,6 @@ ub_sum_per_job = {
 # prepare xml output folder
 xml_folder = "temporal_networks/cstnu_tool/xml_files"
 os.makedirs(xml_folder, exist_ok=True)
-
-# generate delta values
-deltas = list(range(0, 100 + 1, max(1, 100 // 5)))
 
 cp_ok = []
 dc_ok = []
@@ -94,14 +100,14 @@ for delta in deltas:
         model.add_end_before_start(last_task, deadline_task)
 
     # solve CP
-    res = model.solve(display=False)
+    res = model.solve(solver="cpoptimizer", display=False)
     feas = 1 if res.status.name in ("FEASIBLE","OPTIMAL") else 0
     cp_ok.append(feas)
     if not feas:
         dc_ok.append(0)
         continue
     sol = res.best
-    duration_distributions = get_distribution_bounds(model, data)
+    duration_distributions = get_distribution_bounds(model, data, variation=0)
 
     # build STNU
     stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
@@ -143,7 +149,7 @@ ax1.axvline(100, linestyle="--", label="Theoretical gap")
 if delta_star is not None:
     ax1.axvline(delta_star, linestyle=":", label="Critical Δ*")
 optimal_deadlines = {
-  j: ub_sum_per_job[j] + delta_star
+  j: lb_sum_per_job[j] + delta_star
   for j in range(num_jobs)
 }
 

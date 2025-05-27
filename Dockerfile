@@ -1,7 +1,8 @@
 # Use an official Ubuntu image
-FROM ubuntu:22.04
+FROM --platform=linux/amd64 ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required dependencies
+# 1) Install system dependencies (including python3-dev for building C extensions)
 RUN apt-get update && apt-get install -y \
     bash \
     wget \
@@ -10,31 +11,35 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     python3 \
     python3-pip \
+    python3-dev \
     openjdk-21-jdk \
-    && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Create working directory
+# 2) Create installer working dir
 WORKDIR /opt/cplex_installer
 
-# Copy your CPLEX installer + silent install config
-COPY cplex_studio2212.linux_x86_64.bin .
-COPY installer.properties .
+# 3) Copy your 22.1.1 binary and properties
+COPY cplex_studio2211.linux_x86_64.bin installer.properties ./
 
-# Make it executable and install silently
-RUN chmod +x cplex_studio2212.linux_x86_64.bin && \
-    ./cplex_studio2212.linux_x86_64.bin -f installer.properties
+# 4) Make installer executable and run silently
+RUN chmod +x cplex_studio2211.linux_x86_64.bin && \
+    ./cplex_studio2211.linux_x86_64.bin -f installer.properties -i silent
 
-# Set PATH so Python/CP scripts can find cpoptimizer
-ENV PATH="/opt/ibm/ILOG/CPLEX_Studio2212/cpoptimizer/bin/x86-64_linux:$PATH"
+# 5) Install CPLEX Python bindings
+RUN python3 -m pip install --upgrade pip && \
+    python3 /opt/ibm/ILOG/CPLEX_Studio2211/python/setup.py install --user
 
-# Optional: install scientific Python tools
-RUN pip3 install numpy matplotlib pandas
+# 6) Install DOcplex and scientific stack
+RUN python3 -m pip install --user docplex numpy matplotlib pandas
 
-# Optional: add symlink for legacy scripts
-RUN ln -s /opt/ibm/ILOG/CPLEX_Studio2212/cpoptimizer/bin/x86-64_linux/cpoptimizer /usr/local/bin/cpoptimizer
+# 7) Expose CP Optimizer on PATH
+ENV PATH="/opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer/bin/x86-64_linux:$PATH"
 
+# 8) Convenience symlink
+RUN ln -sf /opt/ibm/ILOG/CPLEX_Studio2211/cpoptimizer/bin/x86-64_linux/cpoptimizer /usr/local/bin/cpoptimizer
+
+# 9) Switch to your workspace
 WORKDIR /workspace
 ENV PYTHONPATH=/workspace
+
 CMD ["/bin/bash"]

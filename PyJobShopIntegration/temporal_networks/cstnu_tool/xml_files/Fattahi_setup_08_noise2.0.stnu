@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns/graphml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
+<key id="nContingent" for="graph">
+<desc>Number of contingents in the graph</desc>
+<default>0</default>
+</key>
+<key id="NetworkType" for="graph">
+<desc>Network Type</desc>
+<default>CSTNU</default>
+</key>
+<key id="nEdges" for="graph">
+<desc>Number of edges in the graph</desc>
+<default>0</default>
+</key>
+<key id="nVertices" for="graph">
+<desc>Number of vertices in the graph</desc>
+<default>0</default>
+</key>
+<key id="Name" for="graph">
+<desc>Graph Name</desc>
+<default> </default>
+</key>
+<key id="x" for="node">
+<desc>The x coordinate for the visualization. A positive value.</desc>
+<default>0</default>
+</key>
+<key id="y" for="node">
+<desc>The y coordinate for the visualization. A positive value.</desc>
+<default>0</default>
+</key>
+<key id="Type" for="edge">
+<desc>Type: Possible values: contingent|requirement|derived|internal.</desc>
+<default>requirement</default>
+</key>
+<key id="Value" for="edge">
+<desc>Value for STN edge. Format: 'integer'</desc>
+<default> </default>
+</key>
+<key id="LabeledValue" for="edge">
+<desc>Case Value. Format: 'LC(NodeName):integer' or 'UC(NodeName):integer'</desc>
+<default> </default>
+</key>
+<graph edgedefault="directed">
+<data key="nContingent">9</data>
+<data key="NetworkType">STNU</data>
+<data key="nEdges">28</data>
+<data key="nVertices">18</data>
+<data key="Name">Fattahi_setup_08_noise2.0.stnu</data>
+<node id="0_start">
+<data key="x">62</data>
+<data key="y">190</data>
+</node>
+<node id="0_finish">
+<data key="x">123</data>
+<data key="y">85</data>
+</node>
+<node id="1_start">
+<data key="x">81</data>
+<data key="y">83</data>
+</node>
+<node id="1_finish">
+<data key="x">198</data>
+<data key="y">85</data>
+</node>
+<node id="2_start">
+<data key="x">163</data>
+<data key="y">91</data>
+</node>
+<node id="2_finish">
+<data key="x">155</data>
+<data key="y">132</data>
+</node>
+<node id="3_start">
+<data key="x">50</data>
+<data key="y">196</data>
+</node>
+<node id="3_finish">
+<data key="x">107</data>
+<data key="y">138</data>
+</node>
+<node id="4_start">
+<data key="x">115</data>
+<data key="y">192</data>
+</node>
+<node id="4_finish">
+<data key="x">126</data>
+<data key="y">183</data>
+</node>
+<node id="5_start">
+<data key="x">49</data>
+<data key="y">73</data>
+</node>
+<node id="5_finish">
+<data key="x">99</data>
+<data key="y">103</data>
+</node>
+<node id="6_start">
+<data key="x">101</data>
+<data key="y">126</data>
+</node>
+<node id="6_finish">
+<data key="x">79</data>
+<data key="y">44</data>
+</node>
+<node id="7_start">
+<data key="x">70</data>
+<data key="y">180</data>
+</node>
+<node id="7_finish">
+<data key="x">77</data>
+<data key="y">64</data>
+</node>
+<node id="8_start">
+<data key="x">93</data>
+<data key="y">51</data>
+</node>
+<node id="8_finish">
+<data key="x">91</data>
+<data key="y">182</data>
+</node>
+<edge id="e0_start-0_finish" source="0_start" target="0_finish">
+<data key="Type">contingent</data>
+<data key="LabeledValue">LC(0_finish):8</data>
+</edge>
+<edge id="e0_finish-0_start" source="0_finish" target="0_start">
+<data key="Type">contingent</data>
+<data key="LabeledValue">UC(0_finish):-25</data>
+</edge>
+<edge id="e1_start-0_finish" source="1_start" target="0_finish">
+<data key="Type">requirement</data>
+<data key="Value">-7</data>
+</edge>
+<edge id="e1_start-1_finish" source="1_start" target="1_finish">
+<data key="Type">contingent</data>
+<data key="LabeledValue">LC(1_finish):15</data>
+</edge>
+<edge id="e1_finish-1_start" source="1_finish" target="1_start">
+<data key="Type">contingent</data>
+<data key="LabeledValue">UC(1_finish):-35</data>
+</edge>
+<edge id="e2_start-1_finish" source="2_start" target="1_finish">
+<data key="Type">requirement</data>
+<data key="Value">0</data>
+</edge>
+<edge id="e2_start-2_finish" source="2_start" target="2_finish">
+<data key="Type">contingent</data>
+<data key="LabeledValue">LC(2_finish):27</data>
+</edge>
+<edge id="e2_start-4_finish" source="2_start" target="4_finish">
+<data key="Type">requirement</data>
+<data key="Value">-8</data>
+</edge>
+<edge id="e2_finish-2_start" source="2_finish" target="2_start">
+<data key="Type">contingent</data>
+<data key="LabeledValue">UC(2_finish):-52</data>
+</edge>
+<edge id="e3_start-3_finish" source="3_start" target="3_finish">
+<data key="Type">contingent</data>
+<data key="LabeledValue">LC(3_finish):19</data>
+</edge>
+<edge id="e3_finish-3_start" source="3_finish" target="3_start">
+<data key="Type">contingent</data>
+<data key="LabeledValue">UC(3_finish):-40</data>
+</edge>
+<edge id="e4_start-3_finish" source="4_start" target="3_finish">
+<data key="Type">requirement</data>
+<data key="Value">0</data>
+</edge>
+<edge id="e4_start-4_finish" source="4_start" target="4_finish">
+<data key="Type">contingent</data>
+<data key="LabeledValue">LC(4_finish):125</data>
+</edge>
+<edge id="e4_finish-4_start" source="4_finish" target="4_start">
+<data key="Type">contingent</data>
+<data key="LabeledValue">UC(4_finish):-174</data>
+</edge>
+<edge id="e5_start-4_finish" source="5_start" target="4_finish">
+<data key="Type">requirement</data>
+<data key="Value">0</data>
+</edge>
+<edge id="e5_start-5_finish" source="5_start" target="5_finish">
+<data key="Type">contingent</data>
+<data key="LabeledValue">LC(5_finish):134</data>
+</edge>
+<edge id="e5_finish-5_start" source="5_finish" target="5_start">
+<data key="Type">contingent</data>
+<data key="LabeledValue">UC(5_finish):-185</data>
+</edge>
+<edge id="e6_start-3_finish" source="6_start" target="3_finish">
+<data key="Type">requirement</data>
+<data key="Value">-6</data>
+</edge>
+<edge id="e6_start-6_finish" source="6_start" target="6_finish">
+<data key="Type">contingent</data>
+<data key="LabeledValue">LC(6_finish):19</data>
+</edge>
+<edge id="e6_finish-6_start" source="6_finish" target="6_start">
+<data key="Type">contingent</data>
+<data key="LabeledValue">UC(6_finish):-40</data>
+</edge>
+<edge id="e7_start-1_finish" source="7_start" target="1_finish">
+<data key="Type">requirement</data>
+<data key="Value">-6</data>
+</edge>
+<edge id="e7_start-6_finish" source="7_start" target="6_finish">
+<data key="Type">requirement</data>
+<data key="Value">0</data>
+</edge>
+<edge id="e7_start-7_finish" source="7_start" target="7_finish">
+<data key="Type">contingent</data>
+<data key="LabeledValue">LC(7_finish):35</data>
+</edge>
+<edge id="e7_finish-7_start" source="7_finish" target="7_start">
+<data key="Type">contingent</data>
+<data key="LabeledValue">UC(7_finish):-64</data>
+</edge>
+<edge id="e8_start-5_finish" source="8_start" target="5_finish">
+<data key="Type">requirement</data>
+<data key="Value">-9</data>
+</edge>
+<edge id="e8_start-7_finish" source="8_start" target="7_finish">
+<data key="Type">requirement</data>
+<data key="Value">0</data>
+</edge>
+<edge id="e8_start-8_finish" source="8_start" target="8_finish">
+<data key="Type">contingent</data>
+<data key="LabeledValue">LC(8_finish):40</data>
+</edge>
+<edge id="e8_finish-8_start" source="8_finish" target="8_start">
+<data key="Type">contingent</data>
+<data key="LabeledValue">UC(8_finish):-69</data>
+</edge>
+</graph>
+</graphml>

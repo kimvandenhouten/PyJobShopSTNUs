@@ -1,13 +1,9 @@
 from collections import defaultdict
 
-from matplotlib import pyplot as plt
-from pandas import DataFrame
-
 from PyJobShopIntegration.utils import get_project_root
 import pandas as pd
 from general.logger import get_logger
 from scipy.stats import wilcoxon, rankdata
-from itertools import combinations
 import numpy as np
 
 logger = get_logger(__name__)
@@ -157,6 +153,3 @@ def wilcoxon_test(df, output, alpha=0.05, min_samples=2):
                         file=output)
                 else:
                     print(f"{i} vs {j}: Not enough data for comparison", file=output)
-
-# Example usage:
-#evaluate_results("05_23_2025,19_10")

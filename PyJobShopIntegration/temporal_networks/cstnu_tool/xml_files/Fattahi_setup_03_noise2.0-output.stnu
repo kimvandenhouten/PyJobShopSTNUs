@@ -49,56 +49,56 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="nVertices">13</data>
 <data key="Name">Fattahi_setup_03_noise2.0.stnu</data>
 <node id="0_start">
-<data key="x">196.0</data>
-<data key="y">162.0</data>
+<data key="x">122.0</data>
+<data key="y">139.0</data>
 </node>
 <node id="1_start">
-<data key="x">54.0</data>
-<data key="y">197.0</data>
+<data key="x">103.0</data>
+<data key="y">192.0</data>
 </node>
 <node id="3_start">
-<data key="x">136.0</data>
-<data key="y">67.0</data>
+<data key="x">193.0</data>
+<data key="y">198.0</data>
 </node>
 <node id="2_start">
-<data key="x">170.0</data>
-<data key="y">68.0</data>
+<data key="x">46.0</data>
+<data key="y">155.0</data>
 </node>
 <node id="Z">
 <data key="x">10.0</data>
 <data key="y">10.0</data>
 </node>
 <node id="4_start">
-<data key="x">129.0</data>
-<data key="y">69.0</data>
+<data key="x">55.0</data>
+<data key="y">186.0</data>
 </node>
 <node id="4_finish">
-<data key="x">70.0</data>
-<data key="y">199.0</data>
+<data key="x">126.0</data>
+<data key="y">111.0</data>
 </node>
 <node id="5_finish">
-<data key="x">161.0</data>
-<data key="y">179.0</data>
+<data key="x">141.0</data>
+<data key="y">158.0</data>
 </node>
 <node id="5_start">
-<data key="x">48.0</data>
-<data key="y">43.0</data>
-</node>
-<node id="0_finish">
-<data key="x">137.0</data>
-<data key="y">190.0</data>
-</node>
-<node id="1_finish">
-<data key="x">199.0</data>
+<data key="x">188.0</data>
 <data key="y">176.0</data>
 </node>
+<node id="0_finish">
+<data key="x">198.0</data>
+<data key="y">123.0</data>
+</node>
+<node id="1_finish">
+<data key="x">163.0</data>
+<data key="y">110.0</data>
+</node>
 <node id="3_finish">
-<data key="x">145.0</data>
-<data key="y">114.0</data>
+<data key="x">131.0</data>
+<data key="y">172.0</data>
 </node>
 <node id="2_finish">
-<data key="x">44.0</data>
-<data key="y">81.0</data>
+<data key="x">196.0</data>
+<data key="y">96.0</data>
 </node>
 <edge id="e3_start-1_finish" source="3_start" target="1_finish">
 <data key="Type">requirement</data>

@@ -49,56 +49,56 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="nVertices">13</data>
 <data key="Name">Fattahi_setup_05_noise1.0.stnu</data>
 <node id="0_start">
-<data key="x">196.0</data>
-<data key="y">114.0</data>
+<data key="x">178.0</data>
+<data key="y">99.0</data>
 </node>
 <node id="1_start">
-<data key="x">66.0</data>
-<data key="y">62.0</data>
+<data key="x">93.0</data>
+<data key="y">188.0</data>
 </node>
 <node id="3_start">
-<data key="x">119.0</data>
-<data key="y">120.0</data>
+<data key="x">40.0</data>
+<data key="y">59.0</data>
 </node>
 <node id="2_start">
-<data key="x">186.0</data>
-<data key="y">67.0</data>
+<data key="x">138.0</data>
+<data key="y">92.0</data>
 </node>
 <node id="Z">
 <data key="x">10.0</data>
 <data key="y">10.0</data>
 </node>
 <node id="4_start">
-<data key="x">62.0</data>
-<data key="y">152.0</data>
+<data key="x">108.0</data>
+<data key="y">57.0</data>
 </node>
 <node id="4_finish">
-<data key="x">49.0</data>
-<data key="y">110.0</data>
-</node>
-<node id="5_finish">
-<data key="x">187.0</data>
-<data key="y">46.0</data>
-</node>
-<node id="5_start">
-<data key="x">65.0</data>
-<data key="y">92.0</data>
-</node>
-<node id="0_finish">
-<data key="x">152.0</data>
-<data key="y">68.0</data>
-</node>
-<node id="1_finish">
-<data key="x">135.0</data>
+<data key="x">44.0</data>
 <data key="y">175.0</data>
 </node>
+<node id="5_finish">
+<data key="x">85.0</data>
+<data key="y">140.0</data>
+</node>
+<node id="5_start">
+<data key="x">175.0</data>
+<data key="y">195.0</data>
+</node>
+<node id="0_finish">
+<data key="x">81.0</data>
+<data key="y">169.0</data>
+</node>
+<node id="1_finish">
+<data key="x">132.0</data>
+<data key="y">143.0</data>
+</node>
 <node id="3_finish">
-<data key="x">111.0</data>
-<data key="y">84.0</data>
+<data key="x">100.0</data>
+<data key="y">41.0</data>
 </node>
 <node id="2_finish">
-<data key="x">176.0</data>
-<data key="y">161.0</data>
+<data key="x">182.0</data>
+<data key="y">127.0</data>
 </node>
 <edge id="4_finish_Z" source="4_finish" target="Z">
 <data key="Type">derived</data>

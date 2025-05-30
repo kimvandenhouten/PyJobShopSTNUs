@@ -49,76 +49,76 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="nVertices">19</data>
 <data key="Name">Fattahi_setup_06_noise2.0.stnu</data>
 <node id="0_start">
-<data key="x">104.0</data>
-<data key="y">132.0</data>
+<data key="x">185.0</data>
+<data key="y">126.0</data>
 </node>
 <node id="1_start">
-<data key="x">196.0</data>
-<data key="y">117.0</data>
+<data key="x">104.0</data>
+<data key="y">99.0</data>
 </node>
 <node id="3_start">
-<data key="x">156.0</data>
-<data key="y">75.0</data>
+<data key="x">164.0</data>
+<data key="y">42.0</data>
 </node>
 <node id="2_start">
-<data key="x">172.0</data>
-<data key="y">163.0</data>
+<data key="x">95.0</data>
+<data key="y">119.0</data>
 </node>
 <node id="7_finish">
-<data key="x">186.0</data>
-<data key="y">118.0</data>
+<data key="x">164.0</data>
+<data key="y">122.0</data>
 </node>
 <node id="7_start">
-<data key="x">141.0</data>
-<data key="y">51.0</data>
+<data key="x">62.0</data>
+<data key="y">144.0</data>
 </node>
 <node id="6_start">
-<data key="x">107.0</data>
-<data key="y">185.0</data>
+<data key="x">146.0</data>
+<data key="y">90.0</data>
 </node>
 <node id="6_finish">
-<data key="x">68.0</data>
-<data key="y">175.0</data>
+<data key="x">113.0</data>
+<data key="y">192.0</data>
 </node>
 <node id="4_start">
-<data key="x">44.0</data>
-<data key="y">65.0</data>
+<data key="x">79.0</data>
+<data key="y">126.0</data>
 </node>
 <node id="4_finish">
-<data key="x">184.0</data>
+<data key="x">169.0</data>
 <data key="y">183.0</data>
 </node>
 <node id="5_finish">
-<data key="x">53.0</data>
-<data key="y">189.0</data>
+<data key="x">79.0</data>
+<data key="y">93.0</data>
 </node>
 <node id="5_start">
-<data key="x">138.0</data>
-<data key="y">124.0</data>
+<data key="x">46.0</data>
+<data key="y">116.0</data>
 </node>
 <node id="0_finish">
-<data key="x">186.0</data>
-<data key="y">157.0</data>
+<data key="x">158.0</data>
+<data key="y">161.0</data>
 </node>
 <node id="1_finish">
-<data key="x">40.0</data>
-<data key="y">123.0</data>
+<data key="x">182.0</data>
+<data key="y">111.0</data>
 </node>
 <node id="3_finish">
-<data key="x">124.0</data>
-<data key="y">82.0</data>
+<data key="x">193.0</data>
+<data key="y">179.0</data>
 </node>
 <node id="2_finish">
-<data key="x">149.0</data>
-<data key="y">63.0</data>
+<data key="x">187.0</data>
+<data key="y">68.0</data>
 </node>
 <node id="8_start">
-<data key="x">191.0</data>
-<data key="y">45.0</data>
+<data key="x">43.0</data>
+<data key="y">133.0</data>
 </node>
 <node id="8_finish">
-<data key="x">51.0</data>
-<data key="y">96.0</data>
+<data key="x">95.0</data>
+<data key="y">44.0</data>
 </node>
 <node id="Z">
 <data key="x">10.0</data>

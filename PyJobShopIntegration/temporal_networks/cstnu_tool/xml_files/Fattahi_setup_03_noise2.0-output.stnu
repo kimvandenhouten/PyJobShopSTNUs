@@ -49,56 +49,56 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="nVertices">13</data>
 <data key="Name">Fattahi_setup_03_noise2.0.stnu</data>
 <node id="0_start">
-<data key="x">40.0</data>
-<data key="y">125.0</data>
+<data key="x">196.0</data>
+<data key="y">162.0</data>
 </node>
 <node id="1_start">
-<data key="x">178.0</data>
-<data key="y">78.0</data>
+<data key="x">54.0</data>
+<data key="y">197.0</data>
 </node>
 <node id="3_start">
-<data key="x">191.0</data>
-<data key="y">179.0</data>
+<data key="x">136.0</data>
+<data key="y">67.0</data>
 </node>
 <node id="2_start">
-<data key="x">127.0</data>
-<data key="y">193.0</data>
+<data key="x">170.0</data>
+<data key="y">68.0</data>
 </node>
 <node id="Z">
 <data key="x">10.0</data>
 <data key="y">10.0</data>
 </node>
 <node id="4_start">
-<data key="x">58.0</data>
-<data key="y">97.0</data>
+<data key="x">129.0</data>
+<data key="y">69.0</data>
 </node>
 <node id="4_finish">
-<data key="x">89.0</data>
-<data key="y">72.0</data>
+<data key="x">70.0</data>
+<data key="y">199.0</data>
 </node>
 <node id="5_finish">
-<data key="x">75.0</data>
-<data key="y">49.0</data>
+<data key="x">161.0</data>
+<data key="y">179.0</data>
 </node>
 <node id="5_start">
-<data key="x">115.0</data>
-<data key="y">44.0</data>
+<data key="x">48.0</data>
+<data key="y">43.0</data>
 </node>
 <node id="0_finish">
-<data key="x">104.0</data>
-<data key="y">51.0</data>
+<data key="x">137.0</data>
+<data key="y">190.0</data>
 </node>
 <node id="1_finish">
-<data key="x">116.0</data>
-<data key="y">185.0</data>
+<data key="x">199.0</data>
+<data key="y">176.0</data>
 </node>
 <node id="3_finish">
-<data key="x">143.0</data>
-<data key="y">111.0</data>
+<data key="x">145.0</data>
+<data key="y">114.0</data>
 </node>
 <node id="2_finish">
-<data key="x">41.0</data>
-<data key="y">55.0</data>
+<data key="x">44.0</data>
+<data key="y">81.0</data>
 </node>
 <edge id="e3_start-1_finish" source="3_start" target="1_finish">
 <data key="Type">requirement</data>
@@ -114,15 +114,15 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 </edge>
 <edge id="e3_start-3_finish" source="3_start" target="3_finish">
 <data key="Type">contingent</data>
-<data key="LabeledValue">LC(3_finish):47</data>
+<data key="LabeledValue">LC(3_finish):55</data>
 </edge>
 <edge id="e1_finish-1_start" source="1_finish" target="1_start">
 <data key="Type">contingent</data>
-<data key="LabeledValue">UC(1_finish):-105</data>
+<data key="LabeledValue">UC(1_finish):-114</data>
 </edge>
 <edge id="e4_finish-4_start" source="4_finish" target="4_start">
 <data key="Type">contingent</data>
-<data key="LabeledValue">UC(4_finish):-67</data>
+<data key="LabeledValue">UC(4_finish):-147</data>
 </edge>
 <edge id="0_start_Z" source="0_start" target="Z">
 <data key="Type">derived</data>
@@ -134,11 +134,11 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 </edge>
 <edge id="3_start-2_start" source="3_start" target="2_start">
 <data key="Type">derived</data>
-<data key="LabeledValue">UC(2_finish):-114</data>
+<data key="LabeledValue">UC(2_finish):-67</data>
 </edge>
 <edge id="e5_finish-5_start" source="5_finish" target="5_start">
 <data key="Type">contingent</data>
-<data key="LabeledValue">UC(5_finish):-90</data>
+<data key="LabeledValue">UC(5_finish):-56</data>
 </edge>
 <edge id="1_start-0_start" source="1_start" target="0_start">
 <data key="Type">derived</data>
@@ -150,7 +150,7 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 </edge>
 <edge id="e2_finish-2_start" source="2_finish" target="2_start">
 <data key="Type">contingent</data>
-<data key="LabeledValue">UC(2_finish):-114</data>
+<data key="LabeledValue">UC(2_finish):-67</data>
 </edge>
 <edge id="5_finish_Z" source="5_finish" target="Z">
 <data key="Type">derived</data>
@@ -166,7 +166,7 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 </edge>
 <edge id="e5_start-5_finish" source="5_start" target="5_finish">
 <data key="Type">contingent</data>
-<data key="LabeledValue">LC(5_finish):55</data>
+<data key="LabeledValue">LC(5_finish):29</data>
 </edge>
 <edge id="3_start_Z" source="3_start" target="Z">
 <data key="Type">derived</data>
@@ -174,7 +174,7 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 </edge>
 <edge id="e4_start-4_finish" source="4_start" target="4_finish">
 <data key="Type">contingent</data>
-<data key="LabeledValue">LC(4_finish):38</data>
+<data key="LabeledValue">LC(4_finish):102</data>
 </edge>
 <edge id="3_finish_Z" source="3_finish" target="Z">
 <data key="Type">derived</data>
@@ -194,7 +194,7 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 </edge>
 <edge id="e1_start-1_finish" source="1_start" target="1_finish">
 <data key="Type">contingent</data>
-<data key="LabeledValue">LC(1_finish):68</data>
+<data key="LabeledValue">LC(1_finish):75</data>
 </edge>
 <edge id="e0_finish-0_start" source="0_finish" target="0_start">
 <data key="Type">contingent</data>
@@ -210,11 +210,11 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 </edge>
 <edge id="e2_start-2_finish" source="2_start" target="2_finish">
 <data key="Type">contingent</data>
-<data key="LabeledValue">LC(2_finish):75</data>
+<data key="LabeledValue">LC(2_finish):38</data>
 </edge>
 <edge id="e3_finish-3_start" source="3_finish" target="3_start">
 <data key="Type">contingent</data>
-<data key="LabeledValue">UC(3_finish):-78</data>
+<data key="LabeledValue">UC(3_finish):-90</data>
 </edge>
 <edge id="4_start_Z" source="4_start" target="Z">
 <data key="Type">derived</data>

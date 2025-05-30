@@ -34,14 +34,14 @@ logger = general.logger.get_logger(__name__)
 DATA_ROOT = os.path.join(dir_path, "data", "fjsp_sdst", "fattahi")
 IMAGES_ROOT = os.path.join(dir_path, "images", "fjsp_sdst")
 PROBLEM_TYPE = "fjsp_sdst"
-NOISE_FACTORS = [1.0]
+NOISE_FACTORS = [1.0, 2.0]
 stnu_time_limit = 10000
 proactive_time_limit = 10000
 reactive_offline_time_limit = 10000
 time_limit_rescheduling = 10000
 proactive_mode = 'quantile_0.9'
 reactive_mode = 'quantile_0.9'
-number_samples = 1
+number_samples = 50
 methods = ('stnu', 'proactive', 'reactive')
 
 # Timestamp for results
@@ -55,8 +55,8 @@ output_file = results_dir / f"final_results_{now}.csv"
 for noise in NOISE_FACTORS:
     for file_name in os.listdir(DATA_ROOT):
         instance_name = os.path.splitext(file_name)[0]
-        if (instance_name in ("Fattahi_setup_18", "Fattahi_setup_19",  "Fattahi_setup_20")):
-            continue
+        # if (instance_name in ("Fattahi_setup_18", "Fattahi_setup_19",  "Fattahi_setup_20")):
+        #     continue
 
         # Paths
         instance_path = os.path.join(DATA_ROOT, file_name)

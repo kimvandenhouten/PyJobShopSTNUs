@@ -29,11 +29,8 @@ class RTEStrategy(enum.Enum):
 
 
 class CSTNUTool:
-    # jar_location = Config.get("tool", "cstnutool", "jar_location")
     jar_location = os.path.join(os.path.dirname(__file__), "CSTNU-Tool-4.12.jar")
-    # if not jar_location:
-    #     jar_location = "CSTNU-Tool.jar"
-
+    # jar_location = Config.get("tool", "cstnutool", "jar_location")
     logging_properties = Config.get("tool", "cstnutool", "logging_properties")
 
     if not os.path.exists(jar_location):

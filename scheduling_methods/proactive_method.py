@@ -132,7 +132,3 @@ def run_proactive_online(rcpsp_max, duration_sample, data_dict):
             f'{rcpsp_max.instance_folder}_PSP{rcpsp_max.instance_id} INFEASIBLE with sample {duration_sample}')
 
     return [data_dict]
-
-
-
-

@@ -11,6 +11,7 @@ from pyjobshop.plot import plot_task_gantt, plot_resource_usage
 
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
+from PyJobShopIntegration.deadline_utils import get_distribution_bounds
 from PyJobShopIntegration.utils import add_resource_chains, get_resource_chains, sample_for_rte, plot_stnu, data_to_csv
 from general.logger import get_logger
 from PyJobShopIntegration.evaluator import evaluate_results
@@ -42,7 +43,7 @@ time_limit_cp_stnu = 600
 mode_stnu = "robust"
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["j10"]
+INSTANCE_FOLDERS = ["fattahi"]
 NOISE_FACTORS = [1]
 nb_scenarios_test = 10
 proactive_reactive = True

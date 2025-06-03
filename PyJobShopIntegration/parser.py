@@ -10,6 +10,17 @@ def create_instance(file, problem_type, sdst=False):
     if problem_type.startswith("mmrcpsp"):
         return parse_data_rcpsp(file, problem_type)
 
+    elif problem_type.startswith("fjspgtl"):
+        # return parse_data_fjsp_nw_and_gtl(file, problem_type)
+        num_machines, data = parse_data_fjsp(file)
+        return build_model_fjsp_gtl(num_machines, data)
+
+
+    elif problem_type.startswith("fjspnw"):
+        # return parse_data_fjsp_nw_and_gtl(file, problem_type)
+        num_machines, data = parse_data_fjsp(file)
+        return build_model_fjsp_nw(num_machines, data)
+
     elif problem_type.startswith("fjsp"):
         if sdst:
             num_machines, data, sdst_matrix = parse_data_fjsp_sdst(file)
@@ -163,6 +174,57 @@ def parse_data_fjsp(file):
 
     return num_machines, data
 
+def parse_data_fjsp_nw_and_gtl(file, problem_type):
+    path = Path(file)
+    with open(path, 'r') as f:
+        # Read header line
+        header_tokens = re.findall(r"\S+", f.readline())
+        total_jobs, total_machines, _ = header_tokens
+        num_jobs = int(total_jobs)
+        num_machines = int(total_machines)
+        num_tasks = 0
+
+        data = []
+        # Parse each job line
+        for _ in range(num_jobs):
+            line = f.readline()
+            parsed = re.findall(r"\S+", line)
+            i = 1  # skip first token per original logic
+            job_ops = []
+
+            while i < len(parsed):
+                num_tasks += 1
+                mode_count = int(parsed[i])
+                i += 1
+                options = []
+                for _ in range(mode_count):
+                    machine_id = int(parsed[i]) - 1  # to 0-based
+                    duration = int(parsed[i + 1])
+                    options.append((machine_id, duration))
+                    i += 2
+                job_ops.append(options)
+
+            data.append(job_ops)
+
+    if problem_type.endswith("nw"):
+        return FJSPNW(
+            num_tasks,
+            num_machines,
+            data
+        )
+
+    elif problem_type.endswith("gtl"):
+        return FJSPGTL(
+            num_tasks,
+            num_machines,
+            data
+        )
+
+    else:
+        raise ValueError(f"Unknown problem type: {problem_type}")
+
+
+
 def parse_data_fjsp_sdst(file_path):
         path = Path(file_path)
         with open(path, 'r') as f:
@@ -270,5 +332,86 @@ def build_model_fjsp(num_machines, data, sdst_matrix=None):
                 for j, tj in enumerate(flat_tasks):
                     setup_time = sdst_matrix[m_idx][i][j]
                     model.add_setup_time(machine, ti, tj, duration=setup_time)
+
+    return model
+
+def build_model_fjsp_nw(num_machines, data):
+    """
+    Build a PyJobShop Model:
+      - Adds machines, jobs, tasks, modes
+      - Chains each job’s ops with end-before-start
+    """
+    model = Model()
+
+    # A) machines
+    machines = [
+        model.add_machine(name=f"Machine {m}")
+        for m in range(num_machines)
+    ]
+
+    # B) create jobs & tasks
+    tasks = {}
+    for j_idx, ops in enumerate(data):
+        job = model.add_job(name=f"Job {j_idx}")
+        for o_idx in range(len(ops)):
+            tasks[(j_idx, o_idx)] = model.add_task(job, name=f"Task ({j_idx},{o_idx})")
+
+    # C) add modes and chain precedence and no-wait constraint
+    for j_idx, ops in enumerate(data):
+        for o_idx, options in enumerate(ops):
+            task = tasks[(j_idx, o_idx)]
+            for m_id, dur in options:
+                model.add_mode(task, machines[m_id], duration=dur)
+        for o_idx in range(len(ops)-1):
+            model.add_end_before_start(
+                tasks[(j_idx, o_idx)],
+                tasks[(j_idx, o_idx + 1)]
+            )
+            # model.add_start_before_end(
+            #     tasks[(j_idx, o_idx + 1)],
+            #     tasks[(j_idx, o_idx)],
+            #     0
+            # )
+
+    return model
+
+def build_model_fjsp_gtl(num_machines, data):
+    """
+    Build a PyJobShop Model:
+      - Adds machines, jobs, tasks, modes
+      - Chains each job’s ops with end-before-start
+    """
+    model = Model()
+
+    # A) machines
+    machines = [
+        model.add_machine(name=f"Machine {m}")
+        for m in range(num_machines)
+    ]
+
+    # B) create jobs & tasks
+    tasks = {}
+    for j_idx, ops in enumerate(data):
+        job = model.add_job(name=f"Job {j_idx}")
+        for o_idx in range(len(ops)):
+            tasks[(j_idx, o_idx)] = model.add_task(job, name=f"Task ({j_idx},{o_idx})")
+
+    # C) add modes and chain precedence and generalized time-lags
+    for j_idx, ops in enumerate(data):
+        for o_idx, options in enumerate(ops):
+            task = tasks[(j_idx, o_idx)]
+            for m_id, dur in options:
+                model.add_mode(task, machines[m_id], duration=dur)
+        for o_idx in range(len(ops)-1):
+            model.add_end_before_start(
+                tasks[(j_idx, o_idx)],
+                tasks[(j_idx, o_idx + 1)],
+                0
+            )
+            model.add_start_before_end(
+                tasks[(j_idx, o_idx + 1)],
+                tasks[(j_idx, o_idx)],
+                0
+            )
 
     return model

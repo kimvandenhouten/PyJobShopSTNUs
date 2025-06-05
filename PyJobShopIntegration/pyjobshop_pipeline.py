@@ -43,8 +43,8 @@ mode_stnu = "robust"
 multimode = problem_type.startswith("mm")
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["j10"]
-NOISE_FACTORS = [2]
+INSTANCE_FOLDERS = ["j10", "j20"]
+NOISE_FACTORS = [1, 2]
 nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
@@ -103,13 +103,13 @@ for noise_factor in NOISE_FACTORS:
                         logger.info("The solution is infeasible")
                     else:
                         data_dict_proactive = run_proactive_online(instance, real_durations, data_dict_proactive)
-                        data_to_csv(instance_folder=file, solution=data_dict_proactive, output_file=output_file)
+                        data_to_csv(instance_folder=instance_folder, solution=data_dict_proactive, output_file=output_file)
 
                         # Run reactive online
                         data_dict_reactive = copy.copy(data_dict)
                         data_dict_reactive = run_reactive_online(instance, real_durations, data_dict_reactive, time_limit_rescheduling, result_tasks)
                         data_dict_reactive["method"] = "reactive"
-                        data_to_csv(instance_folder=file, solution=data_dict_reactive, output_file=output_file)
+                        data_to_csv(instance_folder=instance_folder, solution=data_dict_reactive, output_file=output_file)
                 if proactive_saa:
                     pass
                 if stnu:
@@ -172,7 +172,7 @@ for noise_factor in NOISE_FACTORS:
                                         'method': 'stnu',
                                         'time_limit': time_limit_cp_stnu,
                                         'real_durations': str(real_durations)}
-                            data_to_csv(instance_folder=file, solution=solution, output_file=output_file)
+                            data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
                             logger.info(f'The network is not DC for sample{real_durations}')
                             continue
                         schedule = []
@@ -218,7 +218,7 @@ for noise_factor in NOISE_FACTORS:
                             plt.close(fig)
                         except Exception as e:
                             logger.error(f"Error plotting Gantt chart: {e}")
-                        data_to_csv(instance_folder=file, solution=solution, output_file=output_file)
+                        data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
                     # TODO update infeasible solutions count
                     else:
                         finish_offline = time.time()
@@ -231,7 +231,7 @@ for noise_factor in NOISE_FACTORS:
                                     'method': 'stnu',
                                     'time_limit': time_limit_cp_stnu,
                                     'real_durations': str(real_durations)}
-                        data_to_csv(instance_folder=file, solution=solution, output_file=output_file)
+                        data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
                         logger.info(f'The network is not DC for sample{real_durations}')
     # Analyze the results perform statistical tests and create plots
 evaluate_results(now=now)

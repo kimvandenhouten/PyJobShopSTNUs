@@ -1,6 +1,8 @@
 from typing import NamedTuple
 
 import numpy as np
+from docplex.cp.model import *
+from docplex.cp.solution import CpoModelSolution
 from pyjobshop import Model, MAX_VALUE, Task
 
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
@@ -484,9 +486,8 @@ class MMRCPSPGTL(MMRCPSP):
     Class to represent a Multi-mode Resource-Constrained Project Scheduling Problem with Generalized Time Lags (MMRCPSPGTL).
     """
 
-    def __init__(self, num_tasks, num_resources, successors, predecessors, modes, capacities, renewable, start_start, end_start, start_end, end_end):
+    def __init__(self, num_tasks, num_resources, successors, predecessors, modes, capacities, renewable, start_start, start_end, end_start, end_end):
         super().__init__(num_tasks, num_resources, successors, predecessors, modes, capacities, renewable)
-
         self.start_start = start_start
         self.end_start = end_start
         self.start_end = start_end
@@ -509,7 +510,6 @@ class MMRCPSPGTL(MMRCPSP):
 
         for (idx, _, demands), duration in zip(self.modes, durations):
             model.add_mode(tasks[idx], resources, duration, demands)
-
 
         for start_arr in self.start_start:
             model.add_start_before_start(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
@@ -633,70 +633,33 @@ class MMRCPSPGTL(MMRCPSP):
 
     def solve_reactive(self, durations, scheduled_start_times, current_time, result_tasks, time_limit=None,
                        initial_solution=None):
-        class Mode(NamedTuple):
-            job: int
-            duration: int
-            demands: list[int]
-        # Build model with given durations
         model = Model()
         resources = [
             model.add_renewable(capacity) for capacity in self.capacities
         ]
         jobs = [model.add_job() for _ in range(self.num_tasks)]
-        tasks = [
-            model.add_task(job=jobs[idx]) for idx in range(self.num_tasks)
-        ]
+        tasks = []
+        for idx in range(self.num_tasks - 1):
+            scheduled_start = scheduled_start_times[idx]
+            current_job = jobs[idx]
+            tasks.append(model.add_task(current_job, earliest_start=scheduled_start, latest_start=scheduled_start)
+                         if scheduled_start >= 0 else model.add_task(current_job, earliest_start=current_time))
+        tasks.append(
+            model.add_task(jobs[-1], earliest_start=scheduled_start_times[-1],
+                           latest_end=scheduled_start_times[-1] + durations[-1])
+            if scheduled_start_times[-1] >= 0 else model.add_task(jobs[-1], earliest_start=current_time))
         modes = [self.modes[task.mode] for task in result_tasks]
-        modes = modes[:self.num_tasks - 1] + [modes[-1]]
-        modes[-1] = Mode(self.num_tasks - 1, 0, [0] * len(self.capacities))
-        ds = durations[:self.num_tasks - 1] + [durations[-1]]
+        ds = durations
         for (idx, _, demands), duration in zip(modes, ds):
             model.add_mode(tasks[idx], resources, duration, demands)
-
-        try:
-            for start_arr in self.start_start:
-                model.add_start_before_start(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
-            for end_arr in self.end_start:
-                model.add_end_before_start(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
-            for start_arr in self.start_end:
-                model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
-            for end_arr in self.end_end:
-                model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
-            model.set_objective(
-                weight_makespan=1,
-            )
-        except IndexError:
-            pass
-        model.set_objective(
-            weight_makespan=1,
-        )
-
-        # Apply fixed start times or release times based on current schedule
-        sst = scheduled_start_times[:self.num_tasks - 1] + [scheduled_start_times[-1]]
-        for task_id, scheduled_start in enumerate(sst):
-            task = model.tasks[task_id]
-            job = model.jobs[task.job] if task.job < len(model.jobs) else None
-            job_idx = model._id2job[id(job)] if job is not None else None
-            if scheduled_start >= 0:
-                print(f"Task ID: {task_id}, Scheduled Start: {scheduled_start}, durations: {durations[task_id]}, mode: {modes[task_id]}")
-                task_new = Task(
-                    job_idx,
-                    earliest_start=scheduled_start,
-                    latest_start=scheduled_start,
-                )
-                model._id2task[id(task)] = task_id
-                model.tasks[task_id] = task_new
-                # model.tasks[task_id].latest_start = scheduled_start
-                # model.tasks[task_id].earliest_start = scheduled_start
-            else:
-                task_new = Task(
-                    job_idx,
-                    earliest_start=current_time
-                )
-                model._id2task[id(task)] = task_id
-                model.tasks[task_id] = task_new
-
-                # model.tasks[task_id] = model.add_task(model.jobs[task.job], earliest_start=current_time)
+        for start_arr in self.start_start:
+            model.add_start_before_start(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+        for end_arr in self.end_start:
+            model.add_end_before_start(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
+        for start_arr in self.start_end:
+            model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+        for end_arr in self.end_end:
+            model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
         # TODO potentially implement the warm start solver with initial_solution
         # # Apply initial solution if provided
         # if initial_solution:
@@ -705,24 +668,89 @@ class MMRCPSPGTL(MMRCPSP):
 
         # Solve model
         result = model.solve(time_limit=time_limit, display=False)
-        result_tasks = result.best.tasks
+        rt = result.best.tasks
         # Extract start times and makespan
-        if result_tasks:
-            start_times = [task.start for task in result_tasks[:-1]]
-            start_times.append(result_tasks[-1].start)
-            finish_times = [task.end for task in result_tasks]
-            makespan = self.get_objective(self.get_schedule(result_tasks))
+        if rt:
+            start_times = [task.start for task in rt[:-1]]
+            start_times.append(rt[-1].start)
+            finish_times = [task.end for task in rt]
+            makespan = self.get_objective(self.get_schedule(rt))
             return start_times, makespan
         else:
             return None, np.inf
 
-    def sample_mode(self, mode):
+        #
+        # capacities = self.capacities
+        # nb_resources = len(capacities)
+        # mdl = CpoModel()
+        # modes = [self.modes[task.mode] for task in result_tasks]
+        # demands = [modes[idx].demands for idx in range(self.num_tasks)]
+        # tasks = [interval_var(name='T{}'.format(i + 1), size=durations[i]) for i in range(self.num_tasks)]
+        # mdl.add(start_of(tasks[s]) + lag <= start_of(tasks[t]) for (s, t, lag) in self.start_start)
+        # mdl.add(end_of(tasks[s]) + lag <= start_of(tasks[t]) for (s, t, lag) in self.end_start)
+        # mdl.add(start_of(tasks[s]) + lag <= end_of(tasks[t]) for (s, t, lag) in self.start_end)
+        # mdl.add(end_of(tasks[s]) + lag <= end_of(tasks[t]) for (s, t, lag) in self.end_end)
+        #
+        #
+        # for t in range(self.num_tasks):
+        #     if scheduled_start_times[t] >= 0:
+        #         mdl.add(start_of(tasks[t]) == scheduled_start_times[t])
+        #     else:
+        #         mdl.add(start_of(tasks[t]) >= current_time)
+        #
+        # # Constrain capacity of needs
+        # mdl.add(sum(pulse(tasks[t], demands[t][r]) for t in range(self.num_tasks) if demands[t][r] > 0) <=
+        #         capacities[r] for r in range(nb_resources))
+        #
+        # # Add objective value
+        # mdl.add(minimize(max(end_of(t) for t in tasks)))
+        #
+        # # Apply initial solution if provided
+        # if initial_solution:
+        #     starting_point = CpoModelSolution()
+        #     for i in range(self.num_tasks):
+        #         task_name = f'T{i}'
+        #         if task_name in initial_solution:
+        #             task_start = initial_solution[i]
+        #             task_end = task_start + durations[i]
+        #             starting_point.add_interval_var_solution(tasks[i], start=task_start, end=task_end)
+        #     mdl.set_starting_point(starting_point)
+        #
+        # # Solve model
+        # res = mdl.solve(TimeLimit=time_limit, Workers=1, LogVerbosity="Quiet")
+        #
+        # start_times = []
+        # if res:
+        #     for i in range(len(durations)):
+        #         start = res.get_var_solution(tasks[i]).start
+        #         start_times.append(start)
+        #     makespan = res.solution.get_objective_value()
+        #     return start_times, makespan
+        # else:
+        #     # for (s, t, lag) in self.end_end:
+        #     #     e_s = scheduled_start_times[s] + durations[s] if scheduled_start_times[s] >= 0 else 'unknown'
+        #     #     e_t = scheduled_start_times[t] + durations[t] if scheduled_start_times[t] >= 0 else 'unknown'
+        #     #     if e_s == 'unknown' or e_t == 'unknown':
+        #     #         continue
+        #     #     print(
+        #     #         f"original duration of task {s}: {self.modes[result_tasks[s].mode].duration}, "
+        #     #         f"original duration of task {t}: {self.modes[result_tasks[t].mode].duration}")
+        #     #     print(f"duration of task {s}: {durations[s]}, duration of task {t}: {durations[t]}")
+        #     #     print(f"EE constraint: end({s}) + {lag} <= end({t}) | end_s: {e_s}, end_t: {e_t}")
+        #     return None, np.inf
+
+
+
+
+
+    def sample_mode(self, mode, noise_factor):
         """
         Sample a mode for the tasks in the project.
         :param mode: The mode to sample.
+        :param noise_factor: The noise factor to apply to the bounds.
         :return: List of sampled durations.
         """
-        lower_bound, upper_bound = self.get_bounds()
+        lower_bound, upper_bound = self.get_bounds(noise_factor)
         if mode == "robust":
             durations = upper_bound
         elif mode == "mean":
@@ -750,4 +778,15 @@ class MMRCPSPGTL(MMRCPSP):
             real_durations.append(duration_sample[mode])
         return [int(duration) for duration in real_durations]
 
+    def get_deterministic_makespan(self):
+        """
+        Get the deterministic makespan for the tasks.
+        :return: makespan of the schedule.
+        """
+        model = self.create_model([task.duration for task in self.modes])
+        result = model.solve(time_limit=50000, display=False)
+        rt = result.best.tasks
+        if rt:
+            # print(rt)
+            print(f"Makespan: {result.best.makespan}")
 #TODO implement the other problem instances

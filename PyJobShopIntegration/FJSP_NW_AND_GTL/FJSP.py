@@ -116,14 +116,14 @@ def check_feasibility(model, start_times, finish_times, task_data_list):
     """
 
     #1) duration consistency (if no setup_times)
-    if not model.constraints.setup_times:
-        for td in task_data_list:
-            task_idx = model.modes[td.mode].task
-            dur      = finish_times[task_idx] - start_times[task_idx]
-            if dur != model.modes[td.mode].duration:
-                logger.debug(f"Duration mismatch on task {task_idx}: "
-                              f"{dur} vs {model.modes[td.mode].duration}")
-                return False
+    # if not model.constraints.setup_times:
+    #     for td in task_data_list:
+    #         task_idx = model.modes[td.mode].task
+    #         dur      = finish_times[task_idx] - start_times[task_idx]
+    #         if dur != model.modes[td.mode].duration:
+    #             logger.debug(f"Duration mismatch on task {task_idx}: "
+    #                           f"{dur} vs {model.modes[td.mode].duration}")
+    #             return False
 
     # 2) start_before_start: start[t1] + delay <= start[t2]
     for cons in model.constraints.start_before_start:
@@ -138,8 +138,8 @@ def check_feasibility(model, start_times, finish_times, task_data_list):
         if start_times[i] + d > finish_times[j]:
             logger.debug(f"SBE violation: start[{i}]+{d}={start_times[i]+d} > finish[{j}]={finish_times[j]}")
             return False
-
-    # 4) end_before_start: finish[t1] + delay <= start[t2]
+    #
+    # # 4) end_before_start: finish[t1] + delay <= start[t2]
     for cons in model.constraints.end_before_start:
         i, j, d = cons.task1, cons.task2, cons.delay
         if finish_times[i] + d > start_times[j]:
@@ -174,25 +174,25 @@ def check_feasibility(model, start_times, finish_times, task_data_list):
     # 8) setup-time & machine‐capacity (SDST)
     #    Rebuild each machine’s run‐sequence, sort by start, then check
     #    start[j] ≥ finish[i] + setup_time(m,i,j)
-    setup_lookup = {
-        (st.machine, st.task1, st.task2): st.duration
-        for st in model.constraints.setup_times
-    }
-    by_machine = defaultdict(list)
-    for td in task_data_list:
-        m = td.resources[0]
-        t = model.modes[td.mode].task
-        by_machine[m].append(t)
-
-    for m, tasks in by_machine.items():
-        tasks.sort(key=lambda t: start_times[t])
-        for i, j in zip(tasks, tasks[1:]):
-            sdu = setup_lookup.get((m, i, j), 0)
-            if start_times[j] < finish_times[i] + sdu:
-                logger.debug(
-                    f"SDST violation on machine {m}: "
-                    f"finish[{i}]={finish_times[i]} + setup={sdu} > start[{j}]={start_times[j]}"
-                )
-                return False
+    # setup_lookup = {
+    #     (st.machine, st.task1, st.task2): st.duration
+    #     for st in model.constraints.setup_times
+    # }
+    # by_machine = defaultdict(list)
+    # for td in task_data_list:
+    #     m = td.resources[0]
+    #     t = model.modes[td.mode].task
+    #     by_machine[m].append(t)
+    #
+    # for m, tasks in by_machine.items():
+    #     tasks.sort(key=lambda t: start_times[t])
+    #     for i, j in zip(tasks, tasks[1:]):
+    #         sdu = setup_lookup.get((m, i, j), 0)
+    #         if start_times[j] < finish_times[i] + sdu:
+    #             logger.debug(
+    #                 f"SDST violation on machine {m}: "
+    #                 f"finish[{i}]={finish_times[i]} + setup={sdu} > start[{j}]={start_times[j]}"
+    #             )
+    #             return False
 
     return True

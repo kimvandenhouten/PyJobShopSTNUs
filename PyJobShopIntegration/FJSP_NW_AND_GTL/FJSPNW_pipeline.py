@@ -10,7 +10,8 @@ import general.logger
 from datetime import datetime
 
 from PyJobShopIntegration.FJSP_NW_AND_GTL.FJSP import FJSP
-from PyJobShopIntegration.FJSP_NW_AND_GTL.scheduling_approaches.proactive import run_proactive_offline, run_proactive_online_direct
+from PyJobShopIntegration.FJSP_NW_AND_GTL.scheduling_approaches.proactive import run_proactive_offline, \
+    run_proactive_online_direct, run_proactive_online_cp
 from PyJobShopIntegration.FJSP_NW_AND_GTL.scheduling_approaches.reactive import run_reactive_online, run_reactive_offline
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.parser import create_instance
@@ -31,9 +32,9 @@ dir_path = Path(__file__).resolve().parent.parent
 logger = general.logger.get_logger(__name__)
 
 # Configuration
-DATA_ROOT = os.path.join(dir_path, "data", "fjsp", "fattahi")
-IMAGES_ROOT = os.path.join(dir_path, "images", "fjsp")
-PROBLEM_TYPE = "fjsp"
+DATA_ROOT = os.path.join(dir_path, "data", "fjspnw", "fattahi")
+IMAGES_ROOT = os.path.join(dir_path, "images", "fjspnw")
+PROBLEM_TYPE = "fjspnw"
 NOISE_FACTORS = [1.0, 2.0]
 stnu_time_limit = 10000
 proactive_time_limit = 10000
@@ -41,7 +42,7 @@ reactive_offline_time_limit = 10000
 time_limit_rescheduling = 10000
 proactive_mode = 'quantile_0.9'
 reactive_mode = 'quantile_0.9'
-number_samples = 50
+number_samples = 5
 methods = ('stnu', 'proactive', 'reactive')
 
 # Timestamp for results
@@ -67,7 +68,7 @@ for noise in NOISE_FACTORS:
         if 'proactive' in methods:
             # --- Offline phase: CP solver ---
             logger.info(f"---------------------PROACTIVE APPROACH---------------------")
-            model = create_instance(instance_path, PROBLEM_TYPE, 0)
+            model = create_instance(instance_path, PROBLEM_TYPE, False)
             fjsp_instance = FJSP(model)
             data_dict_offline, result = run_proactive_offline(fjsp_instance, noise, proactive_time_limit, proactive_mode)
             logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
@@ -76,7 +77,7 @@ for noise in NOISE_FACTORS:
             real_durations = np.atleast_2d(real_durations)
             # --- Online phase: sampling + execution ---
             for i, duration_sample in enumerate(real_durations):
-                data_dict_proactive = run_proactive_online_direct(duration_sample=duration_sample, data_dict=data_dict_offline, fjsp_instance=fjsp_instance, result=result)
+                data_dict_proactive = run_proactive_online_cp(duration_sample=duration_sample, data_dict=data_dict_offline, fjsp_instance=fjsp_instance, result=result)
                 data_to_csv(instance_folder=instance_name, solution=data_dict_proactive, output_file=output_file)
                 if data_dict_proactive["feasibility"]:
                     logger.info(f"Simulated makespan for {instance_name} noise {noise} sample {i}: {data_dict_proactive['obj']}")
@@ -85,7 +86,7 @@ for noise in NOISE_FACTORS:
         if 'reactive' in methods:
             # --- Offline phase: CP solver ---
             logger.info(f"---------------------REACTIVE APPROACH---------------------")
-            model = create_instance(instance_path, PROBLEM_TYPE, 0)
+            model = create_instance(instance_path, PROBLEM_TYPE, False)
             fjsp_instance = FJSP(model)
             data_dict_offline_reactive, result = run_reactive_offline(fjsp_instance, noise, reactive_offline_time_limit, reactive_mode)
             logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
@@ -106,26 +107,54 @@ for noise in NOISE_FACTORS:
         if 'stnu' in methods:
             logger.info(f"---------------------STNU APPROACH---------------------")
             # --- Offline phase: CP solver ---
-            model = create_instance(instance_path, PROBLEM_TYPE, 0)
+            # model = create_instance(instance_path, PROBLEM_TYPE, False)
+            # start_offline = time.time()
+            # result = model.solve(solver='cpoptimizer', display=False, time_limit=stnu_time_limit)
+            # finish_offline = time.time()
+            # solution = result.best
+            # logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
+            # fjsp = FJSP(model)
+            # duration_distributions = fjsp.duration_distributions(noise_factor=noise)
+            # stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
+            # stnu.add_resource_chains(solution, model)
+            #
+            # # Export XML for DC check
+            # xml_base = f"{instance_name}_noise{noise}"
+            # xml_dir = os.path.join(dir_path, "temporal_networks", "cstnu_tool", "xml_files")
+            # os.makedirs(xml_dir, exist_ok=True)
+            # stnu_to_xml(stnu, xml_base, xml_dir)
+            #
+            # # DC check
+            # dc, xml_out = run_dc_algorithm(xml_dir, xml_base)
+            # logger.info(f"dc: {dc} xml_out {xml_out}")
+            # logger.debug(f"DC result for {instance_name} noise {noise}: {dc}")
+            model = create_instance(instance_path, PROBLEM_TYPE, False)
             start_offline = time.time()
-            result = model.solve(solver='cpoptimizer', display=False, time_limit=stnu_time_limit)
+            # Solving
+            result = model.solve(solver='cpoptimizer', display=False)
             finish_offline = time.time()
             solution = result.best
             logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
             fjsp = FJSP(model)
+
+            ### HERE STARTS OUR CODE ###
+            # Define the stochastic processing time distributions
             duration_distributions = fjsp.duration_distributions(noise_factor=noise)
-            stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions, True, solution.tasks)
+
+            # Create stnu from concrete model
+            stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
+
+            # Add resource chains from solution to the stnu
             stnu.add_resource_chains(solution, model)
 
-            # Export XML for DC check
-            xml_base = f"{instance_name}_noise{noise}"
-            xml_dir = os.path.join(dir_path, "temporal_networks", "cstnu_tool", "xml_files")
-            os.makedirs(xml_dir, exist_ok=True)
-            stnu_to_xml(stnu, xml_base, xml_dir)
+            # Write stnu to xml which is required for using Java CSTNU tool algorithms
+            stnu_to_xml(stnu, f"{instance_name}_noise{noise}", os.path.join(dir_path, "temporal_networks", "cstnu_tool", "xml_files"))
 
-            # DC check
-            dc, xml_out = run_dc_algorithm(xml_dir, xml_base)
-            logger.debug(f"DC result for {instance_name} noise {noise}: {dc}")
+            # Run the DC algorithm using the Java CSTNU tool, the result is written to a xml file
+            dc, xml_out = run_dc_algorithm(os.path.join(dir_path, "temporal_networks", "cstnu_tool", "xml_files"),
+                                                   f"{instance_name}_noise{noise}",)
+
+            logger.info(f"dc: {dc}")
 
             # If not DC, record infeasible and skip reactive execution
             if not dc:

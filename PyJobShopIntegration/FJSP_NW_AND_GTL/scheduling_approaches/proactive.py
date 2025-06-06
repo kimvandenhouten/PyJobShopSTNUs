@@ -80,26 +80,26 @@ def update_dict(data_dict, durations, result, time_offline):
         data_dict["start_times"] = start_times
 
 
-# def run_proactive_online_cp(duration_sample, data_dict, result, fjsp_instance):
-#     data = copy.deepcopy(data_dict)
-#     data["real_durations"] = str(duration_sample)
-#
-#     # 3) Rebuild a Model with these new durations
-#     new_model = fjsp_instance.model_new_durations(duration_sample)
-#
-#     start_online = time.time()
-#     result_online = new_model.solve(
-#         display=False,
-#         initial_solution=result.best # warm start solver with previous solution
-#     )
-#     finish_online = time.time()
-#
-#     if result_online.status in {"Feasible", "Optimal"}:
-#         data["feasibility"] = True
-#         data["time_online"] = finish_online - start_online
-#         data["obj"] = result_online.objective
-#
-#     return data
+def run_proactive_online_cp(duration_sample, data_dict, result, fjsp_instance):
+    data = copy.deepcopy(data_dict)
+    data["real_durations"] = str(duration_sample)
+
+    # 3) Rebuild a Model with these new durations
+    new_model = fjsp_instance.model_new_durations(duration_sample)
+
+    start_online = time.time()
+    result_online = new_model.solve(
+        display=False,
+        initial_solution=result.best # warm start solver with previous solution
+    )
+    finish_online = time.time()
+
+    if result_online.status in {"Feasible", "Optimal"}:
+        data["feasibility"] = True
+        data["time_online"] = finish_online - start_online
+        data["obj"] = result_online.objective
+
+    return data
 
 def run_proactive_online_direct(duration_sample, data_dict, result, fjsp_instance):
     data = copy.deepcopy(data_dict)
@@ -128,6 +128,26 @@ def run_proactive_online_direct(duration_sample, data_dict, result, fjsp_instanc
         start_times = data_dict["start_times"]
         finish_times = [start_times[i] + duration_sample[i] for i in range(len(start_times))]
 
+    # ------------------------------------------------------------------
+    # FAST *no-wait* REPAIR  –  push each successor op forward so that
+    # start(successor) = finish(predecessor) whenever those two belong
+    # to the same job and are linked by an end-before-start (delay 0).
+    # ------------------------------------------------------------------
+    changed = True
+    while changed:  # iterate until no further shifts
+        changed = False
+        for cons in model.constraints.end_before_start:
+            if cons.delay != 0:  # only strict no-wait arcs
+                continue
+            i, j = cons.task1, cons.task2
+            fi = finish_times[i]
+            sj = start_times[j]
+            if sj < fi:  # successor starts too early
+                delta = fi - sj
+                start_times[j] += delta
+                finish_times[j] += delta
+                changed = True
+
     feasible = check_feasibility(
         model, start_times, finish_times, result.best.tasks
     )
@@ -137,4 +157,119 @@ def run_proactive_online_direct(duration_sample, data_dict, result, fjsp_instanc
         data["time_online"] = t1 - t0
         data["obj"]         = max(finish_times)
         data["feasibility"] = True
+        data["start_times"] = start_times
+        data["finish_times"] = finish_times
     return data
+
+# def run_proactive_online_direct(duration_sample, data_dict, result, fjsp_instance):
+#     t0 = time.time()
+#     data = copy.deepcopy(data_dict)
+#     data["real_durations"] = [int(x) for x in duration_sample]
+#
+#     model = fjsp_instance.model
+#     task_list = result.best.tasks  # baseline order
+#     n_tasks = len(model.tasks)
+#
+#     # ------------------------------------------------------------------
+#     # 1. helpers: predecessor map & per-machine baseline sequence
+#     # ------------------------------------------------------------------
+#     pred_map = defaultdict(list)  # task → list[(pred, delay, 'kind')]
+#     for e in model.constraints.end_before_start:
+#         pred_map[e.task2].append((e.task1, e.delay, 'EBS'))
+#     for s in model.constraints.start_before_start:
+#         pred_map[s.task2].append((s.task1, s.delay, 'SBS'))
+#     for s in model.constraints.start_before_end:
+#         pred_map[s.task2].append((s.task1, s.delay, 'SBE'))
+#     for e in model.constraints.end_before_end:
+#         pred_map[e.task2].append((e.task1, e.delay, 'EBE'))
+#
+#     seq_on_machine = defaultdict(list)  # machine → ordered [(task, mode)]
+#     for td in task_list:
+#         m = td.resources[0]
+#         seq_on_machine[m].append((model.modes[td.mode].task, td.mode))
+#
+#     setup = {(st.machine, st.task1, st.task2): st.duration
+#              for st in getattr(model.constraints, "setup_times", ())}
+#
+#     # ------------------------------------------------------------------
+#     # 2. build initial start / finish vectors
+#     # ------------------------------------------------------------------
+#     start = np.array(data_dict["start_times"], dtype=int)
+#     finish = start.copy()
+#     # duration_sample is per-mode; map it to the mode actually chosen
+#     for td in task_list:
+#         mode_idx = td.mode
+#         task_idx = model.modes[mode_idx].task
+#         real_dur = int(duration_sample[mode_idx])
+#         finish[task_idx] = start[task_idx] + real_dur
+#
+#     # ------------------------------------------------------------------
+#     # 3-A. machine-capacity + SDST repair
+#     # ------------------------------------------------------------------
+#     for m, chain in seq_on_machine.items():
+#         prev_task, prev_fin = None, 0
+#         for tk, md in chain:
+#             s = max(start[tk], prev_fin + setup.get((m, prev_task, tk), 0))
+#             if s > start[tk]:
+#                 delta = s - start[tk]
+#                 start[tk] += delta
+#                 finish[tk] += delta
+#             prev_task, prev_fin = tk, finish[tk]
+#
+#     # ------------------------------------------------------------------
+#     # 3-B. precedence / no-wait propagation  (bounded iterations)
+#     # ------------------------------------------------------------------
+#     for _ in range(n_tasks):  # upper bound in DAG
+#         changed = False
+#         for succ in range(n_tasks):
+#             for pred, dly, kind in pred_map[succ]:
+#                 if kind == 'EBS':  # finish(pred)+d ≤ start(succ)
+#                     needed = finish[pred] + dly
+#                     stamp = start[succ]
+#                 elif kind == 'SBS':  # start(pred)+d ≤ start(succ)
+#                     needed = start[pred] + dly
+#                     stamp = start[succ]
+#                 elif kind == 'SBE':  # start(pred)+d ≤ finish(succ)
+#                     needed = start[pred] + dly
+#                     stamp = finish[succ]
+#                 else:  # 'EBE'           # finish(pred)+d ≤ finish(succ)
+#                     needed = finish[pred] + dly
+#                     stamp = finish[succ]
+#
+#                 if stamp < needed:
+#                     delta = needed - stamp
+#                     start[succ] += delta
+#                     finish[succ] += delta
+#                     changed = True
+#         if not changed:
+#             break
+#     else:
+#         # exceeded max iterations → probably a cycle; mark infeasible
+#         logger.warning("Precedence propagation failed to converge.")
+#         data.update(time_online=time.time() - t0,
+#                     feasibility=False,
+#                     obj=np.inf)
+#         return data
+#
+#     # ------------------------------------------------------------------
+#     # 4. final feasibility check  (skip duration-equality)
+#     # ------------------------------------------------------------------
+#     feasible = check_feasibility(model,
+#                                  [int(x) for x in start],
+#                                  [int(x) for x in finish],
+#                                  task_list)
+#
+#     # ------------------------------------------------------------------
+#     # 5. fill record and return
+#     # ------------------------------------------------------------------
+#     data["time_online"] = time.time() - t0
+#     data["feasibility"] = bool(feasible)
+#
+#     if feasible:
+#         data["start_times"] = [int(x) for x in start]
+#         data["finish_times"] = [int(x) for x in finish]
+#         data["obj"] = int(finish.max())
+#     else:
+#         data["obj"] = np.inf
+#
+#     return data

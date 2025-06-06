@@ -365,13 +365,14 @@ def build_model_fjsp_nw(num_machines, data):
         for o_idx in range(len(ops)-1):
             model.add_end_before_start(
                 tasks[(j_idx, o_idx)],
-                tasks[(j_idx, o_idx + 1)]
+                tasks[(j_idx, o_idx + 1)],
+                0
             )
-            # model.add_start_before_end(
-            #     tasks[(j_idx, o_idx + 1)],
-            #     tasks[(j_idx, o_idx)],
-            #     0
-            # )
+            model.add_start_before_end(
+                tasks[(j_idx, o_idx + 1)],
+                tasks[(j_idx, o_idx)],
+                0
+            )
 
     return model
 

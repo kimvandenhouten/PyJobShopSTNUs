@@ -110,5 +110,11 @@ class PyJobShopSTNU(STNU):
                 delay = setup_delay.get((machine, first_idx, second_idx), 0)
                 # add constraint between predecessor and successor, with sequence dependent set up times this is a delay
                 self.set_ordinary_edge(suc_idx_start, pred_idx_finish, -delay)
+
+                # ---------- NEW: make start(succ) executable, controlled by finish(pred) ----------
+                # self.node_types[suc_idx_start] = self.EXECUTABLE_TP
+                # self.set_ordinary_edge(suc_idx_start, pred_idx_finish, 0)  # start ≤ finish
+                # self.set_ordinary_edge(pred_idx_finish, suc_idx_start, 0)  # finish ≤ start
+
                 if delay > 0:
                     logger.info(f"Resource {machine}: SDST {first_idx} → {second_idx} delay={delay}")

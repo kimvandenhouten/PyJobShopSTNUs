@@ -1,0 +1,2 @@
+instance_folder,noise_factor,method,time_limit,feasibility,obj,time_offline,time_online,start_times,real_durations
+MFJS1,1.0,proactive_quantile_0.9,10000,False,inf,0.5751216411590576,inf,"[0, 154, 292, 101, 326, 398, 75, 142, 254, 0, 71, 254, 154, 308, 401]","""[156 129 147 131 131 155 162 207 154  81  58 181  94  96  60 175 108 176\n 100 141  92  60 174 153 142 114 147 118  86  62  46 101  85]"""

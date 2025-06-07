@@ -46,7 +46,7 @@ mode_stnu = "robust"
 multimode = problem_type.startswith("mm")
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["j20"]
+INSTANCE_FOLDERS = ["j10, j20"]
 NOISE_FACTORS = [1, 2]
 nb_scenarios_test = 10
 proactive_reactive = True

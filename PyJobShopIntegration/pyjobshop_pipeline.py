@@ -220,7 +220,7 @@ for noise_factor in NOISE_FACTORS:
                         data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
                         logger.info(f'The network is not DC for sample{real_durations}')
     # Analyze the results perform statistical tests and create plots
-evaluate_results(now=now)
-# TODO potentially add this to evaluate_results for analysis
+evaluate_results(now=now)# TODO potentially add this to evaluate_results for analysis
+
 print(f"Number of infeasible samples: {infeasible_sample}")
 

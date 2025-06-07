@@ -6,13 +6,14 @@ from PyJobShopIntegration.hard_deadline_model_stnu_builder import (
     build_stnu_and_check,
 )
 import general.logger
+from PyJobShopIntegration.robustness_deadlines import run_one_setting
 
 logger = general.logger.get_logger(__name__)
 
 # -------------------------
 # PHASE 1: Load instance
 # -------------------------
-NUM_MACHINES, data = parse_data_fjsp("data/fjsp/kacem/Kacem3.fjs")
+NUM_MACHINES, data = parse_data_fjsp("data/fjsp/brandimarte/Mk01.fjs")
 num_jobs = len(data)
 
 # precompute nominal sums (not varying with uncertainty)
@@ -24,14 +25,14 @@ ub_sum_nominal = {
     j: sum(max(d for _, d in data[j][t]) for t in range(len(data[j])))
     for j in range(num_jobs)
 }
-
+print(lb_sum_nominal)
 # delta sweep
-step = 20
-max_delta = 400
+step = 50
+max_delta = 500
 deltas = list(range(0, max_delta + 1, step))
 
 # uncertainty levels to test
-variations = [0.0, 0.2, 0.5, 1.0, 2.0, 3.0]
+variations = [0.8, 1.5]
 
 # We'll collect one record per (variation, delta)
 records = []

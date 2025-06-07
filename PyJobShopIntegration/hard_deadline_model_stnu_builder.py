@@ -29,7 +29,7 @@ def get_distribution_bounds(model, data, variation: float):
             ds = [d for _, d in data[j][i]]
             nominal = min(ds)
             maximum = max(ds)
-            lb = nominal
+            lb = max(1, int(np.ceil(nominal * (1 - variation))))
             ub = int(np.ceil(maximum * (1 + variation)))
         else:
             # dummy tasks
@@ -136,8 +136,8 @@ def build_stnu_and_check(model, sol, tasks, job_deadlines, data, variation, xml_
             sampler=sampler,
             objective="makespan"
         )
-        sim_sol, _ = sim.run_once()
-        if sim_sol is None:
+        summary = sim.run_many(runs=500)
+        if summary is None:
             # RTE* said “infeasible sample”
             logger.warning("RTE* produced no schedule for one sample → marking as not controllable.")
             return False

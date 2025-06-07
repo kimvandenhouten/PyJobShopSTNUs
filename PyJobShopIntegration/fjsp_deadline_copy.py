@@ -21,7 +21,7 @@ import general.logger
 
 # Initialize logger
 logger = general.logger.get_logger(__name__)
-parsed_data = parse_data_fjsp("data/fjsp/kacem/Kacem3.fjs")
+parsed_data = parse_data_fjsp("data/fjsp/brandimarte/Mk01.fjs")
 
 # -------------------------
 # PHASE 1: Problem Definition
@@ -31,18 +31,10 @@ NUM_MACHINES = parsed_data[0]
 # For each job j, deadline = sum of its tasks’ minimal durations + 10
 data = parsed_data[1]
 num_jobs = len(data)
-delta_complement = 30
-job_deadlines = {0:7 + delta_complement,
-                 1:9 + delta_complement,
-                 2:7 + delta_complement,
-                 3:8 + delta_complement,
-                 4:8 + delta_complement,
-                 5 :9 + delta_complement,
-                 6:7 + delta_complement,
-                 7:11 + delta_complement,
-                 8:7 + delta_complement,
-                 9:8 + delta_complement
-                 }
+delta_complement = 62
+lb_job_deadlines = {0: 12, 1: 16, 2: 14, 3: 11, 4: 22, 5: 17, 6: 9, 7: 19, 8: 17, 9: 16}
+
+job_deadlines = {i : lb_job_deadlines[i] + delta_complement for i in range(num_jobs)}
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
@@ -52,7 +44,7 @@ if infeasible_jobs:
     print("[WARNING] Infeasible jobs found:")
     for job_idx, needed, deadline in infeasible_jobs:
         print(f" - Job {job_idx}: needs ≥ {needed}, deadline = {deadline}")
-w_e = 5
+w_e = 0
 w_t = 0
 is_soft_deadline = True
 model = Model()

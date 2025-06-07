@@ -1,5 +1,4 @@
 import numpy as np
-import re
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 
 
@@ -19,7 +18,7 @@ def get_distribution_bounds(model, data, variation: float):
             ds = [d for _, d in data[j][i]]
             nominal = min(ds)
             maximum = max(ds)
-            lb = nominal
+            lb = max(1, int(np.ceil(nominal * (1 - variation))))
             ub = int(np.ceil(maximum * (1 + variation)))
         else:
             # dummy tasks

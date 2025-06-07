@@ -50,7 +50,7 @@ def run_reactive_offline(instance, noise_factor=1, time_limit_initial=60, mode="
     # Find Initial Estimated Schedule
     logger.debug(f'Making initial schedule with durations {durations}')
     model = instance.create_model(durations)
-    result = model.solve(durations, time_limit=time_limit_initial, mode="Quiet")
+    result = model.solve(durations, time_limit=time_limit_initial, mode="Quiet", random_seed=42, num_search_workers=1)
     if result:
         start_times = [task.start for task in result.best.tasks]
         data_dict["estimated_durations"] = durations

@@ -1,4 +1,5 @@
 import copy
+import random
 import sys
 import os
 import datetime
@@ -23,6 +24,8 @@ from temporal_networks.stnu import STNU
 from PyJobShopIntegration.scheduling_methods.proactive_method import run_proactive_offline, run_proactive_online
 from PyJobShopIntegration.scheduling_methods.reactive_method import run_reactive_online
 
+random.seed(42)
+np.random.seed(45)
 logger = get_logger(__name__)
 # the problem type is passed as a command line argument e.g. python pyjobshop_pipeline.py mmrcpspd
 problem_type = sys.argv[-1]
@@ -43,7 +46,7 @@ mode_stnu = "robust"
 multimode = problem_type.startswith("mm")
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["j10", "j20"]
+INSTANCE_FOLDERS = ["j20"]
 NOISE_FACTORS = [1, 2]
 nb_scenarios_test = 10
 proactive_reactive = True
@@ -98,7 +101,6 @@ for noise_factor in NOISE_FACTORS:
                             print(duration_sample)
                             print(lb)
                             raise ValueError(f"Duration sample {duration} is lower than lower bound {lb[k]} for task {k}")
-
                     if real_durations == []:
                         logger.info("The solution is infeasible")
                     else:
@@ -115,7 +117,7 @@ for noise_factor in NOISE_FACTORS:
                 if stnu:
                     start_offline = time.time()
                     model = instance.create_model(instance.sample_mode(mode_stnu, noise_factor))
-                    result = model.solve(time_limit=5, display=False)
+                    result = model.solve(time_limit=5, display=False, random_seed=42, num_search_workers=1)
                     result_tasks = result.best.tasks
                     if result_tasks == []:
                         # print(f"Infeasible solution for duration sample: {duration_sample}, file: {file}, noise factor: {noise_factor}")

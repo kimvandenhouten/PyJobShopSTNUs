@@ -2,12 +2,11 @@ from typing import NamedTuple
 
 import numpy as np
 from docplex.cp.model import *
-from docplex.cp.solution import CpoModelSolution
 from pyjobshop import Model, MAX_VALUE, Task
 
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 
-
+np.random.seed(42)  # For reproducibility
 # Parent class of all instances, could include more important methods if needed
 class Instance():
 
@@ -667,7 +666,7 @@ class MMRCPSPGTL(MMRCPSP):
         #         model.add_start_hint(model.tasks[task_id], start_time)
 
         # Solve model
-        result = model.solve(time_limit=time_limit, display=False)
+        result = model.solve(time_limit=time_limit, display=False, random_seed=42, num_search_workers=1)
         rt = result.best.tasks
         # Extract start times and makespan
         if rt:
@@ -773,9 +772,14 @@ class MMRCPSPGTL(MMRCPSP):
         :return: List of real durations.
         """
         real_durations = []
+        # # Get the modes of the tasks
+        # result_tasks_mode = [task.mode for task in result_tasks]
+        # print(result_tasks_mode)
+        # print(duration_sample)
         for task in result_tasks:
             mode = task.mode
             real_durations.append(duration_sample[mode])
+        # print([int(duration) for duration in real_durations])
         return [int(duration) for duration in real_durations]
 
     def get_deterministic_makespan(self):
@@ -784,7 +788,7 @@ class MMRCPSPGTL(MMRCPSP):
         :return: makespan of the schedule.
         """
         model = self.create_model([task.duration for task in self.modes])
-        result = model.solve(time_limit=50000, display=False)
+        result = model.solve(time_limit=50000, display=False, random_seed=42, num_search_workers=1)
         rt = result.best.tasks
         if rt:
             # print(rt)

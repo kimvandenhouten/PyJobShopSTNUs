@@ -49,76 +49,76 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="nVertices">18</data>
 <data key="Name">Fattahi_setup_06_noise1.0.stnu</data>
 <node id="0_start">
-<data key="x">83</data>
-<data key="y">147</data>
+<data key="x">126</data>
+<data key="y">136</data>
 </node>
 <node id="0_finish">
-<data key="x">162</data>
-<data key="y">110</data>
+<data key="x">81</data>
+<data key="y">122</data>
 </node>
 <node id="1_start">
-<data key="x">89</data>
-<data key="y">194</data>
+<data key="x">181</data>
+<data key="y">172</data>
 </node>
 <node id="1_finish">
-<data key="x">175</data>
-<data key="y">75</data>
+<data key="x">197</data>
+<data key="y">166</data>
 </node>
 <node id="2_start">
-<data key="x">143</data>
-<data key="y">172</data>
+<data key="x">41</data>
+<data key="y">200</data>
 </node>
 <node id="2_finish">
-<data key="x">137</data>
-<data key="y">141</data>
+<data key="x">156</data>
+<data key="y">131</data>
 </node>
 <node id="3_start">
-<data key="x">105</data>
-<data key="y">147</data>
+<data key="x">96</data>
+<data key="y">87</data>
 </node>
 <node id="3_finish">
-<data key="x">182</data>
-<data key="y">186</data>
+<data key="x">115</data>
+<data key="y">131</data>
 </node>
 <node id="4_start">
-<data key="x">157</data>
-<data key="y">113</data>
+<data key="x">99</data>
+<data key="y">50</data>
 </node>
 <node id="4_finish">
-<data key="x">193</data>
-<data key="y">68</data>
+<data key="x">65</data>
+<data key="y">83</data>
 </node>
 <node id="5_start">
-<data key="x">133</data>
-<data key="y">109</data>
+<data key="x">75</data>
+<data key="y">159</data>
 </node>
 <node id="5_finish">
-<data key="x">89</data>
-<data key="y">59</data>
+<data key="x">95</data>
+<data key="y">191</data>
 </node>
 <node id="6_start">
-<data key="x">93</data>
-<data key="y">112</data>
+<data key="x">152</data>
+<data key="y">93</data>
 </node>
 <node id="6_finish">
-<data key="x">127</data>
-<data key="y">147</data>
+<data key="x">75</data>
+<data key="y">121</data>
 </node>
 <node id="7_start">
-<data key="x">187</data>
-<data key="y">92</data>
+<data key="x">188</data>
+<data key="y">101</data>
 </node>
 <node id="7_finish">
-<data key="x">119</data>
-<data key="y">198</data>
+<data key="x">77</data>
+<data key="y">97</data>
 </node>
 <node id="8_start">
-<data key="x">85</data>
-<data key="y">156</data>
+<data key="x">177</data>
+<data key="y">69</data>
 </node>
 <node id="8_finish">
-<data key="x">109</data>
-<data key="y">172</data>
+<data key="x">81</data>
+<data key="y">103</data>
 </node>
 <edge id="e0_start-0_finish" source="0_start" target="0_finish">
 <data key="Type">contingent</data>

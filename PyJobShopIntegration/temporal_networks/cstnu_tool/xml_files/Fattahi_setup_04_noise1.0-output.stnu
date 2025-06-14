@@ -49,56 +49,56 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="nVertices">13</data>
 <data key="Name">Fattahi_setup_04_noise1.0.stnu</data>
 <node id="0_start">
-<data key="x">92.0</data>
-<data key="y">105.0</data>
+<data key="x">63.0</data>
+<data key="y">164.0</data>
 </node>
 <node id="1_start">
-<data key="x">124.0</data>
+<data key="x">120.0</data>
 <data key="y">95.0</data>
 </node>
 <node id="3_start">
-<data key="x">124.0</data>
-<data key="y">148.0</data>
+<data key="x">59.0</data>
+<data key="y">95.0</data>
 </node>
 <node id="2_start">
-<data key="x">57.0</data>
-<data key="y">120.0</data>
+<data key="x">152.0</data>
+<data key="y">123.0</data>
 </node>
 <node id="Z">
 <data key="x">10.0</data>
 <data key="y">10.0</data>
 </node>
 <node id="4_start">
-<data key="x">61.0</data>
-<data key="y">183.0</data>
+<data key="x">191.0</data>
+<data key="y">184.0</data>
 </node>
 <node id="4_finish">
-<data key="x">115.0</data>
-<data key="y">52.0</data>
+<data key="x">107.0</data>
+<data key="y">122.0</data>
 </node>
 <node id="5_finish">
-<data key="x">86.0</data>
-<data key="y">183.0</data>
+<data key="x">65.0</data>
+<data key="y">196.0</data>
 </node>
 <node id="5_start">
-<data key="x">131.0</data>
-<data key="y">64.0</data>
+<data key="x">90.0</data>
+<data key="y">74.0</data>
 </node>
 <node id="0_finish">
-<data key="x">72.0</data>
-<data key="y">161.0</data>
+<data key="x">136.0</data>
+<data key="y">46.0</data>
 </node>
 <node id="1_finish">
-<data key="x">200.0</data>
-<data key="y">183.0</data>
+<data key="x">91.0</data>
+<data key="y">179.0</data>
 </node>
 <node id="3_finish">
-<data key="x">69.0</data>
-<data key="y">169.0</data>
+<data key="x">151.0</data>
+<data key="y">170.0</data>
 </node>
 <node id="2_finish">
-<data key="x">53.0</data>
-<data key="y">67.0</data>
+<data key="x">129.0</data>
+<data key="y">147.0</data>
 </node>
 <edge id="4_finish_Z" source="4_finish" target="Z">
 <data key="Type">derived</data>

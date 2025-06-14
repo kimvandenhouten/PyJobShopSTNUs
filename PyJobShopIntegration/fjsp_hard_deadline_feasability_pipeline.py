@@ -1,3 +1,6 @@
+import random
+
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from PyJobShopIntegration.parser import parse_data_fjsp
@@ -9,11 +12,12 @@ import general.logger
 from PyJobShopIntegration.robustness_deadlines import run_one_setting
 
 logger = general.logger.get_logger(__name__)
-
+SEED = 12345
+np.random.seed(SEED); random.seed(SEED)
 # -------------------------
 # PHASE 1: Load instance
 # -------------------------
-NUM_MACHINES, data = parse_data_fjsp("data/fjsp/brandimarte/Mk01.fjs")
+NUM_MACHINES, data = parse_data_fjsp("data/fjsp/kacem/Kacem3.fjs")
 num_jobs = len(data)
 
 # precompute nominal sums (not varying with uncertainty)
@@ -27,12 +31,12 @@ ub_sum_nominal = {
 }
 print(lb_sum_nominal)
 # delta sweep
-step = 50
+step = 10
 max_delta = 500
 deltas = list(range(0, max_delta + 1, step))
 
 # uncertainty levels to test
-variations = [0.8, 1.5]
+variations = [0, 0.1, 0.2, 0.5 , 0.8,  1.0, 2.0, 3.0]
 
 # We'll collect one record per (variation, delta)
 records = []
@@ -112,4 +116,18 @@ plt.title("Slack Δ* required vs. uncertainty")
 plt.grid(True)
 plt.tight_layout()
 plt.savefig("images/fjsp_deadlines/delta_star_vs_variation.png")
+plt.show()
+
+
+plt.figure(figsize=(8,5))
+for var in variations:
+    sub = df[df['variation'] == var]
+    plt.plot(sub['delta'], sub['cp_ok'], marker='o', label=f'α={var}')
+plt.xlabel('Slack Δ (tu)')
+plt.ylabel('CP Feasible (1) / Infeasible (0)')
+plt.title('CP Feasibility vs. Slack Δ for Different Uncertainty Levels')
+plt.legend(title='Duration variation', bbox_to_anchor=(1.05,1), loc='upper left')
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("images/fjsp_deadlines/cp_vs_variation.png")
 plt.show()

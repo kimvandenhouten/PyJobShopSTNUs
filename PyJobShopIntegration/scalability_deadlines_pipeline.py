@@ -1,4 +1,7 @@
+import random
 import time
+
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -17,7 +20,8 @@ import general.logger
 import copy
 
 logger = general.logger.get_logger(__name__)
-
+SEED = 12345
+np.random.seed(SEED); random.seed(SEED)
 instances = {
     "Kacem1": "data/fjsp/kacem/Kacem1.fjs",
     "Kacem2": "data/fjsp/kacem/Kacem2.fjs",

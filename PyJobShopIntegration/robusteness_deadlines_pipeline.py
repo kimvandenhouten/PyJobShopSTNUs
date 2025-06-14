@@ -1,3 +1,6 @@
+import random
+
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from PyJobShopIntegration.parser import parse_data_fjsp
@@ -5,7 +8,8 @@ import general.logger
 from PyJobShopIntegration.robustness_deadlines import run_one_setting
 
 logger = general.logger.get_logger(__name__)
-
+SEED = 12345
+np.random.seed(SEED); random.seed(SEED)
 # -------------------------
 # PHASE 1: Load instance
 # -------------------------

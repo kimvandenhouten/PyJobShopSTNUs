@@ -1,4 +1,6 @@
 import os
+import random
+
 import numpy as np
 from matplotlib import pyplot as plt
 from pyjobshop.Model import Model
@@ -6,7 +8,7 @@ from pyjobshop.plot import plot_machine_gantt
 
 from PyJobShopIntegration.deadline_utils import get_distribution_bounds
 from PyJobShopIntegration.parser import parse_data_fjsp
-from PyJobShopIntegration.plot_gantt_and_stats import plot_simulation_statistics
+from PyJobShopIntegration.plot_gantt_and_stats import plot_simulation_statistics, plot_simulation_gantt
 from PyJobShopIntegration.reactive_left_shift import group_shift_solution_resequenced
 from PyJobShopIntegration.simulator import Simulator
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
@@ -18,21 +20,21 @@ from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 from temporal_networks.stnu import STNU
 
 import general.logger
-
+SEED = 12345
+np.random.seed(SEED); random.seed(SEED)
 # Initialize logger
 logger = general.logger.get_logger(__name__)
-parsed_data = parse_data_fjsp("data/fjsp/brandimarte/Mk01.fjs")
+parsed_data = parse_data_fjsp("data/fjsp/kacem/Kacem3.fjs")
 
 # -------------------------
 # PHASE 1: Problem Definition
 # -------------------------
 NUM_MACHINES = parsed_data[0]
 
-# For each job j, deadline = sum of its tasks’ minimal durations + 10
 data = parsed_data[1]
 num_jobs = len(data)
-delta_complement = 62
-lb_job_deadlines = {0: 12, 1: 16, 2: 14, 3: 11, 4: 22, 5: 17, 6: 9, 7: 19, 8: 17, 9: 16}
+delta_complement = 45
+lb_job_deadlines = {0: 3, 1: 5, 2: 3, 3: 4, 4: 4, 5: 5, 6: 3, 7: 7, 8: 3, 9: 4}
 
 job_deadlines = {i : lb_job_deadlines[i] + delta_complement for i in range(num_jobs)}
 # -------------------------
@@ -86,8 +88,11 @@ for job_idx, job_data in enumerate(data):
 # Solve
 result = model.solve(solver='cpoptimizer',display=True)
 solution = result.best
+plot_simulation_gantt(solution, model)
 print(f"Objective value: {result.objective}")
+# Save the Gantt chart to a PNG file (or PDF if needed)
 solution = group_shift_solution_resequenced(solution, model)
+# Save it as image
 print("\n[DEBUG] Tasks after shifting:")
 for idx, task in enumerate(solution.tasks):
     task_name = model.tasks[idx].name if idx < len(model.tasks) else f"Task {idx}"
@@ -97,7 +102,7 @@ for idx, task in enumerate(solution.tasks):
 # PHASE 2: Prepare uncertainty sampler (same as main pipeline)
 # -------------------------
 # gather global min/max per real task
-duration_distributions = get_distribution_bounds(model, data, variation=0.8)
+duration_distributions = get_distribution_bounds(model, data, variation=0.6)
 
 # PHASE 3. Build the STNU
 stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)

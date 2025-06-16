@@ -2,7 +2,7 @@ import time
 import copy
 import numpy as np
 
-from FJSP_Mayte.FJSP import compute_finish_times
+from FJSP import compute_finish_times
 from general.logger import get_logger
 
 logger = get_logger(__name__)

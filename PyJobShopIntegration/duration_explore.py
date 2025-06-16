@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from FJSP_Mayte.FJSP import FJSP
+from FJSP import FJSP
 from parser import create_instance
 
 # ——— Configuration ———

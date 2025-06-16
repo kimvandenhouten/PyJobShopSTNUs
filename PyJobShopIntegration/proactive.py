@@ -1,10 +1,9 @@
 import time
 import copy
-from collections import defaultdict
 
 import numpy as np
 import general.logger
-from FJSP_Mayte.FJSP import compute_finish_times, check_feasibility
+from FJSP import compute_finish_times, check_feasibility
 
 logger = general.logger.get_logger(__name__)
 

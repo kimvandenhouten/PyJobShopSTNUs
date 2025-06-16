@@ -49,36 +49,36 @@ xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns/graphml">
 <data key="nVertices">8</data>
 <data key="Name">Fattahi_setup_02_noise2.0.stnu</data>
 <node id="0_start">
-<data key="x">174</data>
-<data key="y">79</data>
+<data key="x">78</data>
+<data key="y">50</data>
 </node>
 <node id="0_finish">
-<data key="x">118</data>
-<data key="y">92</data>
+<data key="x">109</data>
+<data key="y">165</data>
 </node>
 <node id="1_start">
-<data key="x">170</data>
-<data key="y">182</data>
+<data key="x">196</data>
+<data key="y">98</data>
 </node>
 <node id="1_finish">
-<data key="x">137</data>
-<data key="y">153</data>
-</node>
-<node id="2_start">
-<data key="x">149</data>
-<data key="y">171</data>
-</node>
-<node id="2_finish">
-<data key="x">47</data>
+<data key="x">91</data>
 <data key="y">175</data>
 </node>
+<node id="2_start">
+<data key="x">125</data>
+<data key="y">154</data>
+</node>
+<node id="2_finish">
+<data key="x">81</data>
+<data key="y">49</data>
+</node>
 <node id="3_start">
-<data key="x">115</data>
-<data key="y">183</data>
+<data key="x">135</data>
+<data key="y">40</data>
 </node>
 <node id="3_finish">
-<data key="x">164</data>
-<data key="y">176</data>
+<data key="x">145</data>
+<data key="y">64</data>
 </node>
 <edge id="e0_start-0_finish" source="0_start" target="0_finish">
 <data key="Type">contingent</data>

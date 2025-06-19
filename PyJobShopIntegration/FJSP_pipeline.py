@@ -35,13 +35,13 @@ DATA_ROOT = os.path.join(dir_path, "data", "fjsp_sdst", "fattahi")
 IMAGES_ROOT = os.path.join(dir_path, "images", "fjsp_sdst")
 PROBLEM_TYPE = "fjsp_sdst"
 NOISE_FACTORS = [1.0, 2.0]
-stnu_time_limit = 10000
-proactive_time_limit = 10000
-reactive_offline_time_limit = 10000
-time_limit_rescheduling = 7
+stnu_time_limit = 5000
+proactive_time_limit = 5000
+reactive_offline_time_limit = 5000
+time_limit_rescheduling = 5
 proactive_mode = ['quantile_0.9']
 reactive_mode = ['quantile_0.9']
-number_samples = 50
+number_samples = 10
 methods = ('proactive', 'stnu', 'reactive')
 
 # Timestamp for results

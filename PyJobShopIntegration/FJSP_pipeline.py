@@ -39,10 +39,10 @@ stnu_time_limit = 10000
 proactive_time_limit = 10000
 reactive_offline_time_limit = 10000
 time_limit_rescheduling = 7
-proactive_mode = ['robust', 'quantile_0.25', 'quantile_0.5', 'quantile_0.75', 'quantile_0.9']
-reactive_mode = ['mean', 'robust', 'quantile_0.25', 'quantile_0.5', 'quantile_0.75', 'quantile_0.9']
+proactive_mode = ['quantile_0.9']
+reactive_mode = ['quantile_0.9']
 number_samples = 50
-methods = ('proactive', 'reactive')
+methods = ('proactive', 'stnu', 'reactive')
 
 # Timestamp for results
 now = datetime.now().strftime("%m_%d_%Y,%H_%M")
@@ -56,14 +56,6 @@ all_files = sorted(os.listdir(DATA_ROOT))
 
 for noise in NOISE_FACTORS:
     for file_name in all_files:
-        instance_name = os.path.splitext(file_name)[0]
-
-        # Paths
-        instance_path = os.path.join(DATA_ROOT, file_name)
-        out_folder = os.path.join(IMAGES_ROOT, instance_name, f"noise_{noise}")
-        os.makedirs(out_folder, exist_ok=True)
-
-        logger.info(f"Processing {file_name} with noise factor {noise}")
         instance_name = os.path.splitext(file_name)[0]
 
         # Paths

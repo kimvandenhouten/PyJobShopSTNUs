@@ -39,8 +39,8 @@ stnu_time_limit = 5000
 proactive_time_limit = 5000
 reactive_offline_time_limit = 5000
 time_limit_rescheduling = 5
-proactive_mode = ['quantile_0.9']
-reactive_mode = ['quantile_0.9']
+proactive_mode = 'quantile_0.9'
+reactive_mode = 'quantile_0.9'
 number_samples = 10
 methods = ('proactive', 'stnu', 'reactive')
 
@@ -69,92 +69,93 @@ for noise in NOISE_FACTORS:
             logger.info(f"---------------------PROACTIVE APPROACH---------------------")
             model = create_instance(instance_path, PROBLEM_TYPE, PROBLEM_TYPE == "fjsp_sdst")
             fjsp_instance = FJSP(model)
-            for pmode in proactive_mode:
-                data_dict_offline, result = run_proactive_offline(fjsp_instance, noise, proactive_time_limit, pmode)
+            real_durations = fjsp_instance.duration_distributions(noise_factor=noise).sample(number_samples)
+            real_durations = np.atleast_2d(real_durations)
+            for i, duration_sample in enumerate(real_durations):
+                # --- Online phase: sampling + execution ---
+                data_dict_offline, result = run_proactive_offline(fjsp_instance, noise, proactive_time_limit, proactive_mode)
                 logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
                 # --- Online phase: sampling + execution ---
-                real_durations = fjsp_instance.duration_distributions(noise_factor=noise).sample(number_samples)
-                real_durations = np.atleast_2d(real_durations)
-                # --- Online phase: sampling + execution ---
-                for i, duration_sample in enumerate(real_durations):
-                    data_dict_proactive = run_proactive_online_direct(duration_sample=duration_sample, data_dict=data_dict_offline, fjsp_instance=fjsp_instance, result=result)
-                    data_to_csv(instance_folder=instance_name, solution=data_dict_proactive, output_file=output_file)
-                    if data_dict_proactive["feasibility"]:
-                        logger.info(f"Simulated makespan for {instance_name} noise {noise} sample {i}: {data_dict_proactive['obj']}")
-                    else:
-                        logger.info(f"Simulation for {instance_name} noise {noise} sample {i} is infeasible")
+                data_dict_proactive = run_proactive_online_direct(duration_sample=duration_sample, data_dict=data_dict_offline, fjsp_instance=fjsp_instance, result=result)
+                data_to_csv(instance_folder=instance_name, solution=data_dict_proactive, output_file=output_file)
+                if data_dict_proactive["feasibility"]:
+                    logger.info(f"Simulated makespan for {instance_name} noise {noise} sample {i}: {data_dict_proactive['obj']}")
+                else:
+                    logger.info(f"Simulation for {instance_name} noise {noise} sample {i} is infeasible")
         if 'reactive' in methods:
             # --- Offline phase: CP solver ---
             logger.info(f"---------------------REACTIVE APPROACH---------------------")
             model = create_instance(instance_path, PROBLEM_TYPE, PROBLEM_TYPE == "fjsp_sdst")
-            for rmode in reactive_mode:
-                fjsp_instance = FJSP(model)
-                data_dict_offline_reactive, result = run_reactive_offline(fjsp_instance, noise, reactive_offline_time_limit, rmode)
+            fjsp_instance = FJSP(model)
+            real_durations = fjsp_instance.duration_distributions(noise_factor=noise).sample(number_samples)
+            real_durations = np.atleast_2d(real_durations)
+            for i, duration_sample in enumerate(real_durations):
+                # --- Online phase: sampling + execution ---
+                data_dict_offline_reactive, result = run_reactive_offline(fjsp_instance, noise, reactive_offline_time_limit, reactive_mode)
                 logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
                 # --- Online phase: sampling + execution ---
-                real_durations = fjsp_instance.duration_distributions(noise_factor=noise).sample(number_samples)
-                real_durations = np.atleast_2d(real_durations)
-                # --- Online phase: sampling + execution ---
-                for i, duration_sample in enumerate(real_durations):
-                    data_dict_proactive = run_reactive_online(duration_sample=duration_sample,
-                                                                      data_dict=data_dict_offline_reactive,
-                                                                      fjsp_instance=fjsp_instance, result=result, time_limit_rescheduling=time_limit_rescheduling)
-                    data_to_csv(instance_folder=instance_name, solution=data_dict_proactive, output_file=output_file)
-                    if data_dict_proactive["feasibility"]:
-                        logger.info(
-                            f"Simulated makespan for {instance_name} noise {noise} sample {i}: {data_dict_proactive['obj']}")
-                    else:
-                        logger.info(f"Simulation for {instance_name} noise {noise} sample {i} is infeasible")
+
+                data_dict_proactive = run_reactive_online(duration_sample=duration_sample,
+                                                                  data_dict=data_dict_offline_reactive,
+                                                                  fjsp_instance=fjsp_instance, result=result, time_limit_rescheduling=time_limit_rescheduling)
+                data_to_csv(instance_folder=instance_name, solution=data_dict_proactive, output_file=output_file)
+                if data_dict_proactive["feasibility"]:
+                    logger.info(
+                        f"Simulated makespan for {instance_name} noise {noise} sample {i}: {data_dict_proactive['obj']}")
+                else:
+                    logger.info(f"Simulation for {instance_name} noise {noise} sample {i} is infeasible")
         if 'stnu' in methods:
             logger.info(f"---------------------STNU APPROACH---------------------")
             # --- Offline phase: CP solver ---
+
             model = create_instance(instance_path, PROBLEM_TYPE, PROBLEM_TYPE=="fjsp_sdst")
-            start_offline = time.time()
-            result = model.solve(solver='cpoptimizer', display=False, time_limit=stnu_time_limit)
-            finish_offline = time.time()
-            solution = result.best
-            logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
             fjsp = FJSP(model)
             duration_distributions = fjsp.duration_distributions(noise_factor=noise)
-            stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions, True, solution.tasks)
-            stnu.add_resource_chains(solution, model)
-
-            # Export XML for DC check
-            xml_base = f"{instance_name}_noise{noise}"
-            xml_dir = os.path.join(dir_path, "temporal_networks", "cstnu_tool", "xml_files")
-            os.makedirs(xml_dir, exist_ok=True)
-            stnu_to_xml(stnu, xml_base, xml_dir)
-
-            # DC check
-            dc, xml_out = run_dc_algorithm(xml_dir, xml_base)
-            logger.debug(f"DC result for {instance_name} noise {noise}: {dc}")
-
-            # If not DC, record infeasible and skip reactive execution
-            if not dc:
-                solution_record = {
-                    'method': 'stnu',
-                    'instance_folder': instance_name,
-                    'noise_factor': noise,
-                    'time_offline': finish_offline - start_offline,
-                    'time_online': 0.0,
-                    'obj': float('nan'),
-                    'feasibility': False,
-                    'start_times': {},
-                    'time_limit': stnu_time_limit,
-                    'real_durations': {}
-
-                }
-                data_to_csv(instance_folder=instance_name, solution=solution_record, output_file=str(output_file))
-                continue
-
             real_durations = duration_distributions.sample(number_samples)
             real_durations = np.atleast_2d(real_durations)
-            # --- Online phase: sampling + execution ---
+
+        # --- Online phase: sampling + execution ---
             for i, duration_sample in enumerate(real_durations):
+                start_offline = time.time()
+                result = model.solve(solver='cpoptimizer', display=False, time_limit=stnu_time_limit)
+                finish_offline = time.time()
+                solution = result.best
+                logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
+
+                stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions, True, solution.tasks)
+                stnu.add_resource_chains(solution, model)
+
+                # Export XML for DC check
+                xml_base = f"{instance_name}_noise{noise}"
+                xml_dir = os.path.join(dir_path, "temporal_networks", "cstnu_tool", "xml_files")
+                os.makedirs(xml_dir, exist_ok=True)
+                stnu_to_xml(stnu, xml_base, xml_dir)
+
+                # DC check
+                dc, xml_out = run_dc_algorithm(xml_dir, xml_base)
+                logger.debug(f"DC result for {instance_name} noise {noise}: {dc}")
+
+                # If not DC, record infeasible and skip reactive execution
+                if not dc:
+                    solution_record = {
+                        'method': 'stnu',
+                        'instance_folder': instance_name,
+                        'noise_factor': noise,
+                        'time_offline': finish_offline - start_offline,
+                        'time_online': 0.0,
+                        'obj': float('nan'),
+                        'feasibility': False,
+                        'start_times': {},
+                        'time_limit': stnu_time_limit,
+                        'real_durations': {}
+
+                    }
+                    data_to_csv(instance_folder=instance_name, solution=solution_record, output_file=str(output_file))
+
+                ## online
                 start_online = time.time()
                 estnu = STNU.from_graphml(xml_out)
-                real_durations = duration_distributions.sample()
-                sample = sample_for_rte(real_durations, estnu)
+                sample = sample_for_rte(duration_sample, estnu)
                 rte_data = rte_star(estnu, oracle='sample', sample=sample)
                 finish_online = time.time()
 

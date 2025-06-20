@@ -1,5 +1,6 @@
 import time
 import copy
+from collections import defaultdict
 
 import numpy as np
 import general.logger
@@ -100,36 +101,68 @@ def update_dict(data_dict, durations, result, time_offline):
 #
 #     return data
 
+def check_feasibility2(model, finish_times, start_times, solution, setup_times):
+    data = model.data()  # returns ProblemData
+
+    # # 1) Build mode_id → (task_id, machine_id) mapping
+    mode_to_task_machine = {
+        mode_index: (mode.task, mode.resources[0])
+        for mode_index, mode in enumerate(data.modes)
+    }
+
+    # 2) Precedence constraints with setup
+    for c in getattr(data.constraints, "end_before_start", []):
+        t1, t2, delay = c.task1, c.task2, c.delay
+        finish_t1 = finish_times[t1]
+        start_t2 = start_times[t2]
+
+        # Check if both use same machine
+        _, m1 = mode_to_task_machine[solution.tasks[t1].mode]
+        _, m2 = mode_to_task_machine[solution.tasks[t2].mode]
+        setup = setup_times.get((m1, t1, t2), 0) if m1 == m2 else 0
+
+        if finish_t1 + delay + setup > start_t2:
+            return False
+
+    # 3) SDST constraints per machine
+    tasks_on_machine = {}
+    for td in solution.tasks:
+        task_id, m = mode_to_task_machine[td.mode]
+        tasks_on_machine.setdefault(m, []).append((td.start, td.end, task_id))
+
+    for m, intervals in tasks_on_machine.items():
+        intervals.sort()
+        for (s1, e1, t1), (s2, e2, t2) in zip(intervals, intervals[1:]):
+            setup = setup_times.get((m, t1, t2), 0)
+            if e1 + setup > s2:
+                return False
+
+    return True
+
 def run_proactive_online_direct(duration_sample, data_dict, result, fjsp_instance):
     data = copy.deepcopy(data_dict)
     data["real_durations"] = str(duration_sample)
 
-    model   = fjsp_instance.model
-    n_tasks = len(model.tasks)
+    model = fjsp_instance.model
 
     # 2. build setup lookup
     setup_times = {
         (st.machine, st.task1, st.task2): st.duration
         for st in getattr(model.constraints, "setup_times", ())
     }
+    start_times = data["start_times"]
+    finish_times = [0] * len(start_times)
 
     # 3. recompute start/finish vectors
     t0 = time.time()
-    if (model.constraints.setup_times):
-        start_times, finish_times = compute_finish_times(
-            duration_sample=duration_sample,
-            task_data_list=result.best.tasks,
-            modes=model.modes,
-            n_tasks=n_tasks,
-            setup_times=setup_times
-        )
-    else:
-        start_times = data_dict["start_times"]
-        finish_times = [start_times[i] + duration_sample[i] for i in range(len(start_times))]
 
-    feasible = check_feasibility(
-        model, start_times, finish_times, result.best.tasks
-    )
+    for task_data in result.best.tasks:
+        mode_id = task_data.mode
+        task_id = model.modes[mode_id].task
+        duration = duration_sample[mode_id]
+        finish_times[task_id] = start_times[task_id] + duration
+
+    feasible = check_feasibility2(model, finish_times, start_times,result.best, setup_times)
     t1 = time.time()
 
     if feasible:

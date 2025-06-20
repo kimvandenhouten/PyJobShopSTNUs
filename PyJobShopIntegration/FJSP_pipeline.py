@@ -39,10 +39,10 @@ stnu_time_limit = 5000
 proactive_time_limit = 5000
 reactive_offline_time_limit = 5000
 time_limit_rescheduling = 5
-proactive_mode = 'quantile_0.9'
+proactive_mode = 'robust'
 reactive_mode = 'quantile_0.9'
 number_samples = 10
-methods = ('proactive', 'stnu', 'reactive')
+methods = ('proactive')
 
 # Timestamp for results
 now = datetime.now().strftime("%m_%d_%Y,%H_%M")
@@ -50,7 +50,6 @@ now = datetime.now().strftime("%m_%d_%Y,%H_%M")
 results_dir = get_project_root() / "PyJobShopIntegration" / "results"
 results_dir.mkdir(parents=True, exist_ok=True)
 output_file = results_dir / f"final_results_{now}.csv"
-
 
 all_files = sorted(os.listdir(DATA_ROOT))
 

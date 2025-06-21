@@ -42,7 +42,7 @@ time_limit_rescheduling = 5
 proactive_mode = 'robust'
 reactive_mode = 'quantile_0.9'
 number_samples = 10
-methods = ('proactive')
+methods = ('stnu')
 
 # Timestamp for results
 now = datetime.now().strftime("%m_%d_%Y,%H_%M")
@@ -56,6 +56,8 @@ all_files = sorted(os.listdir(DATA_ROOT))
 for noise in NOISE_FACTORS:
     for file_name in all_files:
         instance_name = os.path.splitext(file_name)[0]
+        if instance_name not in ("Fattahi_setup_20") and noise != 2:
+            continue
 
         # Paths
         instance_path = os.path.join(DATA_ROOT, file_name)

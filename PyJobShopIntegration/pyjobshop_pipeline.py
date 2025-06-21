@@ -74,6 +74,7 @@ for noise_factor in NOISE_FACTORS:
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
+            print(n)
             if n == 100:
                 break
             # Load data

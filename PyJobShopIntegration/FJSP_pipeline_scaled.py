@@ -42,7 +42,7 @@ time_limit_rescheduling = 5
 proactive_modes = ('robust', 'quantile_0.9')
 reactive_mode = 'quantile_0.9'
 number_samples = 10
-methods = ('proactive', 'stnu', 'reactive')
+methods = ('reactive')
 scales = (0.0, 0.25, 0.5, 0.75, 1.0)
 
 # Timestamp for results
@@ -101,7 +101,7 @@ for noise in NOISE_FACTORS:
 
                     data_dict_reactive= run_reactive_online(duration_sample=duration_sample,
                                                                       data_dict=data_dict_offline_reactive,
-                                                                      fjsp_instance=fjsp_instance, result=result, time_limit_rescheduling=time_limit_rescheduling)
+                                                                      fjsp_instance=fjsp_instance, result=result, time_limit=time_limit_rescheduling)
                     data_dict_reactive['scale'] = scale
                     data_to_csv(instance_folder=instance_name, solution=data_dict_reactive, output_file=output_file)
                     if data_dict_reactive["feasibility"]:

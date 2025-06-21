@@ -142,7 +142,7 @@ def run_reactive_online(fjsp_instance, duration_sample, data_dict, result, time_
     time_online = time.time() - t_online_start
 
     # finalize
-    if completed != set(range(n_tasks)):
+    if completed != set(range(n_tasks)) or result.status not in {"Feasible", "Optimal"}:
         # infeasible during online
         data['time_online'] = np.inf
         data['feasibility'] = False

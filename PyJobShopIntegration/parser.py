@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 from PyJobShopIntegration.problem_instances import *
@@ -6,7 +7,7 @@ from typing import NamedTuple
 
 
 
-def create_instance(file, problem_type, sdst=False):
+def create_instance(file, problem_type, sdst=False, scale=None):
     if problem_type.startswith("mmrcpsp"):
         return parse_data_rcpsp(file, problem_type)
 
@@ -16,7 +17,7 @@ def create_instance(file, problem_type, sdst=False):
         else:
             num_machines, data = parse_data_fjsp(file)
             sdst_matrix = None
-        return build_model_fjsp(num_machines, data, sdst_matrix)
+        return build_model_fjsp(num_machines, data, sdst_matrix, scale)
     else:
         raise ValueError(f"Unsupported problem type: {problem_type}")
 
@@ -222,7 +223,7 @@ def parse_data_fjsp_sdst(file_path):
 
             return num_machines, job_data, sdst
 
-def build_model_fjsp(num_machines, data, sdst_matrix=None):
+def build_model_fjsp(num_machines, data, sdst_matrix=None, scale=None):
     """
     Build a PyJobShop Model:
       - Adds machines, jobs, tasks, modes
@@ -264,11 +265,17 @@ def build_model_fjsp(num_machines, data, sdst_matrix=None):
             for j_idx, ops in enumerate(data)
             for o_idx in range(len(ops))
         ]
-
+        if scale is None:
+            scale = 1
         for m_idx, machine in enumerate(machines):
             for i, ti in enumerate(flat_tasks):
                 for j, tj in enumerate(flat_tasks):
                     setup_time = sdst_matrix[m_idx][i][j]
-                    model.add_setup_time(machine, ti, tj, duration=setup_time)
+                    if setup_time < 1000000:
+                        setup_time = setup_time * scale
+                        setup_time = math.ceil(setup_time)
+                        print(setup_time)
+                    if setup_time != 0:
+                        model.add_setup_time(machine, ti, tj, duration=setup_time)
 
     return model

@@ -274,7 +274,6 @@ def build_model_fjsp(num_machines, data, sdst_matrix=None, scale=None):
                     if setup_time < 1000000:
                         setup_time = setup_time * scale
                         setup_time = math.ceil(setup_time)
-                        print(setup_time)
                     if setup_time != 0:
                         model.add_setup_time(machine, ti, tj, duration=setup_time)
 

@@ -39,7 +39,7 @@ stnu_time_limit = 5000
 proactive_time_limit = 5000
 reactive_offline_time_limit = 5000
 time_limit_rescheduling = 5
-proactive_mode = 'robust'
+proactive_modes = ('robust', 'quantile_0.9')
 reactive_mode = 'quantile_0.9'
 number_samples = 10
 methods = ('proactive', 'stnu', 'reactive')
@@ -71,20 +71,21 @@ for noise in NOISE_FACTORS:
                 logger.info(f"---------------------PROACTIVE APPROACH---------------------")
                 model = create_instance(instance_path, PROBLEM_TYPE, PROBLEM_TYPE == "fjsp_sdst", scale)
                 fjsp_instance = FJSP(model)
-                real_durations = fjsp_instance.duration_distributions(noise_factor=noise).sample(number_samples)
-                real_durations = np.atleast_2d(real_durations)
-                for i, duration_sample in enumerate(real_durations):
-                    # --- Online phase: sampling + execution ---
-                    data_dict_offline, result = run_proactive_offline(fjsp_instance, noise, proactive_time_limit, proactive_mode)
-                    logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
-                    # --- Online phase: sampling + execution ---
-                    data_dict_proactive = run_proactive_online_direct(duration_sample=duration_sample, data_dict=data_dict_offline, fjsp_instance=fjsp_instance, result=result)
-                    data_dict_proactive['scale'] = scale
-                    data_to_csv(instance_folder=instance_name, solution=data_dict_proactive, output_file=output_file)
-                    if data_dict_proactive["feasibility"]:
-                        logger.info(f"Simulated makespan for {instance_name} noise {noise} sample {i}: {data_dict_proactive['obj']}")
-                    else:
-                        logger.info(f"Simulation for {instance_name} noise {noise} sample {i} is infeasible")
+                for proactive_mode in proactive_modes:
+                    real_durations = fjsp_instance.duration_distributions(noise_factor=noise).sample(number_samples)
+                    real_durations = np.atleast_2d(real_durations)
+                    for i, duration_sample in enumerate(real_durations):
+                        # --- Online phase: sampling + execution ---
+                        data_dict_offline, result = run_proactive_offline(fjsp_instance, noise, proactive_time_limit, proactive_mode)
+                        logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
+                        # --- Online phase: sampling + execution ---
+                        data_dict_proactive = run_proactive_online_direct(duration_sample=duration_sample, data_dict=data_dict_offline, fjsp_instance=fjsp_instance, result=result)
+                        data_dict_proactive['scale'] = scale
+                        data_to_csv(instance_folder=instance_name, solution=data_dict_proactive, output_file=output_file)
+                        if data_dict_proactive["feasibility"]:
+                            logger.info(f"Simulated makespan for {instance_name} noise {noise} sample {i}: {data_dict_proactive['obj']}")
+                        else:
+                            logger.info(f"Simulation for {instance_name} noise {noise} sample {i} is infeasible")
             if 'reactive' in methods:
                 # --- Offline phase: CP solver ---
                 logger.info(f"---------------------REACTIVE APPROACH---------------------")

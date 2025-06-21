@@ -514,10 +514,10 @@ class MMRCPSPGTL(MMRCPSP):
             model.add_start_before_start(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
         for end_arr in self.end_start:
             model.add_end_before_start(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
-        # for start_arr in self.start_end:
-        #     model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
-        # for end_arr in self.end_end:
-        #     model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
+        for start_arr in self.start_end:
+            model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+        for end_arr in self.end_end:
+            model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
         model.set_objective(
             weight_makespan=1,
         )
@@ -570,6 +570,19 @@ class MMRCPSPGTL(MMRCPSP):
         duration_feasible = self.check_duration_feasibility(start_times, finish_times, durations)
         precedence_feasible = self.check_precedence_feasibility(start_times, finish_times, self.successors)
         resource_feasible = self.check_resource_feasibility(start_times, durations, demands)
+        # Check the generalized time lags
+        for start_arr in self.start_start:
+            if start_times[start_arr[1]] < start_times[start_arr[0]] + start_arr[2]:
+                return False
+        for end_arr in self.end_start:
+            if finish_times[end_arr[1]] < start_times[end_arr[0]] + end_arr[2]:
+                return False
+        for start_arr in self.start_end:
+            if start_times[start_arr[1]] < finish_times[start_arr[0]] + start_arr[2]:
+                return False
+        for end_arr in self.end_end:
+            if finish_times[end_arr[1]] < finish_times[end_arr[0]] + end_arr[2]:
+                return False
         return duration_feasible and precedence_feasible and resource_feasible
     def get_sample_length(self):
         """
@@ -655,10 +668,10 @@ class MMRCPSPGTL(MMRCPSP):
             model.add_start_before_start(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
         for end_arr in self.end_start:
             model.add_end_before_start(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
-        # for start_arr in self.start_end:
-        #     model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
-        # for end_arr in self.end_end:
-        #     model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
+        for start_arr in self.start_end:
+            model.add_start_before_end(tasks[start_arr[0]], tasks[start_arr[1]], start_arr[2])
+        for end_arr in self.end_end:
+            model.add_end_before_end(tasks[end_arr[0]], tasks[end_arr[1]], end_arr[2])
         # TODO potentially implement the warm start solver with initial_solution
         # # Apply initial solution if provided
         # if initial_solution:

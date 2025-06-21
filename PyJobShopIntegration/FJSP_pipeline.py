@@ -42,7 +42,7 @@ time_limit_rescheduling = 5
 proactive_mode = 'robust'
 reactive_mode = 'quantile_0.9'
 number_samples = 10
-methods = ('stnu')
+methods = ('reactive')
 
 # Timestamp for results
 now = datetime.now().strftime("%m_%d_%Y,%H_%M")
@@ -56,9 +56,6 @@ all_files = sorted(os.listdir(DATA_ROOT))
 for noise in NOISE_FACTORS:
     for file_name in all_files:
         instance_name = os.path.splitext(file_name)[0]
-        if instance_name not in ("Fattahi_setup_20") and noise != 2:
-            continue
-
         # Paths
         instance_path = os.path.join(DATA_ROOT, file_name)
         out_folder = os.path.join(IMAGES_ROOT, instance_name, f"noise_{noise}")
@@ -98,7 +95,7 @@ for noise in NOISE_FACTORS:
 
                 data_dict_proactive = run_reactive_online(duration_sample=duration_sample,
                                                                   data_dict=data_dict_offline_reactive,
-                                                                  fjsp_instance=fjsp_instance, result=result, time_limit_rescheduling=time_limit_rescheduling)
+                                                                  fjsp_instance=fjsp_instance, result=result, time_limit=time_limit_rescheduling)
                 data_to_csv(instance_folder=instance_name, solution=data_dict_proactive, output_file=output_file)
                 if data_dict_proactive["feasibility"]:
                     logger.info(

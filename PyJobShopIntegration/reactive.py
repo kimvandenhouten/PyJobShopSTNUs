@@ -1,6 +1,7 @@
 import time
 import copy
 import numpy as np
+from pyjobshop import Model, Task
 
 from FJSP import compute_finish_times
 from general.logger import get_logger
@@ -58,101 +59,112 @@ def run_reactive_offline(fjsp_instance, noise, time_limit_initial=60, mode="mean
 
     return data_dict, result
 
+def run_reactive_online(
+    duration_sample: np.ndarray,
+    data_dict: dict,
+    fjsp_instance,
+    result,
+    time_limit: float
+) -> dict:
+    import time, copy
+    from pyjobshop import Model, Task
 
-def run_reactive_online(fjsp_instance, duration_sample, data_dict, result, time_limit_rescheduling):
-    # copy metadata
-    data = copy.deepcopy(data_dict)
-    data['real_durations'] = str(duration_sample)
-    data['time_limit'] = time_limit_rescheduling
+    data     = copy.deepcopy(data_dict)
+    data['time_limit'] = time_limit
+    orig_pd  = fjsp_instance.model.data()
+    pd_tasks = orig_pd.tasks
+    num_tasks= orig_pd.num_tasks
 
-    # prerequisites
-    est_starts = data.get('estimated_start_times')
-    if est_starts is None:
-        data['feasibility'] = False
-        return data
+    # true & estimated durations per mode
+    true_mode_durs = (
+        duration_sample
+        if isinstance(duration_sample, dict)
+        else {m: int(duration_sample[m]) for m in range(len(duration_sample))}
+    )
+    est_mode_durs = data.get('estimated_durations', {}).copy()
+    solver_calls  = data.get('solver_calls', 0)
 
-    n_tasks = len(est_starts)
-    completed = set()
-    scheduled = [-1] * n_tasks
-    solver_calls = data['solver_calls']
-    durations = data['estimated_durations'].copy()
+    # initial plan
+    current_res = result
+    committed   = {}    # task_idx -> (start_time, end_time)
+    completed   = set()
+    t0          = time.time()
 
-    t_online_start = time.time()
-    current_result = result
+    while len(completed) < num_tasks:
+        # 1) map TaskData → (task_idx, est_start, mode)
+        est_start = {}
+        task_mode = {}
+        for td in current_res.best.tasks:
+            m_idx = td.mode
+            t_idx = orig_pd.modes[m_idx].task
+            est_start[t_idx]  = td.start
+            task_mode[t_idx]  = m_idx
 
-    while len(completed) < n_tasks:
-        # 1) compute estimated and real finish times
-        if fjsp_instance.model.constraints.setup_times:
-            est_starts_vec, est_fin = compute_finish_times(
-                duration_sample=durations,
-                task_data_list=current_result.best.tasks,
-                modes=fjsp_instance.model.modes,
-                n_tasks=n_tasks,
-                setup_times={(st.machine, st.task1, st.task2): st.duration
-                             for st in fjsp_instance.model.constraints.setup_times}
-            )
-            _, real_fin = compute_finish_times(
-                duration_sample=duration_sample,
-                task_data_list=current_result.best.tasks,
-                modes=fjsp_instance.model.modes,
-                n_tasks=n_tasks,
-                setup_times={(st.machine, st.task1, st.task2): st.duration
-                             for st in fjsp_instance.model.constraints.setup_times}
-            )
-        else:
-            est_fin = [est_starts[i] + durations[i] for i in range(n_tasks)]
-            real_fin = [est_starts[i] + duration_sample[i] for i in range(n_tasks)]
+        # 2) compute real finish times
+        real_fin = {
+            i: est_start[i] + true_mode_durs[ task_mode[i] ]
+                for i in est_start if i not in committed
+        }
 
-        # 2) next completion
-        next_i = min((i for i in range(n_tasks) if i not in completed),
-                     key=lambda i: real_fin[i])
-        t_now = real_fin[next_i]
+        # 3) select next_i
+        next_i = min(real_fin, key=real_fin.get)
+        t_now  = real_fin[next_i]
+
+        # 4) commit only that one
+        st, en = est_start[next_i], t_now
+        committed[next_i] = (st, en)
         completed.add(next_i)
+        # update its estimated mode duration
+        est_mode_durs[ task_mode[next_i] ] = true_mode_durs[ task_mode[next_i] ]
 
-        # 3) fix all started tasks
-        for i, st in enumerate(est_starts):
-            if st < t_now:
-                scheduled[i] = st
+        # 5) build tasks: freeze only next_i
+        new_tasks = []
+        for idx, ot in enumerate(pd_tasks):
+            if idx == next_i:
+                nt = Task(
+                    job            = ot.job,
+                    earliest_start = st, latest_start = st,
+                    earliest_end   = en, latest_end   = en,
+                    fixed_duration = True,
+                    name           = ot.name
+                )
+            else:
+                nt = ot
+            new_tasks.append(nt)
 
-        # 4) check deviation
-        if est_fin[next_i] != real_fin[next_i]:
-            # update durations per mode: map each mode's .task to real duration
-            updated = durations.copy()
-            for m, mode in enumerate(fjsp_instance.model.modes):
-                updated[m] = duration_sample[mode.task]
-            durations = updated
 
-            # rebuild and re-solve
-            logger.debug(f"Rescheduling at t={t_now} with durations {durations}")
-            new_model = fjsp_instance.model_new_durations(durations)
-            current_result = new_model.solve(
-                solver='cpoptimizer',
-                time_limit=time_limit_rescheduling,
-                initial_solution=current_result.best,
-                display=False,
-                trace_log = False
-            )
-            solver_calls += 1
-            if not current_result:
-                data['feasibility'] = False
-                logger.info("Reactive online: reschedule infeasible.")
-                break
-            est_starts = [task.start for task in current_result.best.tasks]
+        # 6) rebuild & solve
+        dur_model  = fjsp_instance.model_new_durations(est_mode_durs)
+        pd2        = dur_model.data().replace(tasks=new_tasks)
+        model2     = Model.from_data(pd2)
+        current_res= model2.solve(
+            solver     = 'cpoptimizer',
+            time_limit = time_limit,
+            display    = False
+        )
+        solver_calls += 1
 
-    time_online = time.time() - t_online_start
+        if not current_res or current_res.status not in ('Feasible', 'Optimal'):
+            data['feasibility'] = False
+            break
 
     # finalize
-    if completed != set(range(n_tasks)) or result.status not in {"Feasible", "Optimal"}:
-        # infeasible during online
-        data['time_online'] = np.inf
-        data['feasibility'] = False
-        data['obj'] = np.inf
+    t_online = time.time() - t0
+    ok = len(completed) == num_tasks and current_res.status in ('Feasible', 'Optimal')
+    if not ok:
+        data.update({
+            'time_online': float('inf'),
+            'time_limit':  time_limit,
+            'feasibility': False,
+            'obj':         float('inf')
+        })
     else:
-        data['time_online'] = time_online
-        data['solver_calls'] = solver_calls
-        data['start_times'] = est_starts
-        data['feasibility'] = True
-        # final makespan = max real finish
-        data['obj'] = max(real_fin)
-
+        data.update({
+            'time_online': t_online,
+            'solver_calls': solver_calls,
+            'time_limit':  time_limit,
+            'start_times': [committed[i][0] for i in range(num_tasks)],
+            'obj':         max(e for (_,e) in committed.values()),
+            'feasibility': True
+        })
     return data

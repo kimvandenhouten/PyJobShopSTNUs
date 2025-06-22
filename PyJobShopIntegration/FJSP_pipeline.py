@@ -62,7 +62,7 @@ for noise in NOISE_FACTORS:
         instance_path = os.path.join(DATA_ROOT, file_name)
         out_folder = os.path.join(IMAGES_ROOT, instance_name, f"noise_{noise}")
         os.makedirs(out_folder, exist_ok=True)
-        if noise == 1 and instance_name not in ('Fattahi_setup_20.fjs'):
+        if noise != 1 and instance_name not in ('Fattahi_setup_20.fjs'):
             continue
         logger.info(f"Processing {file_name} with noise factor {noise}")
         if 'proactive' in methods:
@@ -96,11 +96,11 @@ for noise in NOISE_FACTORS:
             #
             # for reactive_mode in reactive_modes:
                 # --- Online phase: sampling + execution ---
-
+            data_dict_offline_reactive, result = run_reactive_offline(fjsp_instance, noise,
+                                                                      reactive_offline_time_limit,
+                                                                      reactive_mode)
             for i, duration_sample in enumerate(real_durations):
-                data_dict_offline_reactive, result = run_reactive_offline(fjsp_instance, noise,
-                                                                          reactive_offline_time_limit,
-                                                                          reactive_mode)
+
                 logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective} for method {reactive_mode}")
 
                 # --- Online phase: sampling + execution ---

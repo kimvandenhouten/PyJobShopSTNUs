@@ -96,13 +96,14 @@ for noise in NOISE_FACTORS:
             #
             # for reactive_mode in reactive_modes:
                 # --- Online phase: sampling + execution ---
-            data_dict_offline_reactive, result = run_reactive_offline(fjsp_instance, noise,
-                                                                      reactive_offline_time_limit,
-                                                                      reactive_mode)
-            logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective}")
 
             for i, duration_sample in enumerate(real_durations):
-             # --- Online phase: sampling + execution ---
+                data_dict_offline_reactive, result = run_reactive_offline(fjsp_instance, noise,
+                                                                          reactive_offline_time_limit,
+                                                                          reactive_mode)
+                logger.info(f"CP deterministic makespan for {instance_name} noise {noise}: {result.objective} for method {reactive_mode}")
+
+                # --- Online phase: sampling + execution ---
                 data_dict_proactive = run_reactive_online(duration_sample=duration_sample,
                                                                   data_dict=data_dict_offline_reactive,
                                                                   fjsp_instance=fjsp_instance, result=result, time_limit=time_limit_rescheduling)

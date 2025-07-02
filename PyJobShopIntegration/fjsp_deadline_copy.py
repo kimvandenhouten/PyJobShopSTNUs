@@ -48,7 +48,7 @@ if infeasible_jobs:
         print(f" - Job {job_idx}: needs ≥ {needed}, deadline = {deadline}")
 w_e = 0
 w_t = 0
-is_soft_deadline = True
+is_soft_deadline = False
 model = Model()
 model.set_objective(
     weight_makespan=1,

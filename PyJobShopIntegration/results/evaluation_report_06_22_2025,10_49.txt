@@ -1,0 +1,68 @@
+
+=== Evaluating method: stnu ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 26.08850
+  • Var Makespan       : 31.90281
+  • Avg Online Time    : 0.00568
+  • Var Online Time    : 0.00001
+  • Avg Offline Time   : 0.54726
+  • Var Offline Time   : 0.01255
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j10, Noise Factor: 2
+  • Avg Makespan       : 29.93151
+  • Var Makespan       : 47.75913
+  • Avg Online Time    : 0.00645
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.69165
+  • Var Offline Time   : 0.03995
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j20, Noise Factor: 1
+  • Avg Makespan       : 43.00000
+  • Var Makespan       : 39.85714
+  • Avg Online Time    : 0.02831
+  • Var Online Time    : 0.00007
+  • Avg Offline Time   : 0.82823
+  • Var Offline Time   : 0.03088
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j20, Noise Factor: 2
+  • Avg Makespan       : 59.25000
+  • Var Makespan       : 119.92857
+  • Avg Online Time    : 0.03215
+  • Var Online Time    : 0.00003
+  • Avg Offline Time   : 0.88097
+  • Var Offline Time   : 0.13695
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Feasibility Summary by Method and Instance Folder ===
+
+=== Feasibility Summary ===
+                        count  sum   ratio
+method instance_folder                    
+stnu   j10               2000  186  0.0930
+       j20               2000   23  0.0115
+
+=== Feasibility Summary by Method, Instance Folder, and Noise Factor ===
+                                     count  sum  ratio
+method instance_folder noise_factor                   
+stnu   j10             1              1000  113  0.113
+                       2              1000   73  0.073
+       j20             1              1000   15  0.015
+                       2              1000    8  0.008
+
+=== Wilcoxon Test Results ===
+
+--- Metric: obj ---
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_online ---
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_offline ---
+stnu vs stnu: Not enough data for comparison

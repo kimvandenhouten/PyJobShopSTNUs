@@ -1,2 +1,0 @@
-instance_folder,noise_factor,method,time_limit,feasibility,obj,time_offline,time_online,start_times,real_durations
-j10,1,proactive_quantile_0.9,600,False,inf,0.06430244445800781,inf,"[0, 0, 0, 12, 1, 9, 17, 14, 25, 25, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 69]","""[0, 1, 2, 2, 10, 3, 10, 1, 9, 3, 4, 70, 66, 45, 53, 15, 50, 37, 70, 33, 0]"""

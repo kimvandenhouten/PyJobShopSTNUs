@@ -1,5 +1,0 @@
-instance_folder,noise_factor,method,time_limit,feasibility,obj,time_offline,time_online,start_times,real_durations
-j10,1,proactive_robust,600,False,inf,0.07771635055541992,inf,"[0, 0, 0, 2, 7, 9, 13, 13, 24, 20, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70]","""[0, 6, 2, 12, 1, 1, 11, 8, 8, 4, 5, 70, 66, 45, 53, 15, 50, 37, 70, 33, 0]"""
-j10,1,reactive,600,False,inf,inf,inf,null,"[0, 6, 2, 12, 1, 1, 11, 8, 8, 4, 5, 70, 66, 45, 53, 15, 50, 37, 70, 33, 0]"
-j10,1,proactive_robust,600,False,inf,0.08478569984436035,inf,"[0, 0, 0, 2, 7, 9, 13, 13, 24, 20, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70]","""[0, 4, 2, 10, 2, 2, 12, 5, 11, 6, 8, 70, 66, 45, 53, 15, 50, 37, 70, 33, 0]"""
-j10,1,reactive,600,False,inf,inf,inf,null,"[0, 4, 2, 10, 2, 2, 12, 5, 11, 6, 8, 70, 66, 45, 53, 15, 50, 37, 70, 33, 0]"

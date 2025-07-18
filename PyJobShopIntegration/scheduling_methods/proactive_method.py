@@ -45,7 +45,7 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
         durations = ub
         logger.debug(f'Start solving upper bound schedule {durations}')
         model = instance.create_model(durations)
-        result = model.solve(time_limit=time_limit, display=False)
+        result = model.solve(time_limit=time_limit, display=False, random_seed=42, num_search_workers=1)
         if result:
             start_times = [task.start for task in result.best.tasks]
             estimated_durations = []
@@ -62,7 +62,7 @@ def run_proactive_offline(instance, noise_factor=1, time_limit=60, mode="robust"
             raise ValueError(f"Unsupported mode: {mode}")
         logger.debug(f'Start solving upper bound schedule {durations}')
         model = instance.create_model(durations)
-        result = model.solve(time_limit=time_limit, display=False)
+        result = model.solve(time_limit=time_limit, display=False, random_seed=42, num_search_workers=1)
         if result:
             print("Solution found proactively quantile")
             start_times = [task.start for task in result.best.tasks]

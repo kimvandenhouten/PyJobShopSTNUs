@@ -1,0 +1,186 @@
+
+=== Evaluating method: proactive_robust ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 36.41000
+  • Var Makespan       : 87.82973
+  • Avg Online Time    : 0.00029
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.05790
+  • Var Offline Time   : 0.00068
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j10, Noise Factor: 2
+  • Avg Makespan       : 42.46000
+  • Var Makespan       : 120.90931
+  • Avg Online Time    : 0.00029
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.06594
+  • Var Offline Time   : 0.00257
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j20, Noise Factor: 1
+  • Avg Makespan       : 58.36000
+  • Var Makespan       : 119.18959
+  • Avg Online Time    : 0.00044
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.13268
+  • Var Offline Time   : 0.01994
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j20, Noise Factor: 2
+  • Avg Makespan       : 67.44000
+  • Var Makespan       : 153.94034
+  • Avg Online Time    : 0.00044
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.27079
+  • Var Offline Time   : 0.53437
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Evaluating method: reactive ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 34.29300
+  • Var Makespan       : 78.34349
+  • Avg Online Time    : 0.08865
+  • Var Online Time    : 0.00045
+  • Avg Offline Time   : 0.05790
+  • Var Offline Time   : 0.00068
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j10, Noise Factor: 2
+  • Avg Makespan       : 38.58900
+  • Var Makespan       : 110.45253
+  • Avg Online Time    : 0.09811
+  • Var Online Time    : 0.00037
+  • Avg Offline Time   : 0.06594
+  • Var Offline Time   : 0.00257
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j20, Noise Factor: 1
+  • Avg Makespan       : 56.40100
+  • Var Makespan       : 112.60881
+  • Avg Online Time    : 0.28651
+  • Var Online Time    : 0.00553
+  • Avg Offline Time   : 0.13268
+  • Var Offline Time   : 0.01994
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j20, Noise Factor: 2
+  • Avg Makespan       : 63.80100
+  • Var Makespan       : 139.50490
+  • Avg Online Time    : 0.30884
+  • Var Online Time    : 0.00564
+  • Avg Offline Time   : 0.27079
+  • Var Offline Time   : 0.53437
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Evaluating method: stnu ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 28.22000
+  • Var Makespan       : 44.65225
+  • Avg Online Time    : 0.00832
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.55734
+  • Var Offline Time   : 0.00239
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j10, Noise Factor: 2
+  • Avg Makespan       : 30.52800
+  • Var Makespan       : 60.05527
+  • Avg Online Time    : 0.00829
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.56468
+  • Var Offline Time   : 0.00420
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j20, Noise Factor: 1
+  • Avg Makespan       : 46.73200
+  • Var Makespan       : 63.87005
+  • Avg Online Time    : 0.03470
+  • Var Online Time    : 0.00001
+  • Avg Offline Time   : 0.77019
+  • Var Offline Time   : 0.01841
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: j20, Noise Factor: 2
+  • Avg Makespan       : 50.11800
+  • Var Makespan       : 69.87595
+  • Avg Online Time    : 0.03451
+  • Var Online Time    : 0.00001
+  • Avg Offline Time   : 0.88751
+  • Var Offline Time   : 0.41620
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Feasibility Summary by Method and Instance Folder ===
+
+=== Feasibility Summary ===
+                                  count   sum  ratio
+method           instance_folder                    
+proactive_robust j10               2000  2000    1.0
+                 j20               2000  2000    1.0
+reactive         j10               2000  2000    1.0
+                 j20               2000  2000    1.0
+stnu             j10               2000  2000    1.0
+                 j20               2000  2000    1.0
+
+=== Feasibility Summary by Method, Instance Folder, and Noise Factor ===
+                                               count   sum  ratio
+method           instance_folder noise_factor                    
+proactive_robust j10             1              1000  1000    1.0
+                                 2              1000  1000    1.0
+                 j20             1              1000  1000    1.0
+                                 2              1000  1000    1.0
+reactive         j10             1              1000  1000    1.0
+                                 2              1000  1000    1.0
+                 j20             1              1000  1000    1.0
+                                 2              1000  1000    1.0
+stnu             j10             1              1000  1000    1.0
+                                 2              1000  1000    1.0
+                 j20             1              1000  1000    1.0
+                                 2              1000  1000    1.0
+
+=== Wilcoxon Test Results ===
+
+--- Metric: obj ---
+proactive_robust vs proactive_robust: Not enough data for comparison
+proactive_robust vs reactive: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 0, sum_neg_ranks = 7874740.0, n_pairs = 4000
+proactive_robust vs stnu: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 0, sum_neg_ranks = 8000919.0, n_pairs = 4000
+reactive vs proactive_robust: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 7874740.0, sum_neg_ranks = 0, n_pairs = 4000
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 6117.5, sum_neg_ranks = 7978862.5, n_pairs = 4000
+stnu vs proactive_robust: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 8000919.0, sum_neg_ranks = 0, n_pairs = 4000
+stnu vs reactive: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 7978862.5, sum_neg_ranks = 6117.5, n_pairs = 4000
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_online ---
+proactive_robust vs proactive_robust: Not enough data for comparison
+proactive_robust vs reactive: p-value = 0.00000, significant = True, better = proactive_robust, sum_pos_ranks = 8002000.0, sum_neg_ranks = 0, n_pairs = 4000
+proactive_robust vs stnu: p-value = 0.00000, significant = True, better = proactive_robust, sum_pos_ranks = 8002000.0, sum_neg_ranks = 0, n_pairs = 4000
+reactive vs proactive_robust: p-value = 0.00000, significant = True, better = proactive_robust, sum_pos_ranks = 0, sum_neg_ranks = 8002000.0, n_pairs = 4000
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 0, sum_neg_ranks = 8002000.0, n_pairs = 4000
+stnu vs proactive_robust: p-value = 0.00000, significant = True, better = proactive_robust, sum_pos_ranks = 0, sum_neg_ranks = 8002000.0, n_pairs = 4000
+stnu vs reactive: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 8002000.0, sum_neg_ranks = 0, n_pairs = 4000
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_offline ---
+proactive_robust vs proactive_robust: Not enough data for comparison
+proactive_robust vs reactive: Not enough data for comparison
+proactive_robust vs stnu: p-value = 0.00000, significant = True, better = proactive_robust, sum_pos_ranks = 7997880.0, sum_neg_ranks = 4120.0, n_pairs = 4000
+reactive vs proactive_robust: Not enough data for comparison
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 7997880.0, sum_neg_ranks = 4120.0, n_pairs = 4000
+stnu vs proactive_robust: p-value = 0.00000, significant = True, better = proactive_robust, sum_pos_ranks = 4120.0, sum_neg_ranks = 7997880.0, n_pairs = 4000
+stnu vs reactive: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 4120.0, sum_neg_ranks = 7997880.0, n_pairs = 4000
+stnu vs stnu: Not enough data for comparison

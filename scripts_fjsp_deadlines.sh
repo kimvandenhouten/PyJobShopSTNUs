@@ -1,0 +1,6 @@
+pip install -r requirements.txt
+cd PyJobShopIntegration || return
+python3 fjsp_hard_deadline_feasability_pipeline.py
+python3 fjsp_deadline_copy.py
+python3 robusteness_deadlines_pipeline.py
+python3 scalability_deadlines_pipeline.py

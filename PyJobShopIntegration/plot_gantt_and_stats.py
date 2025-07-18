@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 from pyjobshop import Machine
 from pyjobshop.plot import plot_task_gantt, plot_machine_gantt, plot_resource_usage
-def plot_simulation_gantt(simulated_solution, model, filename=None, plot_type="auto", output_folder="PyJobShopIntegration/images"):
+def plot_simulation_gantt(simulated_solution, model, filename="fjsp_deadline.png", plot_type="auto", output_folder="images/fjsp_deadlines"):
     """
     Plot a Gantt chart based on the model type and simulation result.
 

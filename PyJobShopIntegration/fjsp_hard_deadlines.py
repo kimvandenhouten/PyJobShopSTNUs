@@ -1,4 +1,6 @@
 import os
+import random
+
 import numpy as np
 from matplotlib import pyplot as plt
 from pyjobshop.Model import Model
@@ -6,7 +8,7 @@ from pyjobshop.plot import plot_machine_gantt
 
 from PyJobShopIntegration.deadline_utils import get_distribution_bounds
 from PyJobShopIntegration.parser import parse_data_fjsp
-from PyJobShopIntegration.plot_gantt_and_stats import plot_simulation_statistics
+from PyJobShopIntegration.plot_gantt_and_stats import plot_simulation_statistics, plot_simulation_gantt
 from PyJobShopIntegration.reactive_left_shift import group_shift_solution_resequenced
 from PyJobShopIntegration.simulator import Simulator
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
@@ -18,25 +20,23 @@ from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
 from temporal_networks.stnu import STNU
 
 import general.logger
-
+SEED = 12345
+np.random.seed(SEED); random.seed(SEED)
 # Initialize logger
 logger = general.logger.get_logger(__name__)
-parsed_data = parse_data_fjsp("data/fjsp/kacem/Kacem1.fjs")
+parsed_data = parse_data_fjsp("data/fjsp/kacem/Kacem3.fjs")
 
 # -------------------------
 # PHASE 1: Problem Definition
 # -------------------------
 NUM_MACHINES = parsed_data[0]
 
-# For each job j, deadline = sum of its tasks’ minimal durations + 10
 data = parsed_data[1]
 num_jobs = len(data)
+delta_complement = 45
+lb_job_deadlines = {0: 3, 1: 5, 2: 3, 3: 4, 4: 4, 5: 5, 6: 3, 7: 7, 8: 3, 9: 4}
 
-job_deadlines = {0:20,
-                 1:76,
-                 2:30,
-                 3:22
-                 }
+job_deadlines = {i : lb_job_deadlines[i] + delta_complement for i in range(num_jobs)}
 # -------------------------
 # PHASE 2: Build and Solve the CP Model
 # -------------------------
@@ -46,7 +46,7 @@ if infeasible_jobs:
     print("[WARNING] Infeasible jobs found:")
     for job_idx, needed, deadline in infeasible_jobs:
         print(f" - Job {job_idx}: needs ≥ {needed}, deadline = {deadline}")
-w_e = 3
+w_e = 0
 w_t = 0
 is_soft_deadline = False
 model = Model()
@@ -54,7 +54,6 @@ model.set_objective(
     weight_makespan=1,
     weight_total_earliness=w_e,
     weight_total_tardiness=w_t,
-    weight_max_lateness=1,
 )
 machines = [model.add_machine(name=f"Machine {idx}") for idx in range(NUM_MACHINES)]
 tasks = {}
@@ -87,10 +86,13 @@ for job_idx, job_data in enumerate(data):
         model.add_end_before_start(last_task, deadline_task)
 
 # Solve
-result = model.solve(display=True)
+result = model.solve(solver='cpoptimizer',display=True)
 solution = result.best
+plot_simulation_gantt(solution, model)
 print(f"Objective value: {result.objective}")
+# Save the Gantt chart to a PNG file (or PDF if needed)
 solution = group_shift_solution_resequenced(solution, model)
+# Save it as image
 print("\n[DEBUG] Tasks after shifting:")
 for idx, task in enumerate(solution.tasks):
     task_name = model.tasks[idx].name if idx < len(model.tasks) else f"Task {idx}"
@@ -100,18 +102,19 @@ for idx, task in enumerate(solution.tasks):
 # PHASE 2: Prepare uncertainty sampler (same as main pipeline)
 # -------------------------
 # gather global min/max per real task
-duration_distributions = get_distribution_bounds(model, data)
+duration_distributions = get_distribution_bounds(model, data, variation=0.6)
 
 # PHASE 3. Build the STNU
 stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
 stnu.add_resource_chains(solution, model)
+if not is_soft_deadline:
+    for job_idx, deadline in job_deadlines.items():
+        last_task = tasks[(job_idx, len(data[job_idx]) - 1)]
+        task_index = model.tasks.index(last_task)
+        finish_node = stnu.translation_dict_reversed[f"{task_index}_{STNU.EVENT_FINISH}"]
+        origin_node = STNU.ORIGIN_IDX
+        stnu.set_ordinary_edge(origin_node, finish_node, deadline)
 
-# Add deadline edges again:
-for job_idx, deadline in job_deadlines.items():
-    last_task = tasks[(job_idx, len(data[job_idx]) - 1)]
-    task_index = model.tasks.index(last_task)
-    finish_node = stnu.translation_dict_reversed[f"{task_index}_{STNU.EVENT_FINISH}"]
-    origin_node = STNU.ORIGIN_IDX
 # -------------------------
 # PHASE 4: Check Dynamic Controllability
 # -------------------------
@@ -131,8 +134,8 @@ else:
 if dc:
     estnu_for_sim = stnu
     sim = Simulator(model, stnu, solution, duration_distributions, objective="makespan")
-    summary = sim.run_many(runs=100)
-    logger.info(f"Deadline violations in {summary['total_runs']} runs: {summary['violations']}")
+    summary = sim.run_many(runs=500)
+    logger.info(f"Deadline violations percentage: {summary['violations'] / summary['total_runs']}")
     # -------------------------
     # Gantt Chart for First Run
     # -------------------------
@@ -143,7 +146,6 @@ if dc:
     plot_simulation_statistics(summary["makespans"], summary["violations"], summary["total_runs"])
 
 
-
 def run_soft_deadline_sweep(
     we_values: list[int],
     wt_values: list[int],
@@ -151,21 +153,21 @@ def run_soft_deadline_sweep(
     data, job_deadlines,
     num_machines: int,
     sampler: DiscreteUniformSampler,
-    sim_runs: int = 100
+    sim_runs: int = 500
 ):
-    results = []
+    # Precompute how many tasks each job has and the prefix sums
+    job_lengths = [len(job_data) for job_data in data]
+    prefixes = [0]
+    for ln in job_lengths[:-1]:
+        prefixes.append(prefixes[-1] + ln)
+    # Now prefixes[j] is the index of job j's first task in the flattened list
 
+    results = []
     for w_e in we_values:
         for w_t in wt_values:
-            # 1) Build & solve CP
+            # 1) Build & solve CP (no hard deadlines)
             model = model_factory()
-            model.set_objective(
-                weight_makespan=1,
-                weight_total_earliness=w_e,
-                weight_total_tardiness=w_t,
-                weight_max_lateness=0,
-            )
-            # add machines, tasks, precedences (no hard deadlines)
+            model.set_objective(1, w_e, w_t, 0)
             machines = [model.add_machine(f"M{i}") for i in range(num_machines)]
             tasks = {}
             for j, job_data in enumerate(data):
@@ -173,26 +175,24 @@ def run_soft_deadline_sweep(
                 for t_idx, opts in enumerate(job_data):
                     t = model.add_task(job, name=f"J{j}_T{t_idx}")
                     tasks[(j, t_idx)] = t
-                    for m,d in opts:
+                    for m, d in opts:
                         model.add_mode(t, machines[m], d)
                 for t_idx in range(len(job_data)-1):
-                    model.add_end_before_start(tasks[(j, t_idx)], tasks[(j, t_idx+1)])
-
-            res = model.solve(display=False)
+                    model.add_end_before_start(tasks[(j, t_idx)],
+                                               tasks[(j, t_idx+1)])
+            res = model.solve(solver='cpoptimizer', display=False)
             cp_time = res.runtime
             sol = res.best
             cp_makespan = res.objective
-            # 2) Build STNU (no DC check for soft‐deadline sweep)
+
+            # 2) Build STNU
             stnu = PyJobShopSTNU.from_concrete_model(model, sampler)
             stnu.add_resource_chains(sol, model)
 
-            # 3) Simulate sim_runs times
+            # 3) Simulate
             sim = Simulator(model, stnu, sol, sampler, objective="makespan")
-            sum_msp = 0
-            sum_tardy = 0
-            sum_earl  = 0
-            count_tardy = 0
-            count_earl  = 0
+            sum_msp = sum_tardy = sum_earl = 0
+            count_tardy = count_earl = 0
 
             for _ in range(sim_runs):
                 sim_sol, _ = sim.run_once()
@@ -201,38 +201,33 @@ def run_soft_deadline_sweep(
                 sum_msp += msp
 
                 # per‐job earliness/tardiness
-                for j in job_deadlines:
-                    # find the last real task of job j
-                    last_idx = len(data[j]) * j + (len(data[j]) - 1)
+                for j in range(len(data)):
+                    # find finish of last real task of job j
+                    last_idx = prefixes[j] + (job_lengths[j] - 1)
                     F = sim_sol.tasks[last_idx].end
                     D = job_deadlines[j]
-                    earl = max(0, D - F)
-                    tard = max(0, F - D)
-                    sum_earl  += earl
-                    sum_tardy += tard
-                    count_earl  += (earl > 0)
-                    count_tardy += (tard > 0)
+                    if F > D:
+                        count_tardy += 1
+                        sum_tardy   += (F - D)
+                    else:
+                        count_earl += 1
+                        sum_earl   += (D - F)
 
+            n = sim_runs * len(data)
             results.append({
-                "w_e":               w_e,
-                "w_t":               w_t,
-                "cp_makespan":       cp_makespan,
-                "cp_time":           cp_time,
-                "avg_makespan":      sum_msp / sim_runs,
-                "avg_tardiness":     sum_tardy / (sim_runs * len(job_deadlines)),
-                "p_tardy":           count_tardy / (sim_runs * len(job_deadlines)),
-                "avg_earliness":     sum_earl / (sim_runs * len(job_deadlines)),
-                "p_early":           count_earl  / (sim_runs * len(job_deadlines)),
+                "w_e":           w_e,
+                "w_t":           w_t,
+                "cp_makespan":   cp_makespan,
+                "cp_time":       cp_time,
+                "avg_makespan":  sum_msp / sim_runs,
+                "p_tardy":       count_tardy / n,
+                "avg_tardiness": sum_tardy   / n,
+                "p_early":       count_earl   / n,
+                "avg_earliness": sum_earl     / n,
             })
 
-            logger.info(
-                f"[w_e={w_e}] CP_ms={cp_makespan:.1f} t={cp_time:.2f}s "
-                f"→ make={results[-1]['avg_makespan']:.1f}, "
-                f"p_tardy={results[-1]['p_tardy']:.1%}, "
-                f"p_early={results[-1]['p_early']:.1%}"
-            )
-
     return results
+
 
 
 if __name__ == "__main__":
@@ -244,7 +239,7 @@ if __name__ == "__main__":
     we_values = [0, 1, 5, 10, 20, 50, 100]
     wt_values = [0,1,5,10,20,50,100]
     results = run_soft_deadline_sweep(
-        we_values, wt_values, make_model, data, job_deadlines, NUM_MACHINES, duration_distributions, sim_runs=100
+        we_values, wt_values, make_model, data, job_deadlines, NUM_MACHINES, duration_distributions, sim_runs=500
     )
     import pandas as pd
 
@@ -335,7 +330,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------
     # 3) Box‐plots of makespan distribution at key (w_e,w_t)
     # -----------------------------------------------------------------------------
-    def simulate_setting(we, wt, sim_runs=100):
+    def simulate_setting(we, wt, sim_runs=500):
         """ Re-run sim_runs and return list of makespans. """
         # rebuild & solve CP as in your sweep but only for one (we,wt)
         model = make_model()
@@ -351,7 +346,7 @@ if __name__ == "__main__":
                     model.add_mode(t, machines[m], d)
             for t_idx in range(len(job_data) - 1):
                 model.add_end_before_start(tasks[(j, t_idx)], tasks[(j, t_idx + 1)])
-        sol = model.solve(display=False).best
+        sol = model.solve(solver='cpoptimizer', display=False).best
 
         stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions)
         stnu.add_resource_chains(sol, model)
@@ -366,7 +361,7 @@ if __name__ == "__main__":
 
     # pick three settings
     settings = [(0, 0), (5, 0), (20, 0)]
-    box_data = {f"{we}/{wt}": simulate_setting(we, wt, sim_runs=100)
+    box_data = {f"{we}/{wt}": simulate_setting(we, wt, sim_runs=500)
                 for we, wt in settings}
 
     df_box = pd.DataFrame(box_data)
@@ -413,10 +408,10 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------
     # 5) Per‐job tardiness bar‐chart at two settings
     # -----------------------------------------------------------------------------
-    def per_job_p_tardy(we, wt, sim_runs=100):
+    def per_job_p_tardy(we, wt, sim_runs=50):
         """
         Return list of p_tardy per job for this (we,wt).
-        If is_soft_deadline=False, builds a HARD-deadline model.
+        If is_soft_deadline=False, builds a HARD‐deadline model.
         """
         # 1) Build & solve the CP model
         model = Model()
@@ -457,7 +452,7 @@ if __name__ == "__main__":
                 model.add_mode(d, deadline_res, duration=1)
                 model.add_end_before_start(last, d)
 
-        res = model.solve(display=False)
+        res = model.solve(solver='cpoptimizer', display=False)
         sol = res.best
 
         # 2) Build the STNU
@@ -472,6 +467,7 @@ if __name__ == "__main__":
                 task_index = model.tasks.index(last_task)
                 finish_node = stnu.translation_dict_reversed[f"{task_index}_{STNU.EVENT_FINISH}"]
                 origin_node = STNU.ORIGIN_IDX
+                stnu.set_ordinary_edge(origin_node, finish_node, deadline)
 
         # 3) Simulate runs
         sim = Simulator(model, stnu, sol, dist, objective="makespan")
@@ -484,9 +480,12 @@ if __name__ == "__main__":
                 continue
             successful += 1
             for j in range(num_jobs):
-                # finish of last real task for job j
-                idx = len(data[j]) * j + (len(data[j]) - 1)
-                F = sim_sol.tasks[idx].end
+                # find the CP‐task object for the last real task
+                last_task = tasks[(j, len(data[j]) - 1)]
+                # get its position in model.tasks
+                pos = model.tasks.index(last_task)
+                # now read the finish time from the simulated solution
+                F = sim_sol.tasks[pos].end
                 if F > job_deadlines[j]:
                     tardy_counts[j] += 1
 
@@ -495,9 +494,9 @@ if __name__ == "__main__":
 
     # compare (0,0) vs (5,0)
     # compare (0,0), (5,0) and (10,0)
-    p0 = per_job_p_tardy(0, 0, sim_runs=100)
-    p5 = per_job_p_tardy(5, 0, sim_runs=100)
-    p10 = per_job_p_tardy(10, 0, sim_runs=100)
+    p0 = per_job_p_tardy(0, 0, sim_runs=500)
+    p5 = per_job_p_tardy(5, 0, sim_runs=500)
+    p10 = per_job_p_tardy(10, 0, sim_runs=500)
 
     x = np.arange(num_jobs)
     width = 0.2  # narrower so three bars fit

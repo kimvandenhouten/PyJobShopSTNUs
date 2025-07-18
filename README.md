@@ -46,3 +46,27 @@ python3 aaai25/generate_tables/compare_two_methods_online_time_to_latex.py
 ```
 
 Note that Table 1 of the main paper "Proactive and Reactive Constraint Programming for Stochastic Project Scheduling with Maximal Time-Lags" shows a subset of the results in the tables that are output by the scripts above.
+
+
+
+## FJSP with Deadlines
+For running the paper experiments, the scripts_fjsp_deadlines.sh script could be used, the permissions have to be set via the command: 
+```
+chmod +x scripts_fjsp_deadlines.sh
+```
+Also, the docker container has to be running:
+first it has to be built via the command 
+```
+ docker build -t fjsp-deadlines:2211 .     
+```
+and then run via the command:
+
+```
+ docker run --platform=linux/amd64 \                                                                       
+  -v "$(pwd)":/workspace \
+  -w /workspace \
+  -it fjsp-deadlines:2211     
+```
+
+
+

@@ -1,0 +1,148 @@
+
+=== Evaluating method: stnu ===
+
+=== Method Evaluation Summary ===
+
+Instance: MFJS1, Noise Factor: 1.0
+  • Avg Makespan       : 43.00000
+  • Var Makespan       : 8.00000
+  • Avg Online Time    : 0.18196
+  • Var Online Time    : 0.00008
+  • Avg Offline Time   : 1.16566
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: MFJS2, Noise Factor: 1.0
+  • Avg Makespan       : 42.50000
+  • Var Makespan       : 40.50000
+  • Avg Online Time    : 0.16037
+  • Var Online Time    : 0.00003
+  • Avg Offline Time   : 2.85749
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: MFJS7, Noise Factor: 1.0
+  • Avg Makespan       : 91.00000
+  • Var Makespan       : 0.00000
+  • Avg Online Time    : 0.64376
+  • Var Online Time    : 0.01880
+  • Avg Offline Time   : 12.10487
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: SFJS1, Noise Factor: 1.0
+  • Avg Makespan       : 11.50000
+  • Var Makespan       : 0.50000
+  • Avg Online Time    : 0.03882
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 2.20060
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: SFJS10, Noise Factor: 1.0
+  • Avg Makespan       : 39.50000
+  • Var Makespan       : 0.50000
+  • Avg Online Time    : 0.13344
+  • Var Online Time    : 0.00002
+  • Avg Offline Time   : 2.31822
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: SFJS2, Noise Factor: 1.0
+  • Avg Makespan       : 13.00000
+  • Var Makespan       : 2.00000
+  • Avg Online Time    : 0.04014
+  • Var Online Time    : 0.00003
+  • Avg Offline Time   : 1.81476
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: SFJS3, Noise Factor: 1.0
+  • Avg Makespan       : 26.50000
+  • Var Makespan       : 0.50000
+  • Avg Online Time    : 0.07691
+  • Var Online Time    : 0.00076
+  • Avg Offline Time   : 2.33945
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: SFJS5, Noise Factor: 1.0
+  • Avg Makespan       : 24.00000
+  • Var Makespan       : 2.00000
+  • Avg Online Time    : 0.05608
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 3.52664
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: SFJS6, Noise Factor: 1.0
+  • Avg Makespan       : 35.00000
+  • Var Makespan       : 0.00000
+  • Avg Online Time    : 0.08213
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 1.88817
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: SFJS7, Noise Factor: 1.0
+  • Avg Makespan       : 24.50000
+  • Var Makespan       : 12.50000
+  • Avg Online Time    : 0.08469
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 11.24099
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: SFJS8, Noise Factor: 1.0
+  • Avg Makespan       : 28.50000
+  • Var Makespan       : 24.50000
+  • Avg Online Time    : 0.12953
+  • Var Online Time    : 0.00350
+  • Avg Offline Time   : 1.76667
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+Instance: SFJS9, Noise Factor: 1.0
+  • Avg Makespan       : 36.00000
+  • Var Makespan       : 50.00000
+  • Avg Online Time    : 0.08732
+  • Var Online Time    : 0.00002
+  • Avg Offline Time   : 1.97250
+  • Var Offline Time   : 0.00000
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Feasibility Summary ===
+                        count  sum  ratio
+method instance_folder                   
+stnu   MFJS1                2    2    1.0
+       MFJS10               1    0    0.0
+       MFJS2                2    2    1.0
+       MFJS3                1    0    0.0
+       MFJS4                1    0    0.0
+       MFJS5                1    0    0.0
+       MFJS6                1    0    0.0
+       MFJS7                2    2    1.0
+       MFJS8                1    0    0.0
+       MFJS9                1    0    0.0
+       SFJS1                2    2    1.0
+       SFJS10               2    2    1.0
+       SFJS2                2    2    1.0
+       SFJS3                2    2    1.0
+       SFJS4                1    0    0.0
+       SFJS5                2    2    1.0
+       SFJS6                2    2    1.0
+       SFJS7                2    2    1.0
+       SFJS8                2    2    1.0
+       SFJS9                2    2    1.0
+
+=== Wilcoxon Test Results ===
+
+--- Metric: obj ---
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_online ---
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_offline ---
+stnu vs stnu: Not enough data for comparison

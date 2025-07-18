@@ -4,13 +4,13 @@
 === Method Evaluation Summary ===
 
 Instance: j10, Noise Factor: 1
-  • Avg Makespan       : 27.27869
-  • Var Makespan       : 71.15454
-  • Avg Online Time    : 0.00048
-  • Var Online Time    : 0.00000
-  • Avg Offline Time   : 0.05250
-  • Var Offline Time   : 0.00010
-  • Feasibility Ratio  : 1.00000
+  â€¢ Avg Makespan       : 24.15510
+  â€¢ Var Makespan       : 44.61393
+  â€¢ Avg Online Time    : 0.00057
+  â€¢ Var Online Time    : 0.00000
+  â€¢ Avg Offline Time   : 0.05339
+  â€¢ Var Offline Time   : 0.00009
+  â€¢ Feasibility Ratio  : 1.00000
 ------------------------------------------------------------
 
 === Evaluating method: reactive ===
@@ -18,13 +18,13 @@ Instance: j10, Noise Factor: 1
 === Method Evaluation Summary ===
 
 Instance: j10, Noise Factor: 1
-  • Avg Makespan       : 28.08374
-  • Var Makespan       : 60.86919
-  • Avg Online Time    : 0.21790
-  • Var Online Time    : 0.00480
-  • Avg Offline Time   : 0.05270
-  • Var Offline Time   : 0.00009
-  • Feasibility Ratio  : 1.00000
+  â€¢ Avg Makespan       : 24.15510
+  â€¢ Var Makespan       : 44.61393
+  â€¢ Avg Online Time    : 0.00041
+  â€¢ Var Online Time    : 0.00000
+  â€¢ Avg Offline Time   : 0.05339
+  â€¢ Var Offline Time   : 0.00009
+  â€¢ Feasibility Ratio  : 1.00000
 ------------------------------------------------------------
 
 === Evaluating method: stnu ===
@@ -32,13 +32,13 @@ Instance: j10, Noise Factor: 1
 === Method Evaluation Summary ===
 
 Instance: j10, Noise Factor: 1
-  • Avg Makespan       : 24.76923
-  • Var Makespan       : 45.08823
-  • Avg Online Time    : 0.00527
-  • Var Online Time    : 0.00000
-  • Avg Offline Time   : 0.43557
-  • Var Offline Time   : 0.00087
-  • Feasibility Ratio  : 1.00000
+  â€¢ Avg Makespan       : 25.00000
+  â€¢ Var Makespan       : 44.37278
+  â€¢ Avg Online Time    : 0.00511
+  â€¢ Var Online Time    : 0.00000
+  â€¢ Avg Offline Time   : 0.44192
+  â€¢ Var Offline Time   : 0.00105
+  â€¢ Feasibility Ratio  : 1.00000
 ------------------------------------------------------------
 
 === Feasibility Summary ===

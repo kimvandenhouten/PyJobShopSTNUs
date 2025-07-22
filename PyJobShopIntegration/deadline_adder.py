@@ -87,4 +87,4 @@ def process_all_mm_files(input_dir, output_dir=None, seed=42):
                 print(f"⚠ Error processing {filename}: {e}")
 
 # Example usage
-process_all_mm_files("C:\\Users\\andre\\PyJobShopSTNUs\\rcpsp_max\\data\\j10_mm", output_dir="data\instances_with_deadlines")
+process_all_mm_files("C:\\Users\\andre\\PyJobShopSTNUs\\rcpsp_max\\data\\j20_mm", output_dir="data\instances_with_deadlines")

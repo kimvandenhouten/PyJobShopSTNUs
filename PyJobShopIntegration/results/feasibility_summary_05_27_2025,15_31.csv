@@ -1,0 +1,7 @@
+method,instance_folder,count,sum,ratio,noise_factor
+proactive_robust,j10,540,540,1.0,ALL
+reactive,j10,540,540,1.0,ALL
+stnu,j10,540,540,1.0,ALL
+proactive_robust,j10,540,540,1.0,1
+reactive,j10,540,540,1.0,1
+stnu,j10,540,540,1.0,1

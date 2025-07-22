@@ -1,0 +1,84 @@
+
+=== Evaluating method: proactive_quantile_0.9 ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 27.27869
+  • Var Makespan       : 71.15454
+  • Avg Online Time    : 0.00048
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.05250
+  • Var Offline Time   : 0.00010
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Evaluating method: reactive ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 28.08374
+  • Var Makespan       : 60.86919
+  • Avg Online Time    : 0.21790
+  • Var Online Time    : 0.00480
+  • Avg Offline Time   : 0.05270
+  • Var Offline Time   : 0.00009
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Evaluating method: stnu ===
+
+=== Method Evaluation Summary ===
+
+Instance: j10, Noise Factor: 1
+  • Avg Makespan       : 24.76923
+  • Var Makespan       : 45.08823
+  • Avg Online Time    : 0.00527
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.43557
+  • Var Offline Time   : 0.00087
+  • Feasibility Ratio  : 1.00000
+------------------------------------------------------------
+
+=== Feasibility Summary ===
+                                        count  sum     ratio
+method                 instance_folder                      
+proactive_quantile_0.9 j10                760  427  0.561842
+reactive               j10                760  203  0.267105
+stnu                   j10                790  559  0.707595
+
+=== Wilcoxon Test Results ===
+
+--- Metric: obj ---
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 3611.0, sum_neg_ranks = 16534.0, n_pairs = 203
+proactive_quantile_0.9 vs stnu: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 14069.0, sum_neg_ranks = 31593.0, n_pairs = 302
+reactive vs proactive_quantile_0.9: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 16534.0, sum_neg_ranks = 3611.0, n_pairs = 203
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 2844.0, sum_neg_ranks = 8303.0, n_pairs = 149
+stnu vs proactive_quantile_0.9: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 31593.0, sum_neg_ranks = 14069.0, n_pairs = 302
+stnu vs reactive: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 8303.0, sum_neg_ranks = 2844.0, n_pairs = 149
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_online ---
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 20706.0, sum_neg_ranks = 0, n_pairs = 203
+proactive_quantile_0.9 vs stnu: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 45753.0, sum_neg_ranks = 0, n_pairs = 302
+reactive vs proactive_quantile_0.9: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 0, sum_neg_ranks = 20706.0, n_pairs = 203
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 0, sum_neg_ranks = 11175.0, n_pairs = 149
+stnu vs proactive_quantile_0.9: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 0, sum_neg_ranks = 45753.0, n_pairs = 302
+stnu vs reactive: p-value = 0.00000, significant = True, better = stnu, sum_pos_ranks = 11175.0, sum_neg_ranks = 0, n_pairs = 149
+stnu vs stnu: Not enough data for comparison
+
+--- Metric: time_offline ---
+proactive_quantile_0.9 vs proactive_quantile_0.9: Not enough data for comparison
+proactive_quantile_0.9 vs reactive: Not enough data for comparison
+proactive_quantile_0.9 vs stnu: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 289180.0, sum_neg_ranks = 0, n_pairs = 760
+reactive vs proactive_quantile_0.9: Not enough data for comparison
+reactive vs reactive: Not enough data for comparison
+reactive vs stnu: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 20706.0, sum_neg_ranks = 0, n_pairs = 203
+stnu vs proactive_quantile_0.9: p-value = 0.00000, significant = True, better = proactive_quantile_0.9, sum_pos_ranks = 0, sum_neg_ranks = 289180.0, n_pairs = 760
+stnu vs reactive: p-value = 0.00000, significant = True, better = reactive, sum_pos_ranks = 0, sum_neg_ranks = 20706.0, n_pairs = 203
+stnu vs stnu: Not enough data for comparison

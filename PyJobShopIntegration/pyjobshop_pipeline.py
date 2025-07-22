@@ -10,7 +10,6 @@ from pyjobshop import Solution, TaskData
 from pyjobshop.plot import plot_task_gantt, plot_resource_usage
 
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
-from PyJobShopIntegration.Sampler import DiscreteUniformSampler
 from PyJobShopIntegration.utils import add_resource_chains, get_resource_chains, sample_for_rte, plot_stnu, data_to_csv
 from general.logger import get_logger
 from PyJobShopIntegration.evaluator import evaluate_results
@@ -29,8 +28,8 @@ problem_type = sys.argv[-1]
 # make sure to have a folder with your data with the same name
 folder = problem_type
 # SETTINGS HEURISTIC PROACTIVE APPROACH
-mode_proactive = "robust"
-time_limit_proactive = 600
+mode_proactive = "quantile_0.50"
+time_limit_proactive = 60
 # SETTINGS REACTIVE APPROACH
 time_limit_rescheduling = 2
 # SETTINGS SAA APPROACH
@@ -38,12 +37,14 @@ mode_saa = "SAA_smart"
 time_limit_saa = 1800
 nb_scenarios_saa = 4
 # SETTINGS STNU APPROACH
-time_limit_cp_stnu = 600
+time_limit_cp_stnu = 60
 mode_stnu = "robust"
+multimode = problem_type.startswith("mm")
+distribution = "uniform"
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["j10"]
-NOISE_FACTORS = [1]
+INSTANCE_FOLDERS = ["j10", "j20"]
+NOISE_FACTORS = [1, 2]
 nb_scenarios_test = 10
 proactive_reactive = True
 proactive_saa = True
@@ -74,7 +75,8 @@ for noise_factor in NOISE_FACTORS:
                 break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
-            test_durations_samples, duration_distributions = instance.sample_durations(nb_scenarios_test, noise_factor)
+            test_durations_samples, duration_distributions = instance.sample_durations(nb_scenarios_test, noise_factor, distribution)
+            instance.set_duration_distributions(duration_distributions)
             # Run experiments on proactive, reactive and stnu
             # TODO implement the proactive, reactive and stnu approaches possibly reusing already existing code
             for i, duration_sample in enumerate(test_durations_samples):
@@ -119,7 +121,7 @@ for noise_factor in NOISE_FACTORS:
                         # print(f"Infeasible solution for duration sample: {duration_sample}, file: {file}, noise factor: {noise_factor}")
                         logger.info("The solution is infeasible")
                         continue
-                    stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions=duration_distributions, result_tasks=result_tasks)
+                    stnu = PyJobShopSTNU.from_concrete_model(model, duration_distributions=duration_distributions, result_tasks=result_tasks, multimode=multimode)
                     # TODO potentially add other fields depending on the problem
                     schedule = instance.get_schedule(result_tasks)
                     real_durations = instance.get_real_durations(result_tasks, duration_sample)

@@ -4,12 +4,12 @@
 === Method Evaluation Summary ===
 
 Instance: j20, Noise Factor: 1
-  â€¢ Avg Makespan       : 34.83495
-  â€¢ Var Makespan       : 44.57053
-  â€¢ Avg Online Time    : 0.00127
-  â€¢ Var Online Time    : 0.00000
-  â€¢ Avg Offline Time   : 0.07800
-  â€¢ Var Offline Time   : 0.00010
+  • Avg Makespan       : 34.83495
+  • Var Makespan       : 44.57053
+  • Avg Online Time    : 0.00127
+  • Var Online Time    : 0.00000
+  • Avg Offline Time   : 0.07800
+  • Var Offline Time   : 0.00010
 ------------------------------------------------------------
 
 === Evaluating method: reactive ===
@@ -17,12 +17,12 @@ Instance: j20, Noise Factor: 1
 === Method Evaluation Summary ===
 
 Instance: j20, Noise Factor: 1
-  â€¢ Avg Makespan       : 32.66667
-  â€¢ Var Makespan       : 56.33333
-  â€¢ Avg Online Time    : 0.53592
-  â€¢ Var Online Time    : 0.04286
-  â€¢ Avg Offline Time   : 0.07722
-  â€¢ Var Offline Time   : 0.00015
+  • Avg Makespan       : 32.66667
+  • Var Makespan       : 56.33333
+  • Avg Online Time    : 0.53592
+  • Var Online Time    : 0.04286
+  • Avg Offline Time   : 0.07722
+  • Var Offline Time   : 0.00015
 ------------------------------------------------------------
 
 === Evaluating method: stnu ===
@@ -30,12 +30,12 @@ Instance: j20, Noise Factor: 1
 === Method Evaluation Summary ===
 
 Instance: j20, Noise Factor: 1
-  â€¢ Avg Makespan       : 31.14167
-  â€¢ Var Makespan       : 30.52598
-  â€¢ Avg Online Time    : 0.01927
-  â€¢ Var Online Time    : 0.00004
-  â€¢ Avg Offline Time   : 0.52898
-  â€¢ Var Offline Time   : 0.00272
+  • Avg Makespan       : 31.14167
+  • Var Makespan       : 30.52598
+  • Avg Online Time    : 0.01927
+  • Var Online Time    : 0.00004
+  • Avg Offline Time   : 0.52898
+  • Var Offline Time   : 0.00272
 ------------------------------------------------------------
 
 === Feasibility Summary ===

@@ -12,6 +12,7 @@ from pyjobshop.plot import plot_task_gantt, plot_resource_usage
 
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
 from PyJobShopIntegration.Sampler import DiscreteUniformSampler
+from PyJobShopIntegration.deadline_utils import get_distribution_bounds
 from PyJobShopIntegration.utils import add_resource_chains, get_resource_chains, sample_for_rte, plot_stnu, data_to_csv
 from general.logger import get_logger
 from PyJobShopIntegration.evaluator import evaluate_results
@@ -24,8 +25,10 @@ from temporal_networks.stnu import STNU
 from PyJobShopIntegration.scheduling_methods.proactive_method import run_proactive_offline, run_proactive_online
 from PyJobShopIntegration.scheduling_methods.reactive_method import run_reactive_online
 
-random.seed(42)
-np.random.seed(45)
+## LEON TODO some people set the random seeds here:
+# random.seed(42)
+# np.random.seed(45)
+
 logger = get_logger(__name__)
 # the problem type is passed as a command line argument e.g. python pyjobshop_pipeline.py mmrcpspd
 problem_type = sys.argv[-1]
@@ -46,10 +49,10 @@ mode_stnu = "robust"
 multimode = problem_type.startswith("mm")
 
 # SETTINGS EXPERIMENTS
-INSTANCE_FOLDERS = ["j10", "j20"]
-NOISE_FACTORS = [1, 2]
+INSTANCE_FOLDERS = ["j10"]  # or "j20", "fattahi"
+NOISE_FACTORS = [1]
 nb_scenarios_test = 10
-proactive_reactive = False
+proactive_reactive = True
 proactive_saa = True
 stnu = True
 writing = False
@@ -74,7 +77,6 @@ for noise_factor in NOISE_FACTORS:
             if not os.path.exists(os.path.join(images_folder, file)):
                 os.makedirs(os.path.join(images_folder, file))
             # Keep it short for testing
-            print(n)
             if n == 100:
                 break
             # Load data
@@ -84,7 +86,6 @@ for noise_factor in NOISE_FACTORS:
             # TODO implement the proactive, reactive and stnu approaches possibly reusing already existing code
             for i, duration_sample in enumerate(test_durations_samples):
                 logger.info(f"Sample {i}")
-                # instance.get_deterministic_makespan()
                 if proactive_reactive:
                     data_dict = run_proactive_offline(instance, noise_factor, time_limit_proactive, mode_proactive)
                     # Run proactive online
@@ -102,6 +103,7 @@ for noise_factor in NOISE_FACTORS:
                             print(duration_sample)
                             print(lb)
                             raise ValueError(f"Duration sample {duration} is lower than lower bound {lb[k]} for task {k}")
+
                     if real_durations == []:
                         logger.info("The solution is infeasible")
                     else:
@@ -212,7 +214,7 @@ for noise_factor in NOISE_FACTORS:
                             d.num_resources + 1,
                             figsize=(12, 16),
                             gridspec_kw={"height_ratios": [6] + [1] * d.num_resources},
-                            )
+                        )
                         try:
                             plot_task_gantt(solution_plot, d, ax=axes[0])
                             plot_resource_usage(solution_plot, d, axes=axes[1:])
@@ -237,7 +239,7 @@ for noise_factor in NOISE_FACTORS:
                         data_to_csv(instance_folder=instance_folder, solution=solution, output_file=output_file)
                         logger.info(f'The network is not DC for sample{real_durations}')
     # Analyze the results perform statistical tests and create plots
-evaluate_results(now=now)# TODO potentially add this to evaluate_results for analysis
-
+evaluate_results(now=now)
+# TODO potentially add this to evaluate_results for analysis
 print(f"Number of infeasible samples: {infeasible_sample}")
 

@@ -24,5 +24,7 @@ def get_logger(name):
 
         logging.config.dictConfig(config)
         setattr(get_logger, 'configured', True)
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.INFO)
 
     return logging.getLogger(name)

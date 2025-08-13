@@ -49,18 +49,16 @@ else:
     logger.info(f'The network is not DC')
 
 if dc:
-    # TODO: we could have some sort of Simulator/Evaluator class to do all of this
     # Read ESTNU xml file into Python object that was the output from the previous step
     estnu = STNU.from_graphml(output_location)
     sample_duration = duration_distributions.sample()
-    sample = sample_for_rte(sample_duration, estnu)  # TODO: this could then be integrated in a Simulator Class
+    sample = sample_for_rte(sample_duration, estnu)
     logger.debug(f'Sample dict that will be given to RTE star is {sample_duration}')
 
     # Run RTE algorithm with sample
     rte_data = rte_star(estnu, oracle="sample", sample=sample)
 
     # Convert to PyJobShop solution for visualization
-    ## TODO: currently objective is not overwritten in Solution object
     simulated_solution, objective = rte_data_to_pyjobshop_solution(solution, estnu, rte_data, len(model.tasks), "makespan")
     logger.info(f'Simulated solution has objective {objective}')
     plot_machine_gantt(simulated_solution, model.data(), plot_labels=True)

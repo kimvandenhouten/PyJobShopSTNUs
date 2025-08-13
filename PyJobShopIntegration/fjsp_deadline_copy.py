@@ -189,10 +189,13 @@ def run_soft_deadline_sweep(
             stnu = PyJobShopSTNU.from_concrete_model(model, sampler)
             stnu.add_resource_chains(sol, model)
 
-            # 3) Simulate
+            # 3) Simulate sim_runs times
             sim = Simulator(model, stnu, sol, sampler, objective="makespan")
-            sum_msp = sum_tardy = sum_earl = 0
-            count_tardy = count_earl = 0
+            sum_msp = 0
+            sum_tardy = 0
+            sum_earl  = 0
+            count_tardy = 0
+            count_earl  = 0
 
             for _ in range(sim_runs):
                 sim_sol, _ = sim.run_once()
@@ -226,8 +229,14 @@ def run_soft_deadline_sweep(
                 "avg_earliness": sum_earl     / n,
             })
 
-    return results
+            logger.info(
+                f"[w_e={w_e}] CP_ms={cp_makespan:.1f} t={cp_time:.2f}s "
+                f"→ make={results[-1]['avg_makespan']:.1f}, "
+                f"p_tardy={results[-1]['p_tardy']:.1%}, "
+                f"p_early={results[-1]['p_early']:.1%}"
+            )
 
+    return results
 
 
 if __name__ == "__main__":

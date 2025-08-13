@@ -47,6 +47,7 @@ nb_scenarios_saa = 4
 time_limit_cp_stnu = 600
 mode_stnu = "robust"
 multimode = problem_type.startswith("mm")
+distribution = "uniform"
 
 # SETTINGS EXPERIMENTS
 INSTANCE_FOLDERS = ["j10"]  # or "j20", "fattahi"
@@ -81,7 +82,8 @@ for noise_factor in NOISE_FACTORS:
                 break
             # Load data
             instance = create_instance(os.path.join(folder_path, file), problem_type)
-            test_durations_samples, duration_distributions = instance.sample_durations(nb_scenarios_test, noise_factor)
+            test_durations_samples, duration_distributions = instance.sample_durations(nb_scenarios_test, noise_factor, distribution)
+            instance.set_duration_distributions(duration_distributions)
             # Run experiments on proactive, reactive and stnu
             # TODO implement the proactive, reactive and stnu approaches possibly reusing already existing code
             for i, duration_sample in enumerate(test_durations_samples):

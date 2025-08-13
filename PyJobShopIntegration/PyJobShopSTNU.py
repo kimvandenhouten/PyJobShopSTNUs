@@ -81,6 +81,12 @@ class PyJobShopSTNU(STNU):
         suc_idx = self.translation_dict_reversed[f'{cons.task2}_{STNU.EVENT_START}']
         self.set_ordinary_edge(suc_idx, pred_idx, -cons.delay)
 
+    def add_setup_times(self, cons: SetupTime):
+        """
+        Set-up times are machine-dependent, so they can only been added when the schedule per resource is known
+        """
+        raise NotImplementedError
+
     def add_resource_chains(self, sol: Solution, model: Model):
         schedule_per_resource = find_schedule_per_resource(sol)
 

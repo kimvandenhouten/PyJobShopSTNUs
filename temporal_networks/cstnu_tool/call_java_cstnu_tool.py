@@ -103,6 +103,7 @@ class CSTNUTool:
 def run_dc_algorithm(directory, file_name):
     instance_location = os.path.abspath(f"{directory}/{file_name}.stnu")
     if not os.path.exists(instance_location):
+        print("File not found dc algorithm")
         logger.warning(f"warning: could not find {instance_location}")
         return False, None
     else:

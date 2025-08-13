@@ -4,8 +4,7 @@ import numpy as np
 from docplex.cp.model import *
 from pyjobshop import Model, MAX_VALUE, Task
 
-from PyJobShopIntegration.Sampler import DiscreteUniformSampler
-from PyJobShopIntegration.deadline_utils import get_distribution_bounds, get_bounds
+from PyJobShopIntegration.Sampler import DiscreteUniformSampler, DiscreteBinomialSampler
 
 np.random.seed(42)  # For reproducibility
 # Parent class of all instances, could include more important methods if needed
@@ -25,6 +24,7 @@ class Instance():
         self.successors = successors
         self.predecessors = predecessors
         self.model = None
+        self.duration_distributions = None
     def get_objective_rte(self, rte_data, objective="makespan"):
         """
         Get the objective value from the RTE data.
@@ -197,6 +197,23 @@ class MMRCPSP(Instance):
                     resource_feasible = False
         return resource_feasible
 
+    def set_duration_distributions(self, duration_distributions):
+        """
+        Set the duration distributions for the tasks.
+        :param duration_distributions: List of duration distributions for each task.
+        """
+        self.duration_distributions = duration_distributions
+
+    def get_quantile(self, quantile):
+        """
+        Get the quantile of the duration distributions.
+        :param quantile: The quantile to retrieve.
+        :return: List of quantiles for each task.
+        """
+        if self.duration_distributions is None:
+            raise ValueError("Duration distributions are not set.")
+        return self.duration_distributions.get_quantile(quantile)
+
 
 class MMRCPSPD(MMRCPSP):
     """
@@ -266,17 +283,23 @@ class MMRCPSPD(MMRCPSP):
                 ub.append(upper_bound)
         return lb, ub
     # TODO change this to add uncertainty
-    def sample_durations(self, nb_scenarios, noise_factor):
+    def sample_durations(self, nb_scenarios, noise_factor, distribution="uniform"):
         """
         Sample durations for the tasks in the project.
         :param nb_scenarios: Number of scenarios to sample.
         :return: List of sampled durations.
         """
         lower_bound, upper_bound = self.get_bounds(noise_factor)
-        duration_distributions = DiscreteUniformSampler(
-            lower_bounds=lower_bound,
-            upper_bounds=upper_bound
-        )
+        if distribution == "uniform":
+            duration_distributions = DiscreteUniformSampler(
+                lower_bounds=lower_bound,
+                upper_bounds=upper_bound
+            )
+        elif distribution == "binomial":
+            duration_distributions = DiscreteBinomialSampler(
+                lower_bounds=lower_bound,
+                upper_bounds=upper_bound
+            )
         return duration_distributions.sample(nb_scenarios), duration_distributions
 
 

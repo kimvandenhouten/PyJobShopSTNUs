@@ -1,18 +1,15 @@
 import os
 import time
-import copy
+
 import numpy as np
+from pyjobshop.Model import Solution
 
 import general.logger
-from pyjobshop.Model import Model, Solution
-
-from PyJobShopIntegration.simulator import Simulator
-from PyJobShopIntegration.utils import find_schedule_per_resource
-from PyJobShopIntegration.Sampler import DiscreteRVSampler
 from PyJobShopIntegration.PyJobShopSTNU import PyJobShopSTNU
-from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
+from PyJobShopIntegration.Sampler import DiscreteRVSampler
+from PyJobShopIntegration.simulator import Simulator
 from temporal_networks.cstnu_tool.call_java_cstnu_tool import run_dc_algorithm
-from temporal_networks.rte_star import rte_star
+from temporal_networks.cstnu_tool.stnu_to_xml_function import stnu_to_xml
 
 logger = general.logger.get_logger(__name__)
 
@@ -25,7 +22,7 @@ def run_proactive_offline_pjstnu(
     dc_xml_folder: str = "temporal_networks/cstnu_tool/xml_files",
 ):
     """
-    Build a \emph{proactive} STNU‐based schedule:
+    Build a proactive STNU‐based schedule:
       - mode="robust": use upper‐bounds of durations
       - mode="quantile": use the p‐quantile of [lb,ub]
       - mode="SAA": will just build the STNU for later SAA online
